@@ -60,6 +60,7 @@ class Mec:
 
     def service_price(self, service: VrService):
         #calculate the service deployment
+        # maybe we dont need this function anymore
         pass
 
 
