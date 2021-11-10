@@ -3,6 +3,11 @@ import uuid
 class AppWorkload:
     def __init__(self):
         pass
+    
+class ServiceWorload:
+    def __init__(self):
+        pass
+
 
 class ServiceQuota:
 
