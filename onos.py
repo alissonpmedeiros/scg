@@ -34,6 +34,7 @@ class OnosController:
         hosts = self.get_hosts()
         for host in hosts['hosts']:
             '''
+            usage -> host['key']
             during this loop, the following keys are available for each host:
             id, mac, vlan, innerVlan, outerTpid, configured, suspended,
             ipAddresses[0], locations[0]['elementId'] 
@@ -43,20 +44,36 @@ class OnosController:
                 return host
 
         print('Host with ip ' + host_IP + ' not found')
-
+        return None
 
     def get_devices(self):
+        # this function returns a list of devices, where each one of them is a dict object
         resource = 'devices'
         devices = self.request(resource)
-        return devices
+        devices_list = []
+
+        for device in devices['devices']:
+            '''
+            usage -> device['key']
+            during this loop, the following keys are available for each device:
+            id, chassisId, annotations['datapathDescription']. 
+            annotations['datapathDescription'] contains the device name from mininet  
+            '''
+            device_id = device['id']
+            device_name = device['annotations']['datapathDescription']
+            new_device = {'id': device_id, 'name': device_name}
+            devices_list.append(new_device)
+        
+        return devices_list
 
 
     def get_device(self, device_id: str):
         devices = self.get_devices()
-        device = {}
         for device in devices:
-            pass
-        return device    
+            if device['id'] == device_id:
+                print(device)
+                return device
+        return None    
 
 
     def get_links(self):
@@ -77,8 +94,13 @@ class OnosController:
         return intents
 
 
+    def get_topology(self):
+        devices = self.get_devices()
+        links = self.get_links()
+
+
 
 if __name__ == '__main__':
     controller = OnosController()
-    controller.get_host('10.0.0.1')
+    controller.get_device('of:1000000000000005')
     
