@@ -77,8 +77,27 @@ class OnosController:
 
 
     def get_links(self):
+        # this function returns a list of links, where each one of them is a dict object
         resource = 'links'
         links = self.request(resource)
+        links_list = []
+
+        for link in links['links']:
+            '''
+            usage -> link['key']
+            during this loop, the following keys are available for each link:
+            src['port'], src['device'], dst['port'], dst['device'], state, type. 
+            Furthermore, scr = source and dst = destination
+            '''
+            scr_port = link['src']['port']
+            scr_device = link['src']['device']
+            dst_port = link['dst']['port']
+            dst_device = link['dst']['device']
+
+            new_link = {'scr': {scr_port, scr_device}, 'dst': {dst_port, dst_device}}
+
+            links_list.append(new_link)
+
         return links
 
 
@@ -102,5 +121,5 @@ class OnosController:
 
 if __name__ == '__main__':
     controller = OnosController()
-    controller.get_device('of:1000000000000005')
+    controller.get_links()
     
