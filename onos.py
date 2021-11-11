@@ -94,11 +94,22 @@ class OnosController:
             dst_port = link['dst']['port']
             dst_device = link['dst']['device']
 
-            new_link = {'scr': {scr_port, scr_device}, 'dst': {dst_port, dst_device}}
+            new_link = {'scr': {'port': scr_port, 'device': scr_device}, 
+                        'dst': {'port': dst_port, 'device': dst_device}}
 
             links_list.append(new_link)
 
-        return links
+        return links_list
+
+
+    def get_link(self, node_id: str):
+        links = self.get_links()
+        device_links = []
+        for link in links:
+            if link['scr']['device'] == node_id:
+                device_links.append(link)
+        
+        return device_links
 
 
     def get_flows(self):
@@ -114,12 +125,22 @@ class OnosController:
 
 
     def get_topology(self):
+        # this function builds the topology of the network, containing devices and links
         devices = self.get_devices()
-        links = self.get_links()
+        topology = []
+        for device in devices: 
+            device_id = device['id']
+            device_links = self.get_link(device_id)
+            device['links'] = device_links
+            topology.append(device)
+        
+        return topology
+            
+
 
 
 
 if __name__ == '__main__':
     controller = OnosController()
-    controller.get_links()
-    
+    x = controller.get_topology()
+    pprint.pprint(x)
