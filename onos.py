@@ -3,7 +3,7 @@ import requests
 from requests.exceptions import HTTPError
 from dataclasses import dataclass
 from munch import Munch, DefaultMunch
-import pprint
+import pprint, time
 
 
 @dataclass(frozen=True)
@@ -164,3 +164,11 @@ if __name__ == '__main__':
         print(link.dst.device)
     
 '''
+
+
+if __name__ == '__main__':
+    controller = OnosController()
+    while True:
+     x = controller.get_hosts() 
+     pprint.pprint(x)
+     time.sleep(1)
