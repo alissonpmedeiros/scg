@@ -8,7 +8,7 @@ This repository describes the technology stack setup used by SCG.
 
 ONOS sdn controller is used to provide the mobility connectivity automation for SCG. 
 
-1. run: ```docker run -t -d -p 8181:8181 -p 8101:8101 -p 5005:5005 -p 830:830 --name onos onosproject/onos:2.6-latest``` 
+1. run: ```docker run -t -d -p 8181:8181 -p 8101:8101 -p 5005:5005 -p 830:830 --name onos onosproject/onos:2.7-latest``` 
 
 2. install ONOS openflow apps. To do so, go to http://130.92.70.174:8181/onos/ui/login.html and access *Applications* and install the following apps:
 
@@ -17,6 +17,10 @@ ONOS sdn controller is used to provide the mobility connectivity automation for 
     - OpenFlow Agent
     - Control Message Stats Provider
     - Reactive Forwarding
+    - Proxy ARP/NDP
+    - LLDP
+    - OVSDB host Provider
+    - Openflow overlay
 
 
 ---

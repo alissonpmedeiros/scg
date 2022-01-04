@@ -149,26 +149,3 @@ class OnosController:
             
 
 
-
-
-'''
-
-if __name__ == '__main__':
-    controller = OnosController()
-    #x = controller.get_device('of:1000000000000004')
-    x = controller.get_link('of:1000000000000002')
-    #x = controller.get_links()
-    print("\n")
-    pprint.pprint(x)
-    for link in x:
-        print(link.dst.device)
-    
-'''
-
-
-if __name__ == '__main__':
-    controller = OnosController()
-    while True:
-     x = controller.get_hosts() 
-     pprint.pprint(x)
-     time.sleep(1)
