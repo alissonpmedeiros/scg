@@ -8,7 +8,7 @@ class MecResources:
     """ generates MEC GPU and CPU workloads """
 
     #lam: rate or known number of occurences
-    gpu_lam: int    = 15
+    gpu_lam: int    = 20
     cpu_lam: int    = 60
 
 

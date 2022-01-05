@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 import uuid, random
 
+from numpy import cumproduct
+
 class AppWorkload:
     def __init__(self):
         pass
@@ -12,10 +14,10 @@ class ServiceWorload:
 class ServiceQuota:
     """ describes the service quotas available in the system"""
     quota_name: str
-    quota: dict = field(init=False)
+    quota_description: dict = field(init=False)
 
     def __post_init__(self):
-        self.quota = self.get_quota(self.quota_name)
+        self.quota_description = self.get_quota(self.quota_name)
 
 
     def get_quota(self, quota_name: str):
@@ -27,7 +29,7 @@ class ServiceQuota:
         return quota
     
     def quota_medium(self):
-        quota =  { "cpu" : 2, "gpu" : 1}
+        quota =  { "cpu" : 4, "gpu" : 0}
         return quota  
 
     def quota_large(self):
@@ -35,7 +37,7 @@ class ServiceQuota:
         return quota 
 
     def quota_xlarge(self):
-        quota = { "cpu" : 8, "gpu" : 4}
+        quota = { "cpu" : 8, "gpu" : 2}
         return quota
 
 
@@ -43,6 +45,7 @@ class ServiceQuota:
 class VrService:
     """ represents a VR service""" 
     quota: ServiceQuota = field(init=False)
+    cpu_only: bool
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     #workload: ServiceWorload
     
@@ -50,8 +53,13 @@ class VrService:
     def __post_init__(self):
         """ selects a random quote for each service """
         quotas_set = ['tiny', 'medium', 'large', 'xlarge']
-        quota_choice = random.choice(quotas_set)
-        self.quota = ServiceQuota(quota_choice)
+        
+        if self.cpu_only:
+            quota_choice = random.choice([quota for quota in quotas_set if quota not in ['large', 'xlarge']])
+            self.quota = ServiceQuota(quota_choice)
+        else:
+            quota_choice = random.choice(quotas_set)
+            self.quota = ServiceQuota(quota_choice)
     
 
 @dataclass
