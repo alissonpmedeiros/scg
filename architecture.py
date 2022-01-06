@@ -1,9 +1,13 @@
+""" dataclasses imports """
 from dataclasses import dataclass, field
-from typing import List
-from numpy.random.mtrand import random
+from dataclasses_json import dataclass_json
 
+from typing import List
 from pprint import pprint   
-import uuid, random
+import uuid, json, pprint
+
+""" np incoder class"""
+from encoder import JsonEncoder
 
 """ scg classes import """
 from onos import OnosController
@@ -11,11 +15,11 @@ from mec.mec import MecResources, MecWorkloads
 from vr import VrService
 
 
+
 @dataclass
 class VrAgent:
     """ represents and VR agent"""
 
-    
     def select_services(self):
         """ select which services should be offloaded from the HMD to MEC """
         pass
@@ -25,11 +29,12 @@ class VrAgent:
         pass
 
 
-
+@dataclass_json
 @dataclass
 class Mec:
     """ represents a MEC server """
-    mec_agent_id: uuid.UUID
+    id: str = field(init=False)
+    mec_agent_id: str
     
     overall_cpu:   int
     overall_gpu:   int 
@@ -37,15 +42,16 @@ class Mec:
     allocated_cpu: int = 0
     allocated_gpu: int = 0
     
-    services_set: List[VrService] = field(default_factory=list, init=False)
-    
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    
     """ defines the cpu and gpu threshold for mec servers, which can allocate up to 20% of their computing resources """
     cpu_threshold: int = field(init=False)
     gpu_threshold: int = field(init=False)
 
+    services_set: List[VrService] = field(default_factory=list, init=False)
+
     def __post_init__(self):
+        """ set up the id """
+        self.id = str(uuid.uuid4())
+
         self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.2)
         self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.2)
 
@@ -53,14 +59,18 @@ class Mec:
 @dataclass
 class MecAgent:
     """" represents an MEC agent"""    
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    id: str = field(init=False)
+
+    def __post_init__(self):
+        """ set up the id """
+        self.id = str(uuid.uuid4())
 
 
     def available_resources(self, mec: Mec, service: VrService) -> bool:
         """ checks resource availity at MEC server. """
 
         """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
-        quota = service.quota.quota_description
+        quota = service.quota.resources
         
         """ returns True if there is available resources after deploy a vr service """
         if quota['cpu'] + mec.allocated_cpu <= mec.cpu_threshold and quota['gpu'] + mec.allocated_gpu <= mec.gpu_threshold:
@@ -73,8 +83,8 @@ class MecAgent:
     def deploy_service(self,  mec: Mec, service: VrService) -> None:
         """ deploy a vr service on mec server """
         
-        mec.allocated_cpu += service.quota.quota_description['cpu']
-        mec.allocated_gpu += service.quota.quota_description['gpu']
+        mec.allocated_cpu += service.quota.resources['cpu']
+        mec.allocated_gpu += service.quota.resources['gpu']
         mec.services_set.append(service)
         
 
@@ -87,36 +97,21 @@ class MecAgent:
 @dataclass
 class ScgController:
     """ SCG controller representation """
-    
+    overall_mecs: int = field(default = 100)
     mec_set: List[Mec] = field(default_factory=list, init=False)
     mec_agent_set: List[MecAgent] = field(default_factory=list, init=False)
     net_controller = OnosController()
-
-
-    def print_mec(self, mec: Mec):
-        print("\nID: {} \nCPUS: {} | ALLOCATED CPUs {} \nGPUS: {} | ALLOCATED GPUs {} \nMEC AGENT: {} \nSERVICES:".format(mec.id, mec.overall_cpu, mec.allocated_cpu, mec.overall_gpu, mec.allocated_gpu, mec.mec_agent_id))
-        pprint(mec.services_set)
-        print("\n")
-
-    def print_mecs(self):
-        for mec in self.mec_set:
-            print("ID: {} \nCPUS: {} | ALLOCATED CPUs {} \nGPUS: {} | ALLOCATED GPUs {} \nMEC AGENT: {} \nSERVICES:".
-            format(mec.id, mec.overall_cpu, mec.allocated_cpu, mec.overall_gpu, mec.allocated_gpu, mec.mec_agent_id))
-            pprint(mec.services_set)
-            print("\n")
-
-
+    json_encoder = JsonEncoder()
 
     def init_servers(self):
         """ init mec servers and vr services """
-        overall_mecs = 5
         
         """ generates cpu and gpu resources for all mec servers """
         mec_resources = MecResources()
-        cpu_set = mec_resources.generate_cpu_resources(overall_mecs)
-        gpu_set = mec_resources.generate_gpu_resources(overall_mecs)
+        cpu_set = mec_resources.generate_cpu_resources(self.overall_mecs)
+        gpu_set = mec_resources.generate_gpu_resources(self.overall_mecs)
         
-        for i in range(0, overall_mecs):
+        for i in range(0, self.overall_mecs):
             """ creating mec agent i """
             new_mec_agent = MecAgent()
 
@@ -137,20 +132,17 @@ class ScgController:
                 if new_mec_agent.available_resources(new_mec, new_service):        
                     new_mec_agent.deploy_service(new_mec, new_service)
                 else:
-                    self.print_mec(new_mec)
-                    a = input("WHILE BREAK!")
                     break
 
-
-
             """ stores mec server on scg controller's mec set """
-            self.mec_set.append(new_mec)
-
+            self.mec_set.append(new_mec.to_dict())
+            
             """ store mec server agent on scg controller's mec agent set """
             self.mec_agent_set.append(new_mec_agent)
-
-        self.print_mecs()
-
+        
+        """ encoding json to txt file """
+        self.json_encoder.encoder(self.mec_set)
+        
 
     def discover_mec(self):
         """ discover a nearby MEC server to either offload or migrate the service"""

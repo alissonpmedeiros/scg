@@ -34,3 +34,13 @@ The script **network.py** constains the mininet code to provide the network, inc
 To run the script use *python2*: ```sudo python2 ~/network.py```
 
 ---
+
+## SCG setup
+
+1. To generate computing (gpu and cpu) resources for MEC servers and VR services call the method **init_servers()** from class **ScgController**. The data will be stored at **./mec/mecs.txt**:
+
+    ``` python3 architecture.py ```. 
+
+
+2. 
+---

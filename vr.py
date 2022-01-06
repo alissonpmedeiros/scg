@@ -13,16 +13,16 @@ class ServiceWorload:
 @dataclass
 class ServiceQuota:
     """ describes the service quotas available in the system"""
-    quota_name: str
-    quota_description: dict = field(init=False)
+    name: str
+    resources: dict = field(init=False)
 
     def __post_init__(self):
-        self.quota_description = self.get_quota(self.quota_name)
+        self.resources = self.get_quota(self.name)
 
 
-    def get_quota(self, quota_name: str):
+    def get_quota(self, name: str):
         default = "incorrect quota"
-        return getattr(self, 'quota_' + str(quota_name), lambda: default)()
+        return getattr(self, 'quota_' + str(name), lambda: default)()
 
     def quota_small(self):
         quota =  { "cpu" : 1, "gpu" : 0}
@@ -48,13 +48,16 @@ class ServiceQuota:
 @dataclass
 class VrService:
     """ represents a VR service""" 
+    id: str = field(init=False)
     quota: ServiceQuota = field(init=False)
     cpu_only: bool = field(default=False, init=True) # cpu_only becomes an optional field
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
     #workload: ServiceWorload
     
     
     def __post_init__(self):
+        """ set up the id """
+        self.id = str(uuid.uuid4())
+    
         """ selects a random quote for each service """
         quotas_set = ['small', 'tiny', 'medium', 'large', 'xlarge']
         
@@ -71,7 +74,7 @@ class VrService:
 class VrApp:
     """ represents a VR application """
     def __init__(self, refresh_rate: int, workload: AppWorkload):
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.refresh_rate = refresh_rate
         self.workload = workload
         self.services=[]
