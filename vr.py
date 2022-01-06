@@ -24,20 +24,24 @@ class ServiceQuota:
         default = "incorrect quota"
         return getattr(self, 'quota_' + str(quota_name), lambda: default)()
 
+    def quota_small(self):
+        quota =  { "cpu" : 1, "gpu" : 0}
+        return quota
+
     def quota_tiny(self):
         quota =  { "cpu" : 2, "gpu" : 0}
         return quota
     
     def quota_medium(self):
-        quota =  { "cpu" : 4, "gpu" : 0}
+        quota =  { "cpu" : 4, "gpu" : 2}
         return quota  
 
     def quota_large(self):
-        quota = { "cpu" : 4, "gpu" : 2}
+        quota = { "cpu" : 8, "gpu" : 4}
         return quota 
 
     def quota_xlarge(self):
-        quota = { "cpu" : 8, "gpu" : 2}
+        quota = { "cpu" : 10, "gpu" : 4}
         return quota
 
 
@@ -45,17 +49,18 @@ class ServiceQuota:
 class VrService:
     """ represents a VR service""" 
     quota: ServiceQuota = field(init=False)
-    cpu_only: bool
+    cpu_only: bool = field(default=False, init=True) # cpu_only becomes an optional field
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     #workload: ServiceWorload
     
     
     def __post_init__(self):
         """ selects a random quote for each service """
-        quotas_set = ['tiny', 'medium', 'large', 'xlarge']
+        quotas_set = ['small', 'tiny', 'medium', 'large', 'xlarge']
         
+        """ if cpu_only is True, then the quotas 'large' and 'xlarge' are excluded """
         if self.cpu_only:
-            quota_choice = random.choice([quota for quota in quotas_set if quota not in ['large', 'xlarge']])
+            quota_choice = random.choice([quota for quota in quotas_set if quota not in ['medium', 'large', 'xlarge']])
             self.quota = ServiceQuota(quota_choice)
         else:
             quota_choice = random.choice(quotas_set)

@@ -1,15 +1,16 @@
 from dataclasses import dataclass, field
 from typing import List
-import uuid
-from numpy import true_divide
-
 from numpy.random.mtrand import random
-from vr import VrService
-from mec.mec import MecResources, MecWorkloads
-from onos import OnosController
-import time, random
+
 from pprint import pprint   
-    
+import uuid, random
+
+""" scg classes import """
+from onos import OnosController
+from mec.mec import MecResources, MecWorkloads
+from vr import VrService
+
+
 @dataclass
 class VrAgent:
     """ represents and VR agent"""
@@ -40,16 +41,13 @@ class Mec:
     
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     
-       
+    """ defines the cpu and gpu threshold for mec servers, which can allocate up to 20% of their computing resources """
+    cpu_threshold: int = field(init=False)
+    gpu_threshold: int = field(init=False)
 
-        
-    '''
-    def remove_service(self, id: uuid.UUID):
-        for i in range(len(self.services_set)):
-             if self.services_set[i]==id:
-                 del self.services_set[i]
-                 break
-    '''
+    def __post_init__(self):
+        self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.2)
+        self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.2)
 
 
 @dataclass
@@ -57,44 +55,32 @@ class MecAgent:
     """" represents an MEC agent"""    
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
+
     def available_resources(self, mec: Mec, service: VrService) -> bool:
-        """ check resource availity at MEC server. """
+        """ checks resource availity at MEC server. """
 
-        cpu_threshold = mec.overall_cpu - int(mec.overall_cpu * 0.2)
-        gpu_threshold = mec.overall_gpu - int(mec.overall_gpu * 0.2)
-
-
-        """ gets a quota description represented as a dict """   
+        """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
         quota = service.quota.quota_description
         
-        """ returns True if there is available resources right after deploy a vr service  """
-        print('cpu quota + allocated [{}] <= [{}]'.format(quota['cpu'] + mec.allocated_cpu, cpu_threshold))
-
-        print('gpu quota + allocate [{}] <= [{}]:'.format(quota['gpu'] + mec.allocated_gpu, gpu_threshold))
-
-        
-        if quota['cpu'] + mec.allocated_cpu <= cpu_threshold and quota['gpu'] + mec.allocated_gpu <= gpu_threshold:
+        """ returns True if there is available resources after deploy a vr service """
+        if quota['cpu'] + mec.allocated_cpu <= mec.cpu_threshold and quota['gpu'] + mec.allocated_gpu <= mec.gpu_threshold:
             return True
         else:
             return False
 
         
 
-    def deploy_service(self,  mec: Mec, service: VrService) -> bool:
+    def deploy_service(self,  mec: Mec, service: VrService) -> None:
         """ deploy a vr service on mec server """
         
-        if self.available_resources(mec, service):
-            mec.allocated_cpu += service.quota.quota_description['cpu']
-            mec.allocated_gpu += service.quota.quota_description['gpu']
-            mec.services_set.append(service) 
-            return True   
-        else:
-            return False
+        mec.allocated_cpu += service.quota.quota_description['cpu']
+        mec.allocated_gpu += service.quota.quota_description['gpu']
+        mec.services_set.append(service)
         
 
 
-    def allocate_resources(self):
-        """ allocate resources for a service in MEC server. """ 
+    def remove_service(self, service: VrService):
+        """ removes a service from a mec server """ 
         pass
 
 
@@ -108,7 +94,7 @@ class ScgController:
 
 
     def print_mec(self, mec: Mec):
-        print("ID: {} \nCPUS: {} | ALLOCATED CPUs {} \nGPUS: {} | ALLOCATED GPUs {} \nMEC AGENT: {} \nSERVICES:".format(mec.id, mec.overall_cpu, mec.allocated_cpu, mec.overall_gpu, mec.allocated_gpu, mec.mec_agent_id))
+        print("\nID: {} \nCPUS: {} | ALLOCATED CPUs {} \nGPUS: {} | ALLOCATED GPUs {} \nMEC AGENT: {} \nSERVICES:".format(mec.id, mec.overall_cpu, mec.allocated_cpu, mec.overall_gpu, mec.allocated_gpu, mec.mec_agent_id))
         pprint(mec.services_set)
         print("\n")
 
@@ -140,28 +126,23 @@ class ScgController:
             new_mec = Mec(new_mec_agent.id, new_mec_cpu, new_mec_gpu)
 
             """ creating services that will be deployed on mec server i """
-            average_services = 35
-            overall_services =  random.randint(1, average_services)
-            for i in range(0, overall_services):
+            while True:
                 """ checks if mec i has gpu resources """
                 cpu_only = False
                 if new_mec.overall_gpu == 0:
                     cpu_only = True
 
                 new_service = VrService(cpu_only)
-                
-                """ checks if service j can be deployed on mec i """
-                if new_mec_agent.deploy_service(new_mec, new_service):
-                    print('sucessfuly service deployment')
+
+                if new_mec_agent.available_resources(new_mec, new_service):        
+                    new_mec_agent.deploy_service(new_mec, new_service)
                 else:
-                    print('there is no available resources at mec to deploy service')
-                    print('MEC: {} \nSERVICE: {}'.format(new_mec, new_service))
-                
-                print("\n")
-                self.print_mec(new_mec)
-                a = input("")        
-            a = input("STOP")
-            
+                    self.print_mec(new_mec)
+                    a = input("WHILE BREAK!")
+                    break
+
+
+
             """ stores mec server on scg controller's mec set """
             self.mec_set.append(new_mec)
 
@@ -169,6 +150,7 @@ class ScgController:
             self.mec_agent_set.append(new_mec_agent)
 
         self.print_mecs()
+
 
     def discover_mec(self):
         """ discover a nearby MEC server to either offload or migrate the service"""
