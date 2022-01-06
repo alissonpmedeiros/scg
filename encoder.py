@@ -17,8 +17,7 @@ class NpEncoder(json.JSONEncoder):
 
 class JsonEncoder():
     """ encoding json to txt file """
-    def encoder(self, mec_set):
-        files_directory = './mec/'
+    def encoder(self, mec_set, files_directory):
         mecs = json.dumps(mec_set, cls=NpEncoder)
         f = open("{}mecs.txt".format(files_directory), "w+")
         f.write(mecs)

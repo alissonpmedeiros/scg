@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 
+from munch import Munch, DefaultMunch
 from typing import List
 from pprint import pprint   
 import uuid, json, pprint
@@ -102,8 +103,10 @@ class ScgController:
     mec_agent_set: List[MecAgent] = field(default_factory=list, init=False)
     net_controller = OnosController()
     json_encoder = JsonEncoder()
+    files_directory =  './mec/'
+    file_name_servers = 'mecs.txt'
 
-    def init_servers(self):
+    def init_servers(self) -> None:
         """ init mec servers and vr services """
         
         """ generates cpu and gpu resources for all mec servers """
@@ -141,8 +144,14 @@ class ScgController:
             self.mec_agent_set.append(new_mec_agent)
         
         """ encoding json to txt file """
-        self.json_encoder.encoder(self.mec_set)
+        self.json_encoder.encoder(self.mec_set, self.files_directory)
         
+
+    def get_servers(self) -> list:
+        with open('{}{}'.format(self.files_directory, self.file_name_servers)) as json_file:
+            data = json.load(json_file)
+            result = DefaultMunch.fromDict(data)
+            pprint.pprint(result[0].services_set[0].quota.name)
 
     def discover_mec(self):
         """ discover a nearby MEC server to either offload or migrate the service"""
@@ -179,7 +188,7 @@ class ScgController:
 
 if __name__=='__main__':
     scg = ScgController()
-    scg.init_servers()
+    scg.get_servers()
     
     
 
