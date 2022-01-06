@@ -101,6 +101,7 @@ class ScgController:
     overall_mecs: int = field(default = 100)
     mec_set: List[Mec] = field(default_factory=list, init=False)
     mec_agent_set: List[MecAgent] = field(default_factory=list, init=False)
+    base_station_set: List[dict] = field(default_factory=list, init=False)
     net_controller = OnosController()
     json_encoder = JsonEncoder()
     files_directory =  './mec/'
@@ -147,11 +148,11 @@ class ScgController:
         self.json_encoder.encoder(self.mec_set, self.files_directory)
         
 
-    def get_servers(self) -> list:
+    def get_servers(self) -> None:
         with open('{}{}'.format(self.files_directory, self.file_name_servers)) as json_file:
             data = json.load(json_file)
             result = DefaultMunch.fromDict(data)
-            pprint.pprint(result[0].services_set[0].quota.name)
+            self.mec_set = result
 
     def discover_mec(self):
         """ discover a nearby MEC server to either offload or migrate the service"""
@@ -170,26 +171,29 @@ class ScgController:
         pass    
 
     
-    def build_mec_topology(self) -> dict:
+    def build_mec_topology(self) -> None:
         """ builds MEC topology based on the network topology built by ONOS """
-        
 
-        '''
-        f = open("{}cpu_resources.txt".format(self.files_directory), "w+")
-        for i in cpu_set:
-            f.write("{} \n".format(i))
-        f.close()
-        '''
-
+        """ gets network topology from onos """
         net_topology = self.net_controller.get_topology()
-        for node in net_topology:
-            print(node)
+        i = 0
+        for base_station in net_topology:
+            base_station['mec_id'] = self.mec_set[i].id 
+            pprint.pprint(base_station)
+            print(self.mec_set[i].id)
+            i+=1
+            a = input("ENTER")
+            self.base_station_set.append(base_station)
+            
+        """ merging base stations and mec servers """
+
  
 
 if __name__=='__main__':
     scg = ScgController()
     scg.get_servers()
-    
+    scg.build_mec_topology()
+    pprint.pprint(scg.base_station_set[0].id)
     
 
 
