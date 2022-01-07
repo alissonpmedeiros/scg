@@ -1,6 +1,8 @@
 """ dataclasses imports """
 from dataclasses import dataclass, field
-from dataclasses_json import dataclass_json
+
+""" import mec modules """
+from mec.mec import MecResources, MecWorkloads, Mec, MecAgent
 
 from munch import Munch, DefaultMunch
 from typing import List
@@ -12,7 +14,6 @@ from encoder import JsonEncoder
 
 """ scg classes import """
 from onos import OnosController
-from mec.mec import MecResources, MecWorkloads
 from vr import VrService
 
 
@@ -30,69 +31,6 @@ class VrAgent:
         pass
 
 
-@dataclass_json
-@dataclass
-class Mec:
-    """ represents a MEC server """
-    id: str = field(init=False)
-    mec_agent_id: str
-    
-    overall_cpu:   int
-    overall_gpu:   int 
-
-    allocated_cpu: int = 0
-    allocated_gpu: int = 0
-    
-    """ defines the cpu and gpu threshold for mec servers, which can allocate up to 20% of their computing resources """
-    cpu_threshold: int = field(init=False)
-    gpu_threshold: int = field(init=False)
-
-    services_set: List[VrService] = field(default_factory=list, init=False)
-
-    def __post_init__(self):
-        """ set up the id """
-        self.id = str(uuid.uuid4())
-
-        self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.2)
-        self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.2)
-
-
-@dataclass
-class MecAgent:
-    """" represents an MEC agent"""    
-    id: str = field(init=False)
-
-    def __post_init__(self):
-        """ set up the id """
-        self.id = str(uuid.uuid4())
-
-
-    def available_resources(self, mec: Mec, service: VrService) -> bool:
-        """ checks resource availity at MEC server. """
-
-        """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
-        quota = service.quota.resources
-        
-        """ returns True if there is available resources after deploy a vr service """
-        if quota['cpu'] + mec.allocated_cpu <= mec.cpu_threshold and quota['gpu'] + mec.allocated_gpu <= mec.gpu_threshold:
-            return True
-        else:
-            return False
-
-        
-
-    def deploy_service(self,  mec: Mec, service: VrService) -> None:
-        """ deploy a vr service on mec server """
-        
-        mec.allocated_cpu += service.quota.resources['cpu']
-        mec.allocated_gpu += service.quota.resources['gpu']
-        mec.services_set.append(service)
-        
-
-
-    def remove_service(self, service: VrService):
-        """ removes a service from a mec server """ 
-        pass
 
 
 @dataclass
@@ -178,14 +116,12 @@ class ScgController:
         net_topology = self.net_controller.get_topology()
         i = 0
         for base_station in net_topology:
+            """ gets a mec server ip and put it on the base station """
             base_station['mec_id'] = self.mec_set[i].id 
-            pprint.pprint(base_station)
-            print(self.mec_set[i].id)
-            i+=1
-            a = input("ENTER")
             self.base_station_set.append(base_station)
+            i+=1
             
-        """ merging base stations and mec servers """
+        
 
  
 
@@ -193,7 +129,8 @@ if __name__=='__main__':
     scg = ScgController()
     scg.get_servers()
     scg.build_mec_topology()
-    pprint.pprint(scg.base_station_set[0].id)
+    pprint.pprint(scg.base_station_set)
+
     
 
 
