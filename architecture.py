@@ -7,7 +7,7 @@ from mec.mec import MecResources, MecWorkloads, Mec, MecAgent
 from munch import Munch, DefaultMunch
 from typing import List
 from pprint import pprint   
-import uuid, json, pprint
+import uuid, json, pprint, random
 
 """ np incoder class"""
 from encoder import JsonEncoder
@@ -108,7 +108,40 @@ class ScgController:
         """ provide the trade-off analysis between migration and offloading the service back to the HMD"""
         pass    
 
-    
+    def generate_bs_latency_keys(self):
+        """ creates dict keys on each base station data structure """
+        for base_station in self.base_station_set:
+            for link in base_station.links:
+                link['latency'] = 0.0
+
+
+    def set_destination_latency(self, src_id, dst_id, latency: float) -> None:
+        """ sets the same latency of the source node on the destination node """
+        for base_station in self.base_station_set:
+            for link in base_station.links:
+                """ 
+                the test occurs in a inverse way (src with dst) because we have to make sure that only a unique link that belongs to a base station will have the same 'latency' parameter 
+                """
+                if link.src.device == dst_id and link.dst.device == src_id:
+                    link.latency = latency
+                    break
+                
+
+    def set_base_station_net_latency(self):
+        """ generates the network latency for base station i"""
+        self.generate_bs_latency_keys()
+        
+        for base_station in self.base_station_set:
+            """ includes the delay on each base station destination """
+            for link in base_station.links:
+                """ generates the network latencty randomly """
+                net_latency = round(random.uniform(0.1, 0.7), 2)    
+                link.latency = net_latency
+                
+                """ makes sure that A to B has the same delay of B to A"""
+                self.set_destination_latency(base_station.id, link.dst.device, net_latency)
+
+
     def build_mec_topology(self) -> None:
         """ builds MEC topology based on the network topology built by ONOS """
 
@@ -116,7 +149,7 @@ class ScgController:
         net_topology = self.net_controller.get_topology()
         i = 0
         for base_station in net_topology:
-            """ gets a mec server ip and put it on the base station """
+            """ gets a mec server id and stores it on the base station object"""
             base_station['mec_id'] = self.mec_set[i].id 
             self.base_station_set.append(base_station)
             i+=1
@@ -129,6 +162,7 @@ if __name__=='__main__':
     scg = ScgController()
     scg.get_servers()
     scg.build_mec_topology()
+    scg.set_base_station_net_latency()
     pprint.pprint(scg.base_station_set)
 
     

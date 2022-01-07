@@ -93,15 +93,15 @@ class OnosController:
             usage -> link['key']
             during this loop, the following keys are available for each link:
             src['port'], src['device'], dst['port'], dst['device'], state, type. 
-            Furthermore, scr = source and dst = destination
+            Furthermore, src = source and dst = destination
             """
 
-            scr_port = link['src']['port']
-            scr_device = link['src']['device']
+            src_port = link['src']['port']
+            src_device = link['src']['device']
             dst_port = link['dst']['port']
             dst_device = link['dst']['device']
 
-            new_link = {'scr': {'port': scr_port, 'device': scr_device}, 
+            new_link = {'src': {'port': src_port, 'device': src_device}, 
                         'dst': {'port': dst_port, 'device': dst_device}}
             
             new_link_dict = DefaultMunch.fromDict(new_link)
@@ -115,7 +115,7 @@ class OnosController:
         """ get the associated (destination) links to a specific device""" 
 
         links = self.get_links()
-        return [link for link in links if link.scr.device == device_id]
+        return [link for link in links if link.src.device == device_id]
 
 
     def get_flows(self) -> dict:
