@@ -46,8 +46,9 @@ class OnosController:
         """
         
         hosts = self.get_hosts()
-        return [host for host in hosts.hosts if host.ipAddresses[0] == host_IP]
-        
+        for host in hosts.hosts:
+            if host.ipAddresses[0] == host_IP:
+                return host
 
 
 

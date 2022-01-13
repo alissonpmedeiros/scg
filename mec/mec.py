@@ -11,7 +11,7 @@ import uuid
 class MecResources:
     """ generates MEC GPU and CPU workloads """
 
-    #lam: rate or known number of occurences
+    """ lam: rate or known number of occurences """
     gpu_lam: int    = 20
     cpu_lam: int    = 60
 
@@ -19,14 +19,13 @@ class MecResources:
     def generate_cpu_resources(self, number_mecs: int):
         """generates cpu resources for MEC servers"""
         cpu_set = random.poisson(lam=self.cpu_lam, size=number_mecs)
-        #print(cpu_set)
         return cpu_set
         
 
     def include_zero_values(self, array) -> None:
         """ randomly set zero values for GPUs on MEC servers """
         array_len  = len(array)
-        percentage = int(array_len / 3.33) #define 30% of the array with zero values
+        percentage = int(array_len / 3.33) #defines 30% of the array with zero values
         for i in range(0, percentage):
             while True:
                 random_index = random.randint(0,array_len)
@@ -39,7 +38,6 @@ class MecResources:
         """generates gpu resources for MEC servers"""
         gpu_set = random.poisson(lam=self.gpu_lam, size=number_mecs)
         self.include_zero_values(gpu_set)
-        #print(gpu_set)
         return gpu_set
 
 
@@ -50,7 +48,6 @@ class MecWorkloads:
 
     mec_cpus: int = 0
     mec_gpus: int = 0
-
 
     def __post_init__(self):
         """post init method called right after creating MecWorkloads object"""
@@ -63,7 +60,6 @@ class MecWorkloads:
 class Mec:
     """ represents a MEC server """
     id: str = field(init=False)
-    mec_agent_id: str
     
     overall_cpu:   int
     overall_gpu:   int 
@@ -91,34 +87,51 @@ class MecAgent:
     """" represents an MEC agent"""    
     id: str = field(init=False)
 
-    def __post_init__(self):
-        """ set up the id """
-        self.id = str(uuid.uuid4())
-
-
-    def available_resources(self, mec: Mec, service: VrService) -> bool:
+    @staticmethod
+    def available_resources(mec_set: list,  mec_id: str, service: VrService) -> bool:
         """ checks resource availity at MEC server. """
 
         """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
         quota = service.quota.resources
         
-        """ returns True if there is available resources after deploy a vr service """
-        if quota['cpu'] + mec.allocated_cpu <= mec.cpu_threshold and quota['gpu'] + mec.allocated_gpu <= mec.gpu_threshold:
-            return True
-        else:
-            return False
+        for mec in mec_set:
+            if mec.id == mec_id:
+                """ returns True if there is available resources after deploy a vr service """
+                if quota['cpu'] + mec.allocated_cpu <= mec.cpu_threshold and quota['gpu'] + mec.allocated_gpu <= mec.gpu_threshold:
+                    return True
+                else:
+                    return False
 
+    @staticmethod
+    def check_deployment(mec_set: list,  mec_id: str, service: VrService) -> bool:
+        """ checks if a service can be deployed on mec server i on the fly """
+       
+        """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
+        quota = service.quota.resources
+        
+        for mec in mec_set:
+            if mec.id == mec_id:
+                """ returns True if there is available resources after deploy a vr service """
+                if quota['cpu'] + mec.allocated_cpu <= mec.overall_cpu and quota['gpu'] + mec.allocated_gpu <= mec.overall_gpu:
+                    return True
+                else:
+                    return False
+
+
+
+
+    @staticmethod
+    def deploy_service(mec_set: list,  mec_id: str, service: VrService) -> None:
+        """ deploys a vr service on mec server """
+        
+        for mec in mec_set:
+            if mec.id == mec_id:
+                mec.allocated_cpu += service.quota.resources['cpu']
+                mec.allocated_gpu += service.quota.resources['gpu']
+                mec.services_set.append(service)
         
 
-    def deploy_service(self,  mec: Mec, service: VrService) -> None:
-        """ deploy a vr service on mec server """
-        
-        mec.allocated_cpu += service.quota.resources['cpu']
-        mec.allocated_gpu += service.quota.resources['gpu']
-        mec.services_set.append(service)
-        
-
-
-    def remove_service(self, service: VrService):
+    @staticmethod
+    def remove_service(service: VrService):
         """ removes a service from a mec server """ 
         pass
