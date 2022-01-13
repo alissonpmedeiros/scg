@@ -19,21 +19,8 @@ from encoder import JsonEncoder
 
 """ scg classes import """
 from onos import OnosController
-from vr import VrService
+from vr import VrService, VrAgent
 
-
-
-@dataclass
-class VrAgent:
-    """ represents and VR agent"""
-
-    def select_services(self):
-        """ select which services should be offloaded from the HMD to MEC """
-        pass
-
-    def request_offloading(self):
-        """ request the services offloading to SCG controller """
-        pass
 
 
 
@@ -44,7 +31,6 @@ class ScgController:
     overall_mecs: int = field(default = 100)
     mec_set: List[Mec] = field(default_factory=list, init=False)
     base_station_set: List[dict] = field(default_factory=list, init=False)
-    net_controller = OnosController()
     json_encoder = JsonEncoder()
     files_directory =  './mec/'
     file_name_servers = 'mecs.txt'
@@ -145,7 +131,7 @@ class ScgController:
         """ builds MEC topology based on the network topology built by ONOS """
 
         """ gets base stations topology from onos """
-        bs_topology = self.net_controller.get_topology()
+        bs_topology = OnosController.get_topology()
         total_mecs_without_gpus = int(len(bs_topology) * 0.2)
         mecs_without_gpus = 0
         i = 0
@@ -172,7 +158,7 @@ class ScgController:
     def discover_mec(self, vr_ip: str, service: VrService) -> str:
         """ discover a nearby MEC server to either offload or migrate the service"""
         #print("\n#################  BEGIN  #################")
-        host = self.net_controller.get_host(vr_ip)
+        host = OnosController.get_host(vr_ip)
         host_location = host.locations[0].elementId
         
         current_base_station = self.get_base_station(host_location)
@@ -280,11 +266,11 @@ class ScgController:
 
 
 
-def start_vr_services(scg: ScgController):
+def start_mobile_vr_services(scg: ScgController):
     '''
     '''
     services_per_user = 2
-    hosts = scg.net_controller.get_hosts()
+    hosts = OnosController.get_hosts()
     for host in hosts['hosts']:
         host_ip = host.ipAddresses[0]
         for i in range(0, services_per_user):
@@ -293,11 +279,9 @@ def start_vr_services(scg: ScgController):
 
             if mec_id is not None:
                 MecAgent.deploy_service(scg.mec_set, mec_id, service)
-                #scg.list_mecs()
-                #a = input("")
             else:
                 print("could not deploy the following service: {}".format(service))
-                #a = input("")
+    
 
 
 def start_system() -> None:
@@ -306,22 +290,11 @@ def start_system() -> None:
     scg.build_mec_topology()
     scg.set_bs_net_latency()
     scg.list_mecs()
-    start_vr_services(scg)
+    start_mobile_vr_services(scg)
     scg.list_mecs()
 
 
 if __name__=='__main__':
-    #scg = ScgController()
-    #scg.get_servers()
-    #scg.build_mec_topology()
-    #scg.set_bs_net_latency()
-    #pprint(scg.base_station_set)
-    #print("\n")
-    #scg.discover_mec('10.0.0.1', 1)
-    #scg.list_mecs()
-    #pprint(scg.mec_set)
-    #a = input("")
-    
     start_system()
 
 

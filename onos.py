@@ -15,7 +15,7 @@ class OnosController:
     user: str = 'onos'
     password: str = 'rocks' 
 
-
+    @classmethod
     def request(self, resource: str) -> dict:
         """ provides an http request to onos server API """
         
@@ -27,16 +27,16 @@ class OnosController:
         except HTTPError as http_err:
             print(f'HTTP error occurred: {http_err}')
 
-
-    def get_hosts(self) -> dict:
+    @staticmethod
+    def get_hosts() -> dict:
         """ get the list of mininet hosts, including stations and hosts """
         
         resource = 'hosts'
-        hosts = self.request(resource)
+        hosts = OnosController.request(resource)
         return hosts
 
-
-    def get_host(self, host_IP: str) -> list:
+    @staticmethod
+    def get_host(host_IP: str) -> list:
         """ get a specific host info based on its IP""" 
         """
         usage -> host['key']
@@ -45,18 +45,18 @@ class OnosController:
         ipAddresses[0], locations[0]['elementId'] 
         """
         
-        hosts = self.get_hosts()
+        hosts = OnosController.get_hosts()
         for host in hosts.hosts:
             if host.ipAddresses[0] == host_IP:
                 return host
 
 
-
-    def get_devices(self) -> list:
+    @staticmethod
+    def get_devices() -> list:
         """ returns a list of devices, which includes mininet switches and access points """
         
         resource = 'devices'
-        devices = self.request(resource)
+        devices = OnosController.request(resource)
         devices_list = []
 
         for device in devices.devices:
@@ -74,20 +74,20 @@ class OnosController:
         
         return devices_list
 
-
-    def get_device(self, device_id: str) -> list:
+    @staticmethod
+    def get_device(device_id: str) -> list:
         """ get a specific device info based on its ID""" 
 
-        devices = self.get_devices()
+        devices = OnosController.get_devices()
         print(type(devices))
         return [device for device in devices if device.id == device_id]
         
-
-    def get_links(self) -> list:
+    @staticmethod
+    def get_links() -> list:
         """ returns a list of links, including the source and destination devices and the used ports """
 
         resource = 'links'
-        links = self.request(resource)
+        links = OnosController.request(resource)
         links_list = []
         for link in links.links:
             """
@@ -111,38 +111,38 @@ class OnosController:
 
         return links_list
 
-
-    def get_link(self, device_id: str) -> list:
+    @staticmethod
+    def get_link(device_id: str) -> list:
         """ get the associated (destination) links to a specific device""" 
 
-        links = self.get_links()
+        links = OnosController.get_links()
         return [link for link in links if link.src.device == device_id]
 
-
-    def get_flows(self) -> dict:
+    @staticmethod
+    def get_flows() -> dict:
         """ returns the list of flows deployed on the devices"""
 
         resource = 'flows'
-        flows = self.request(resource)
+        flows = OnosController.request(resource)
         return flows
 
-
-    def get_intents(self) -> dict:
+    @staticmethod
+    def get_intents() -> dict:
         """ returns the list of intents, which are used to manage the network resources (bandwidth, flows)"""
 
         resource = 'intents'
-        intents = self.request(resource)
+        intents = OnosController.request(resource)
         return intents
 
-
-    def get_topology(self) -> list:
+    @staticmethod
+    def get_topology() -> list:
         """" builds the topology of the network, containing devices and links """
 
-        devices = self.get_devices()
+        devices = OnosController.get_devices()
         topology = []
         for device in devices: 
             device_id = device['id']
-            device_links = self.get_link(device_id)
+            device_links = OnosController.get_link(device_id)
             device['links'] = device_links
             topology.append(device)
         

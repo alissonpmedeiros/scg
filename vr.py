@@ -80,6 +80,18 @@ class VrApp:
         self.services=[]
     
 
+@dataclass
+class VrAgent:
+    """ represents and VR agent"""
+    @staticmethod
+    def select_services(self):
+        """ selects which services should be offloaded from the HMD to MEC """
+        pass
+    
+    @staticmethod
+    def request_offloading(self):
+        """ requests the services offloading to SCG controller """
+        pass
 
 @dataclass
 class HMD:

@@ -84,7 +84,7 @@ class Mec:
 
 @dataclass
 class MecAgent:
-    """" represents an MEC agent"""    
+    """" represents a MEC agent"""    
     id: str = field(init=False)
 
     @staticmethod
@@ -132,6 +132,11 @@ class MecAgent:
         
 
     @staticmethod
-    def remove_service(service: VrService):
-        """ removes a service from a mec server """ 
+    def service_migration(mec_set: list, service: VrService):
+        """ migrates a service s from mec i to mec j """ 
+        pass
+
+    @staticmethod
+    def reverse_offloading(mec_set: list, service: VrService):
+        """ offloads a service i back to vr hmd """ 
         pass
