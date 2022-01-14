@@ -234,10 +234,23 @@ class ScgController:
 
 
 
-    def calculate_ETE(self, vr_ip, service):
+    def calculate_ETE(self, src_ip: str, dst_ip: str): # NEED TO TEST THIS METHOD!
         """ calculates the end-to-end latency between two entities """
+
+        """ gets the base station where both entities (services or vr users) are connected """
+        src_host = OnosController.get_host(src_ip)
+        src_location = src_host.locations[0].elementId
+
+        dst_host = OnosController.get_host(dst_ip)
+        dst_location = dst_host.locations[0].elementId
         
-        pass
+        path, ete_latency = Dijkstra.init_algorithm(base_station_set=self.base_station_set, start_node=src_location, target_node=dst_location)
+
+        
+
+        print(" -> ".join(path))
+        print("latency: {}".format(ete_latency))
+        return round(ete_latency, 2)
     
     def service_offloading(self):
         """ offload the service from HMD to MEC, vice-versa """
@@ -289,9 +302,16 @@ def start_system() -> None:
     scg.get_servers()
     scg.build_mec_topology()
     scg.set_bs_net_latency()
+    
+    scg.calculate_ETE('10.0.0.2', '10.0.0.1')
+
+
+    '''
     scg.list_mecs()
     start_mobile_vr_services(scg)
     scg.list_mecs()
+    '''
+    
 
 
 if __name__=='__main__':

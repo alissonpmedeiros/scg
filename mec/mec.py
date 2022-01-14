@@ -1,5 +1,6 @@
 #!/user/bin/python3
 from dataclasses import dataclass, field
+from pprint import pprint
 from dataclasses_json import dataclass_json
 from vr import VrService
 from numpy import random
@@ -129,6 +130,26 @@ class MecAgent:
                 mec.allocated_cpu += service.quota.resources['cpu']
                 mec.allocated_gpu += service.quota.resources['gpu']
                 mec.services_set.append(service)
+        
+
+    @staticmethod
+    def remove_service(mec_set: list, mec_id: str, service_id: str) -> VrService:
+        """ removes a service from where it is deployed """
+        service_index = 0
+        for mec in mec_set:
+            if mec.id == mec_id:
+                for service in mec.services_set:
+                    if service.id == service_id:
+                        break
+                    service_index += 1
+                extracted_service = mec.services_set.pop(service_index)
+                print("service index: {}".format(service_index))
+
+                """ updates the allocated resources of mec """
+                mec.allocated_cpu -= extracted_service.quota.resources['cpu']
+                mec.allocated_gpu -= extracted_service.quota.resources['gpu']
+                return extracted_service
+                
         
 
     @staticmethod
