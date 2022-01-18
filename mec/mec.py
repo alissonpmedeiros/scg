@@ -51,7 +51,6 @@ class MecWorkloads:
     mec_gpus: int = 0
 
     def __post_init__(self):
-        """post init method called right after creating MecWorkloads object"""
         pass
 
 
@@ -78,8 +77,8 @@ class Mec:
         """ set up the id """
         self.id = str(uuid.uuid4())
 
-        self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.2)
-        self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.2)
+        self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.3)
+        self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.3)
 
 
 
@@ -143,7 +142,7 @@ class MecAgent:
                         break
                     service_index += 1
                 extracted_service = mec.services_set.pop(service_index)
-                print("service index: {}".format(service_index))
+                #print("service index: {}".format(service_index))
 
                 """ updates the allocated resources of mec """
                 mec.allocated_cpu -= extracted_service.quota.resources['cpu']
@@ -161,3 +160,34 @@ class MecAgent:
     def reverse_offloading(mec_set: list, service: VrService):
         """ offloads a service i back to vr hmd """ 
         pass
+
+    @staticmethod
+    def get_service(mec_set: list, service_id: str) -> VrService:
+        """ gets a VR service """
+        for mec in mec_set:
+            for service in mec.services_set:
+                if service.id == service_id:
+                    return service
+
+    @staticmethod
+    def get_service_server_id(mec_set: list, service_id: str) -> str:
+        """ gets the mec server where the service is deployed """
+        for mec in mec_set:
+            for service in mec.services_set:
+                if service.id == service_id:
+                    return mec.id
+
+    @staticmethod
+    def get_service_bs_location(base_station_set: list, mec_set: list, service_id: str) -> str:
+        """ gets the base station where mec used to deploy the service is connected """
+        mec_location = MecAgent.get_service_server_id(mec_set, service_id)
+        for base_station in base_station_set:
+            if base_station.mec_id == mec_location:
+                return base_station.id
+
+    @staticmethod
+    def get_mec_bs_location(base_station_set: list, mec_id: str) -> str:
+        """ gets the base station location where the mec is attached to """
+        for base_station in base_station_set:
+            if base_station.mec_id == mec_id:
+                return base_station.id

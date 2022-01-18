@@ -1,18 +1,16 @@
 """ dataclasses imports """
 from dataclasses import dataclass, field
 
-from numpy import short
-
 """ import mec modules """
 from mec.mec import MecResources, MecWorkloads, Mec, MecAgent
 
 """ import graph modules """
-from graph import Dijkstra, Graph
+from graph import Dijkstra
 
 from munch import Munch, DefaultMunch
 from typing import List
 from pprint import pprint as pprint   
-import uuid, json, random
+import uuid, json, random, time
 
 """ np incoder class"""
 from encoder import JsonEncoder
@@ -23,19 +21,50 @@ from vr import VrService, VrAgent
 
 
 
-
-
 @dataclass
 class ScgController:
     """ SCG controller representation """
     overall_mecs: int = field(default = 100)
     mec_set: List[Mec] = field(default_factory=list, init=False)
     base_station_set: List[dict] = field(default_factory=list, init=False)
-    json_encoder = JsonEncoder()
+    vr_users: List[list] = field(default_factory=list, init=False)
     files_directory =  './mec/'
     file_name_servers = 'mecs.txt'
 
+    def __post_init__(self):
+        self.get_servers()
+        self.build_mec_topology()
+        self.set_bs_net_latency()
+        self.get_vr_users()
+        self.start_mobile_vr_services()
+        ''''
+        '''
+        
+    def get_vr_users(self) -> None:
+        users = OnosController.get_hosts()
+        for user in users['hosts']:
+            user['services'] = []
+            self.vr_users.append(user)
 
+    def start_mobile_vr_services(self):
+        """ start vr services for mobile vr users """
+
+        '''
+        '''
+        services_per_user = 2
+        users = self.vr_users
+        for user in users:
+            user_ip = user.ipAddresses[0]
+            for i in range(0, services_per_user):
+                service = VrService()
+                mec_id = self.discover_mec(user_ip, service)
+
+                if mec_id is not None:
+                    MecAgent.deploy_service(self.mec_set, mec_id, service)
+                    user.services.append(service.id)
+                else:
+                    print("could not deploy the following service: {}".format(service))
+    
     def add_services(self, mec: Mec) -> None:
         """ creating services that will be deployed on mec server i """
         while True:
@@ -46,8 +75,8 @@ class ScgController:
 
             new_service = VrService(cpu_only)
 
-            if MecAgent.available_resources(self.mec_set, mec, new_service):        
-                MecAgent.deploy_service(self.mec_set, mec, new_service)
+            if MecAgent.available_resources(self.mec_set, mec.id, new_service):        
+                MecAgent.deploy_service(self.mec_set, mec.id, new_service)
             else:
                 break    
 
@@ -63,19 +92,26 @@ class ScgController:
             """ creating mec server i """
             overall_mec_cpu = cpu_set[i]
             overall_mec_gpu = gpu_set[i]    
-            new_mec = Mec(overall_mec_cpu, overall_mec_gpu)
+            new_mec = DefaultMunch.fromDict(Mec(overall_mec_cpu, overall_mec_gpu))
 
             """ stores mec server on scg controller's mec set """
-            self.mec_set.append(new_mec.to_dict())
+            #self.mec_set.append(new_mec.to_dict())
+            self.mec_set.append(new_mec)
         
-        """ encoding json to txt file """
-        self.json_encoder.encoder(self.mec_set, self.files_directory)
-
         """ instantiating services on each mec server """
         for mec in self.mec_set:
             self.add_services(mec)
         
+        """ transforming mecs to dict """
+        new_mec_set = [] 
+        for mec in self.mec_set:
+            new_mec_set.append(mec.to_dict())
+        self.mec_set = new_mec_set
 
+        #a = input("")    
+        """ encoding json to txt file """
+        JsonEncoder.encoder(self.mec_set, self.files_directory)
+        
     def get_servers(self) -> None:
         with open('{}{}'.format(self.files_directory, self.file_name_servers)) as json_file:
             data = json.load(json_file)
@@ -111,7 +147,6 @@ class ScgController:
                     link.latency = latency
                     break
                 
-
     def set_bs_net_latency(self):
         """ generates the network latency for base station i"""
         self.generate_bs_latency_keys()
@@ -125,7 +160,6 @@ class ScgController:
                 
                 """ makes sure that A to B has the same delay of B to A"""
                 self.set_destination_latency(base_station.id, link.dst.device, net_latency)
-
 
     def build_mec_topology(self) -> None:
         """ builds MEC topology based on the network topology built by ONOS """
@@ -150,14 +184,10 @@ class ScgController:
             base_station['mec_id'] = self.mec_set[i].id 
             self.base_station_set.append(base_station)
             i+=1
-            
-            
-            
-                        
-
+                               
     def discover_mec(self, vr_ip: str, service: VrService) -> str:
         """ discover a nearby MEC server to either offload or migrate the service"""
-        #print("\n#################  BEGIN  #################")
+        
         host = OnosController.get_host(vr_ip)
         host_location = host.locations[0].elementId
         
@@ -166,25 +196,17 @@ class ScgController:
 
         if MecAgent.check_deployment(mec_set=self.mec_set, mec_id=current_base_station.mec_id, service=service):        
             """ mec server attached to the base station where the user is connected can deploy the vr service """
-            
-            #MecAgent.deploy_service(self.mec_set, current_base_station.mec_id, service)
-            '''
-            print("\n***service deployed in mec attached to user's base station***")
-            print("service: {}".format(service))
-            print("base_station: {}".format(current_base_station.id))
-            print("MEC: {}".format(current_base_station.mec_id))
-            '''
             return current_base_station.mec_id
             
         else:
             """ otherwise, we need to look for nearby mec server """
             
-            """ we need to take care of the network latency """
             best_destination = ''
             shortest_latency = float('inf')
             for link in current_base_station.links:
                 bs_destination = self.get_base_station(link.dst.device)
                 if MecAgent.check_deployment(self.mec_set, bs_destination.mec_id, service):
+                    """ we need to take care of the network latency """
                     if link.latency < shortest_latency:
                         best_destination = bs_destination.id
 
@@ -192,13 +214,6 @@ class ScgController:
             if best_destination != '':
                 """ a nearby mec can deploy the service """
                 bs_destination = self.get_base_station(best_destination)
-                #MecAgent.deploy_service(self.mec_set, bs_destination.mec_id, service)
-                '''
-                print("\n***service deployed in a nearby mec server***")
-                print("service: {}".format(service))
-                print("base_station: {}".format(bs_destination.id))
-                print("MEC: {}".format(bs_destination.mec_id))
-                '''
                 return bs_destination.mec_id 
             else:
                 """ otherwise, we should call Dijkstra algorithm for all nodes. The initial node is where the user is connected """
@@ -207,112 +222,96 @@ class ScgController:
                 for base_station in self.base_station_set:
                     if base_station.id != current_base_station.id and MecAgent.check_deployment(self.mec_set, base_station.mec_id, service):
                         """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-                        #pprint(base_station)
                         aux_path, aux_shortest_latency = Dijkstra.init_algorithm(base_station_set=self.base_station_set, start_node=current_base_station.id, target_node=base_station.id)
                         
                         if aux_shortest_latency <= shortest_latency:
-                            #print("path test!")
                             path = aux_path
                             shortest_latency = aux_shortest_latency
-                
-                
-                """ gets last element of the path, which corresponds to the base station which contains a mec server that can accomodate the service """
-                #MecAgent.deploy_service(self.mec_set, bs_destination, service)
-                '''
-                print("\n***service deployed via DIJKSTRA ALGORITH***")
-                print("service: {}".format(service))
-                print("base_station: {}".format(bs_destination.id))
-                '''
                 
                 """ we need to take care of the case where there is no more mec available """
                 if not path:
                     return None  
 
                 #print(" -> ".join(path))
+                """ gets last element of the path, which corresponds to the base station which contains a mec server that can accomodate the service """
                 bs_destination =  self.get_base_station(path[-1])
                 return bs_destination.mec_id
 
-
-
-    def calculate_ETE(self, src_ip: str, dst_ip: str): # NEED TO TEST THIS METHOD!
+    def calculate_ETE(self, src_location: str, dst_location: str):
         """ calculates the end-to-end latency between two entities """
-
-        """ gets the base station where both entities (services or vr users) are connected """
-        src_host = OnosController.get_host(src_ip)
-        src_location = src_host.locations[0].elementId
-
-        dst_host = OnosController.get_host(dst_ip)
-        dst_location = dst_host.locations[0].elementId
         
         path, ete_latency = Dijkstra.init_algorithm(base_station_set=self.base_station_set, start_node=src_location, target_node=dst_location)
 
-        
-
-        print(" -> ".join(path))
-        print("latency: {}".format(ete_latency))
+        #print(" -> ".join(path))
+        #print("latency: {}".format(ete_latency))
         return round(ete_latency, 2)
     
-    def service_offloading(self):
-        """ offload the service from HMD to MEC, vice-versa """
-        pass
-    
-    def service_migration(self):
-        """ migrate the service from one MEC server to another"""
-        pass
-    
+
+    def check_migration(self):
+        for user in self.vr_users:
+            for service_id in user.services:
+                host = OnosController.get_host(user.ipAddresses[0])
+                user_location = host.locations[0].elementId
+                
+                service_content = MecAgent.get_service(self.mec_set, service_id)
+                service_server_id = MecAgent.get_service_server_id(self.mec_set, service_id)
+                service_location = MecAgent.get_service_bs_location(self.base_station_set, self.mec_set, service_id)
+                previous_service_latency = self.calculate_ETE(user_location, service_location)
+
+                mec_id_candidate = self.discover_mec(user.ipAddresses[0], service_content)
+                mec_candidate_location = MecAgent.get_mec_bs_location(self.base_station_set, mec_id_candidate)
+                 
+                if mec_candidate_location is not None:
+                    new_service_latency = self.calculate_ETE(user_location, mec_candidate_location)
+
+                    if new_service_latency < previous_service_latency:
+                        extracted_service = MecAgent.remove_service(self.mec_set,  service_server_id, service_id)
+                        MecAgent.deploy_service(self.mec_set, mec_id_candidate, extracted_service)
+                        print("*** Performing migration ***\n")
+                        print("service {} move from MEC {} to {}\n".format(service_id, service_server_id, mec_id_candidate))
+                        
+                else:
+                    print("**** no candidates ****")
+                    """ Migration should be performed but there is no more mec available to host the service. We should consider a service migration violation... """
+                    
+                
+               
+
+
     def trade_off(self):
         """ provide the trade-off analysis between migration and offloading the service back to the HMD"""
         pass
- 
 
-    def list_mecs(self):
+    def print_mecs(self):
         print("\n###############  LISTING MECS ###################\n")
         for base_station in self.base_station_set:
-
+            
             mec = self.get_mec(base_station.mec_id)
             print("BS: {}".format(base_station.id))
             print("ID: {}".format(mec.id))
             print("CPU: {} | ALOCATED CPU: {}".format(mec.overall_cpu, mec.allocated_cpu))
             print("GPU: {} | ALLOCATED GPU: {}".format(mec.overall_gpu, mec.allocated_gpu))
+            print("Services:")
+            for service in mec.services_set:
+                print(service.id)
             print("-------------------------------")
         print("################    END     ##################\n")
 
 
 
-def start_mobile_vr_services(scg: ScgController):
-    '''
-    '''
-    services_per_user = 2
-    hosts = OnosController.get_hosts()
-    for host in hosts['hosts']:
-        host_ip = host.ipAddresses[0]
-        for i in range(0, services_per_user):
-            service = VrService()
-            mec_id = scg.discover_mec(host_ip, service)
-
-            if mec_id is not None:
-                MecAgent.deploy_service(scg.mec_set, mec_id, service)
-            else:
-                print("could not deploy the following service: {}".format(service))
-    
-
 
 def start_system() -> None:
     scg = ScgController()
-    scg.get_servers()
-    scg.build_mec_topology()
-    scg.set_bs_net_latency()
+    #scg.print_mecs()
+    #pprint(scg.vr_users)
+    #print("\n")
+    #a = input("start check migration!")
+    while True:
+        print("\n\n##############################\n")
+        scg.check_migration()
+        time.sleep(1)
+        
     
-    scg.calculate_ETE('10.0.0.2', '10.0.0.1')
-
-
-    '''
-    scg.list_mecs()
-    start_mobile_vr_services(scg)
-    scg.list_mecs()
-    '''
-    
-
 
 if __name__=='__main__':
     start_system()
