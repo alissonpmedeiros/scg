@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
 import uuid, random
-
-from numpy import cumproduct
+from typing import List
 
 class AppWorkload:
     def __init__(self):
@@ -69,7 +69,6 @@ class VrService:
             quota_choice = random.choice(quotas_set)
             self.quota = ServiceQuota(quota_choice)
     
-
 @dataclass
 class VrApp:
     """ represents a VR application """
@@ -93,20 +92,18 @@ class VrAgent:
         """ requests the services offloading to SCG controller """
         pass
 
+@dataclass_json
 @dataclass
 class HMD:
     """ represents a VR HMD instance """
-    id: str = field(init=False)
-
+    ip: str
+    mac_address: str
     cpu: int = 0
     gpu: int = 0
-
+    id: str = field(init=False)
     computing_latency: int = field(init=False)
+    services_set: List[VrService] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-        """ set up the id """
         self.id = str(uuid.uuid4())
-
         self.computing_latency = round(random.uniform(2, 6), 2)
-
-        

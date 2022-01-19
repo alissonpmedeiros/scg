@@ -2,6 +2,7 @@
 
 """ dataclasses modules """
 from dataclasses import dataclass, field
+from fileinput import filename
 
 """ mec modules """
 from mec.mec import MecController, MecResources, MecWorkloads, Mec, MecAgent
@@ -16,12 +17,14 @@ from graph import Dijkstra
 from onos import OnosController
 
 """ vr modules """
-from vr import VrService, VrAgent
+from vr import VrService, VrAgent, HMD
 
 """ other modules """
+from encoder import JsonEncoder, NpEncoder
+from munch import DefaultMunch, Munch
 from typing import List
 from pprint import pprint as pprint   
-import time
+import time, json, os
 
 
 @dataclass
@@ -36,18 +39,39 @@ class ScgController:
     def __post_init__(self):
         MecController.init_servers(self.overall_mecs)
         self.mec_set = MecController.load_mec_servers()
-        MecController.build_mec_topology(self.base_station_set, self.mec_set)
-        BaseStationController.set_bs_net_latency(self.base_station_set)
-        self.get_vr_users()
-        MecController.init_mobile_services(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_users=self.vr_users)
+        BaseStationController.build_network_topology(base_station_set=self.base_station_set, mec_set=self.mec_set)
+        self.init_vr_users()
+        self.vr_users = self.load_vr_users()
         
         
-    def get_vr_users(self) -> None:
+        
+    def init_vr_users(self) -> None:
+        files_directory =  './user/'
+        file_name = 'users.txt'
+
+        if os.path.isfile('{}{}'.format(files_directory, file_name)):
+            return
+
         users = OnosController.get_hosts()
         for user in users['hosts']:
-            user['services'] = []
-            self.vr_users.append(user)
+            new_user = DefaultMunch.fromDict(HMD(ip=user.ipAddresses[0], mac_address=user.mac))
+            self.vr_users.append(new_user)
+        
+        MecController.init_mobile_services(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_users=self.vr_users)
 
+        new_vr_users = []
+        for user in self.vr_users:
+            new_vr_users.append(user.to_dict())
+
+        JsonEncoder.encoder(new_vr_users, files_directory, file_name)
+
+    def load_vr_users(self) -> dict:
+        files_directory =  './user/'
+        file_name = 'users.txt'
+        with open('{}{}'.format(files_directory, file_name)) as json_file:
+            data = json.load(json_file)
+            result = DefaultMunch.fromDict(data)
+            return result    
 
     def calculate_ETE(self, src_location: str, dst_location: str):
         """ calculates the end-to-end latency between two entities """
@@ -113,11 +137,11 @@ def start_system() -> None:
     #pprint(scg.vr_users)
     #print("\n")
     #a = input("start check migration!")
+    '''
     while True:
         print("\n\n##############################\n")
         scg.service_migration()
         time.sleep(1)
-    '''
     #pprint(scg.base_station_set)
     pprint(scg.mec_set[0])   
     pprint(scg.mec_set[1])
@@ -125,6 +149,12 @@ def start_system() -> None:
     pprint(scg.base_station_set)
     MecController.print_mecs(scg.base_station_set, scg.mec_set)
     '''
+    #pprint(scg.vr_users[0].hmd.to_json())
+    '''
+    print("\n")
+    pprint(scg.mec_set[0])
+    '''
+    pprint(scg.vr_users)
 
 if __name__=='__main__':
     start_system()

@@ -216,7 +216,7 @@ class MecController:
 
     @staticmethod
     def discover_mec(base_station_set: list, mec_set: list, vr_ip: str, service: VrService) -> str:
-        """ discover a nearby MEC server to either offload or migrate the service"""
+        """ discovers a nearby MEC server to either offload or migrate the service"""
         
         host = OnosController.get_host(vr_ip)
         host_location = host.locations[0].elementId
@@ -268,25 +268,25 @@ class MecController:
 
     @staticmethod
     def init_mobile_services(base_station_set: list, mec_set: list, vr_users: list):
-        """ start vr services for mobile vr users """
+        """ starts vr services for mobile vr users """
 
         services_per_user = 2
         users = vr_users
         for user in users:
-            user_ip = user.ipAddresses[0]
+            user_ip = user.ip
             for i in range(0, services_per_user):
                 new_service = VrService()
                 mec_id = MecController.discover_mec(base_station_set=base_station_set, mec_set=mec_set, vr_ip=user_ip, service=new_service)
                 
                 if mec_id is not None:
                     MecAgent.deploy_service(mec_set, mec_id, new_service)
-                    user.services.append(new_service.id)
+                    user.services_set.append(new_service.id)
                 else:
                     print("could not deploy the following service: {}".format(new_service))
 
     @staticmethod
     def init_services(mec_set: list, mec: Mec) -> None:
-        """ creating services that will be deployed on mec server i """
+        """ creates services that will be deployed on mec server i """
         while True:
             """ checks if mec i has gpu resources """
             cpu_only = False
@@ -323,7 +323,6 @@ class MecController:
             new_mec = DefaultMunch.fromDict(Mec(overall_mec_cpu, overall_mec_gpu))
 
             """ stores mec server on scg controller's mec set """
-            #self.mec_set.append(new_mec.to_dict())
             mec_set.append(new_mec)
         
         """ instantiating services on each mec server """
@@ -338,7 +337,7 @@ class MecController:
 
         #a = input("")    
         """ encoding json to txt file """
-        JsonEncoder.encoder(mec_set, files_directory)
+        JsonEncoder.encoder(mec_set, files_directory, file_name_servers)
 
     @staticmethod
     def get_mec(mec_set: list, mec_id: str) -> Mec:
@@ -346,31 +345,6 @@ class MecController:
         for mec in mec_set:
             if mec.id  == mec_id:
                 return mec   
-
-    @staticmethod
-    def build_mec_topology(base_station_set: list, mec_set: list) -> None:
-        """ builds MEC topology based on the network topology built by ONOS """
-
-        """ gets base stations topology from onos """
-        bs_topology = OnosController.get_topology()
-        total_mecs_without_gpus = int(len(bs_topology) * 0.2)
-        mecs_without_gpus = 0
-        i = 0
-
-        for base_station in bs_topology:
-            """ if-else statement controls how many mec servers without gpus must exist in the system (20%) """
-            if mec_set[i].overall_gpu == 0 and mecs_without_gpus < total_mecs_without_gpus:
-                mecs_without_gpus += 1
-            else:
-                while True:
-                    i+=1
-                    if mec_set[i].overall_gpu != 0:
-                        break
-            
-            """ gets a mec server id and stores it on the base station object"""
-            base_station['mec_id'] = mec_set[i].id 
-            base_station_set.append(base_station)
-            i+=1
 
     @staticmethod
     def print_mecs(base_station_set: list, mec_set: list):

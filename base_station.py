@@ -1,5 +1,8 @@
 #!/user/bin/python3
 
+""" onos sdn controller module """
+from onos import OnosController
+
 import random
 
 class BaseStationController:
@@ -45,3 +48,30 @@ class BaseStationController:
                 
                 """ makes sure that A to B has the same delay of B to A"""
                 BaseStationController.set_destination_latency(base_station_set=base_station_set, src_id=base_station.id, dst_id=link.dst.device, latency=net_latency)
+
+    @staticmethod
+    def build_network_topology(base_station_set: list, mec_set: list) -> None:
+        """ builds MEC topology based on the network topology built by ONOS """
+
+        """ gets base stations topology from onos """
+        bs_topology = OnosController.get_topology()
+        total_mecs_without_gpus = int(len(bs_topology) * 0.2)
+        mecs_without_gpus = 0
+        i = 0
+
+        for base_station in bs_topology:
+            """ if-else statement controls how many mec servers without gpus must exist in the system (20%) """
+            if mec_set[i].overall_gpu == 0 and mecs_without_gpus < total_mecs_without_gpus:
+                mecs_without_gpus += 1
+            else:
+                while True:
+                    i+=1
+                    if mec_set[i].overall_gpu != 0:
+                        break
+            
+            """ gets a mec server id and stores it on the base station object"""
+            base_station['mec_id'] = mec_set[i].id 
+            base_station_set.append(base_station)
+            i+=1
+        
+        BaseStationController.set_bs_net_latency(base_station_set=base_station_set)
