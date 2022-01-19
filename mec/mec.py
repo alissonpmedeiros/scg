@@ -26,7 +26,7 @@ from graph import Dijkstra
 from pprint import pprint
 from numpy import random
 from typing import List
-import uuid, json
+import uuid, json, os
 
 @dataclass
 class MecResources:
@@ -86,6 +86,8 @@ class Mec:
 
     allocated_cpu: int = 0
     allocated_gpu: int = 0
+
+    computing_latency: int = field(init=False)
     
     """ defines the cpu and gpu threshold for mec servers, which can allocate up to 20% of their computing resources """
     cpu_threshold: int = field(init=False)
@@ -99,6 +101,8 @@ class Mec:
 
         self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.3)
         self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.3)
+
+        self.computing_latency = round(random.uniform(1, 5), 2)
 
 
 
@@ -137,9 +141,6 @@ class MecAgent:
                 else:
                     return False
 
-
-
-
     @staticmethod
     def deploy_service(mec_set: list,  mec_id: str, service: VrService) -> None:
         """ deploys a vr service on mec server """
@@ -150,7 +151,6 @@ class MecAgent:
                 mec.allocated_gpu += service.quota.resources['gpu']
                 mec.services_set.append(service)
         
-
     @staticmethod
     def remove_service(mec_set: list, mec_id: str, service_id: str) -> VrService:
         """ removes a service from where it is deployed """
@@ -168,18 +168,6 @@ class MecAgent:
                 mec.allocated_cpu -= extracted_service.quota.resources['cpu']
                 mec.allocated_gpu -= extracted_service.quota.resources['gpu']
                 return extracted_service
-                
-        
-
-    @staticmethod
-    def service_migration(mec_set: list, service: VrService):
-        """ migrates a service s from mec i to mec j """ 
-        pass
-
-    @staticmethod
-    def reverse_offloading(mec_set: list, service: VrService):
-        """ offloads a service i back to vr hmd """ 
-        pass
 
     @staticmethod
     def get_service(mec_set: list, service_id: str) -> VrService:
@@ -296,7 +284,6 @@ class MecController:
                 else:
                     print("could not deploy the following service: {}".format(new_service))
 
-
     @staticmethod
     def init_services(mec_set: list, mec: Mec) -> None:
         """ creating services that will be deployed on mec server i """
@@ -314,7 +301,13 @@ class MecController:
                 break   
 
     @staticmethod
-    def init_servers(overall_mecs: int, files_directory: str) -> None:
+    def init_servers(overall_mecs: int) -> None:
+        files_directory =  './mec/'
+        file_name_servers = 'mecs.txt'
+
+        if os.path.isfile('{}{}'.format(files_directory, file_name_servers)):
+            return
+
         """ init mec servers and vr services """
         mec_set = []
 
@@ -346,7 +339,6 @@ class MecController:
         #a = input("")    
         """ encoding json to txt file """
         JsonEncoder.encoder(mec_set, files_directory)
-
 
     @staticmethod
     def get_mec(mec_set: list, mec_id: str) -> Mec:
@@ -390,6 +382,7 @@ class MecController:
             print("ID: {}".format(mec.id))
             print("CPU: {} | ALOCATED CPU: {}".format(mec.overall_cpu, mec.allocated_cpu))
             print("GPU: {} | ALLOCATED GPU: {}".format(mec.overall_gpu, mec.allocated_gpu))
+            print("LATENCY: {}".format(mec.computing_latency))
             print("Services:")
             for service in mec.services_set:
                 print(service.id)

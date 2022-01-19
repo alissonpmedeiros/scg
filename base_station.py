@@ -14,9 +14,10 @@ class BaseStationController:
     def generate_bs_latency_keys(base_station_set):
         """ creates dict keys on each base station data structure """
         for base_station in base_station_set:
+            base_station['wireless_latency'] = round(random.uniform(0.1, 0.3), 2) 
             for link in base_station.links:
                 link['latency'] = 0.0
-                link['wireless_latency'] = round(random.uniform(0.1, 0.3), 2)  
+                #link['wireless_latency'] = round(random.uniform(0.1, 0.3), 2)  
 
     @staticmethod
     def set_destination_latency(base_station_set, src_id, dst_id, latency: float) -> None:
@@ -43,4 +44,4 @@ class BaseStationController:
                 link.latency = net_latency
                 
                 """ makes sure that A to B has the same delay of B to A"""
-                BaseStationController.set_destination_latency(base_station_set, base_station.id, link.dst.device, net_latency)
+                BaseStationController.set_destination_latency(base_station_set=base_station_set, src_id=base_station.id, dst_id=link.dst.device, latency=net_latency)

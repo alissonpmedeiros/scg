@@ -1,5 +1,6 @@
 from pprint import pprint as pprint
 import sys
+
  
 class Graph(object):
     def __init__(self, nodes, init_graph):
@@ -83,8 +84,6 @@ class Dijkstra:
             unvisited_nodes.remove(current_min_node)
         
         return previous_nodes, shortest_path
-
-
 
     @staticmethod
     def result(previous_nodes, shortest_path, start_node, target_node):
