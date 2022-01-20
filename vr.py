@@ -1,7 +1,11 @@
+""" dataclasses modules """
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
-import uuid, random
+
+
+""" other modules """
 from typing import List
+import uuid, random
 
 class AppWorkload:
     def __init__(self):
@@ -107,3 +111,5 @@ class HMD:
     def __post_init__(self):
         self.id = str(uuid.uuid4())
         self.computing_latency = round(random.uniform(2, 6), 2)
+
+

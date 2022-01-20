@@ -17,11 +17,11 @@ from graph import Dijkstra
 from onos import OnosController
 
 """ vr modules """
-from vr import VrService, VrAgent, HMD
+from vr import VrService
+from vr_controller import VrController
+
 
 """ other modules """
-from encoder import JsonEncoder, NpEncoder
-from munch import DefaultMunch, Munch
 from typing import List
 from pprint import pprint as pprint   
 import time, json, os
@@ -40,38 +40,11 @@ class ScgController:
         MecController.init_servers(self.overall_mecs)
         self.mec_set = MecController.load_mec_servers()
         BaseStationController.build_network_topology(base_station_set=self.base_station_set, mec_set=self.mec_set)
-        self.init_vr_users()
-        self.vr_users = self.load_vr_users()
+        VrController.init_vr_users(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_users=self.vr_users)
+        self.vr_users = VrController.load_vr_users()
         
         
-        
-    def init_vr_users(self) -> None:
-        files_directory =  './user/'
-        file_name = 'users.txt'
-
-        if os.path.isfile('{}{}'.format(files_directory, file_name)):
-            return
-
-        users = OnosController.get_hosts()
-        for user in users['hosts']:
-            new_user = DefaultMunch.fromDict(HMD(ip=user.ipAddresses[0], mac_address=user.mac))
-            self.vr_users.append(new_user)
-        
-        MecController.init_mobile_services(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_users=self.vr_users)
-
-        new_vr_users = []
-        for user in self.vr_users:
-            new_vr_users.append(user.to_dict())
-
-        JsonEncoder.encoder(new_vr_users, files_directory, file_name)
-
-    def load_vr_users(self) -> dict:
-        files_directory =  './user/'
-        file_name = 'users.txt'
-        with open('{}{}'.format(files_directory, file_name)) as json_file:
-            data = json.load(json_file)
-            result = DefaultMunch.fromDict(data)
-            return result    
+           
 
     def calculate_ETE(self, src_location: str, dst_location: str):
         """ calculates the end-to-end latency between two entities """
