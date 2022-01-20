@@ -154,6 +154,7 @@ class MecAgent:
     @staticmethod
     def remove_service(mec_set: list, mec_id: str, service_id: str) -> VrService:
         """ removes a service from where it is deployed """
+        extracted_service = None
         service_index = 0
         for mec in mec_set:
             if mec.id == mec_id:
@@ -167,7 +168,8 @@ class MecAgent:
                 """ updates the allocated resources of mec """
                 mec.allocated_cpu -= extracted_service.quota.resources['cpu']
                 mec.allocated_gpu -= extracted_service.quota.resources['gpu']
-                return extracted_service
+                break
+        return extracted_service
 
     @staticmethod
     def get_service(mec_set: list, service_id: str) -> VrService:
@@ -266,24 +268,6 @@ class MecController:
                 bs_destination =  BaseStationController.get_base_station(base_station_set, path[-1])
                 return bs_destination.mec_id
 
-    @staticmethod
-    def init_mobile_services(base_station_set: list, mec_set: list, vr_users: list):
-        """ starts vr services for mobile vr users """
-
-        services_per_user = 2
-        users = vr_users
-        for user in users:
-            user_ip = user.ip
-            for i in range(0, services_per_user):
-                new_service = VrService()
-                mec_id = MecController.discover_mec(base_station_set=base_station_set, mec_set=mec_set, vr_ip=user_ip, service=new_service)
-                
-                if mec_id is not None:
-                    MecAgent.deploy_service(mec_set, mec_id, new_service)
-                    user.services_set.append(new_service)
-                    user.services_ids.append(new_service.id)
-                else:
-                    print("could not deploy the following service: {}".format(new_service))
 
     @staticmethod
     def init_services(mec_set: list, mec: Mec) -> None:

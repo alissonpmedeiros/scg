@@ -2,7 +2,8 @@
 
 """ dataclasses modules """
 from dataclasses import dataclass, field
-from fileinput import filename
+
+from numpy import extract
 
 """ mec modules """
 from mec.mec import MecController, MecResources, MecWorkloads, Mec, MecAgent
@@ -30,6 +31,7 @@ import time, json, os
 @dataclass
 class ScgController:
     """ SCG controller representation """
+    services_per_user = 4
     overall_mecs: int = field(default = 100)
     base_station_set: List[dict] = field(default_factory=list, init=False)
     mec_set: List[Mec] = field(default_factory=list, init=False)
@@ -42,7 +44,7 @@ class ScgController:
         
         BaseStationController.build_network_topology(base_station_set=self.base_station_set, mec_set=self.mec_set)
         
-        VrController.init_vr_users(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_users=self.vr_users)
+        VrController.init_vr_users(vr_users=self.vr_users, services_per_user=self.services_per_user)
         self.vr_users = VrController.load_vr_users()
         
         
@@ -95,8 +97,18 @@ class ScgController:
                     print("**** no candidates ****")
                     """ Migration should be performed but there is no more mec available to host the service. We should consider a service migration violation... """
 
-    def offloading(mec_set: list, service: VrService):
-        pass    
+    def offload_services(self):
+        for user in self.vr_users:
+            for service_id in user.services_ids:
+                extract_service = VrController.remove_vr_service(self.vr_users, user.id, service_id)
+                mec_id_dst = MecController.discover_mec(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_ip=user.ip, service=extract_service)
+
+                if mec_id_dst is not None:
+                    MecAgent.deploy_service(self.mec_set, mec_id_dst, extract_service)
+                else:
+                    print("could not deploy the following service: {}".format(extract_service))
+
+                #print('service {} moved from HMD {} to mec {} \n'.format(service_id, user.id, mec_id_dst))   
 
     def reverse_offloading(mec_set: list, service: VrService):
         """ offloads a service i back to vr hmd """ 
@@ -111,27 +123,16 @@ class ScgController:
 def start_system() -> None:
     scg = ScgController()
     #MecController.print_mecs(scg.base_station_set, scg.mec_set)
-    #pprint(scg.vr_users)
-    #print("\n")
     #a = input("start check migration!")
     '''
     while True:
         print("\n\n##############################\n")
         scg.service_migration()
         time.sleep(1)
-    #pprint(scg.base_station_set)
-    pprint(scg.mec_set[0])   
-    pprint(scg.mec_set[1])
-    pprint(scg.mec_set[2]) 
-    pprint(scg.base_station_set)
-    MecController.print_mecs(scg.base_station_set, scg.mec_set)
     '''
-    #pprint(scg.vr_users[0].hmd.to_json())
-    '''
-    print("\n")
-    pprint(scg.mec_set[0])
-    '''
-    pprint(scg.vr_users)
+   
+    
+    
 
 if __name__=='__main__':
     start_system()
