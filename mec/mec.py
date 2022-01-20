@@ -280,7 +280,8 @@ class MecController:
                 
                 if mec_id is not None:
                     MecAgent.deploy_service(mec_set, mec_id, new_service)
-                    user.services_set.append(new_service.id)
+                    user.services_set.append(new_service)
+                    user.services_ids.append(new_service.id)
                 else:
                     print("could not deploy the following service: {}".format(new_service))
 

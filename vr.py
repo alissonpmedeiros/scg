@@ -107,6 +107,7 @@ class HMD:
     id: str = field(init=False)
     computing_latency: int = field(init=False)
     services_set: List[VrService] = field(default_factory=list, init=False)
+    services_ids: List[str] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         self.id = str(uuid.uuid4())

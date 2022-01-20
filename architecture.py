@@ -39,7 +39,9 @@ class ScgController:
     def __post_init__(self):
         MecController.init_servers(self.overall_mecs)
         self.mec_set = MecController.load_mec_servers()
+        
         BaseStationController.build_network_topology(base_station_set=self.base_station_set, mec_set=self.mec_set)
+        
         VrController.init_vr_users(base_station_set=self.base_station_set, mec_set=self.mec_set, vr_users=self.vr_users)
         self.vr_users = VrController.load_vr_users()
         
@@ -62,7 +64,6 @@ class ScgController:
         #print(" -> ".join(path))
         #print("latency: {}".format(ete_latency))
         return round(ete_latency, 2)
-    
 
     def service_migration(self):
         """ migrates a service s from mec i to mec j """ 
@@ -93,7 +94,10 @@ class ScgController:
                 else:
                     print("**** no candidates ****")
                     """ Migration should be performed but there is no more mec available to host the service. We should consider a service migration violation... """
-                    
+
+    def offloading(mec_set: list, service: VrService):
+        pass    
+
     def reverse_offloading(mec_set: list, service: VrService):
         """ offloads a service i back to vr hmd """ 
         pass      
