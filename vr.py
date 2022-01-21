@@ -55,6 +55,7 @@ class VrService:
     id: str = field(init=False)
     quota: ServiceQuota = field(init=False)
     cpu_only: bool = field(default=False, init=True) # cpu_only becomes an optional field
+    is_mobile: bool = field(default=False, init=True) # is_mobile becomes an optional field
     #workload: ServiceWorload
     
     

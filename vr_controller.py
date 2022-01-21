@@ -32,7 +32,7 @@ class VrController:
             vr_users.append(new_user)
 
             for i in range(0, services_per_user):
-                new_service = VrService()
+                new_service = VrService(is_mobile=True)
                 new_user.services_set.append(new_service)
                 new_user.services_ids.append(new_service.id)
 
@@ -52,7 +52,7 @@ class VrController:
             return result 
 
     @staticmethod
-    def get_vr_user(vr_users: list, user_id: str):
+    def get_vr_user(vr_users: list, user_id: str) -> dict:
         for user in vr_users:
             if user.id == user_id:
                 return user
@@ -71,3 +71,11 @@ class VrController:
                 extracted_service = user.services_set.pop(service_index)
                 break
         return extracted_service
+
+    """ NEED TO TEST """
+    @staticmethod
+    def deploy_vr_service(vr_users:list, user_ip: str, service: VrService) -> None:
+        for user in vr_users:
+            if user.ip == user_ip:
+                user.services_set.append(service)
+                break

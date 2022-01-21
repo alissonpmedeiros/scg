@@ -278,7 +278,7 @@ class MecController:
             if mec.overall_gpu == 0:
                 cpu_only = True
 
-            new_service = VrService(cpu_only)
+            new_service = VrService(cpu_only=cpu_only)
 
             if MecAgent.available_resources(mec_set, mec.id, new_service):        
                 MecAgent.deploy_service(mec_set, mec.id, new_service)
