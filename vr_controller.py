@@ -13,7 +13,7 @@ from encoder import JsonEncoder
 """ other modules """
 from munch import DefaultMunch
 import os, json
-
+from pprint import pprint as pprint
 @dataclass 
 class VrController:
     """ represents a Vr controller """
@@ -51,19 +51,37 @@ class VrController:
             result = DefaultMunch.fromDict(data)
             return result 
 
-    @staticmethod
-    def get_vr_user(vr_users: list, user_id: str) -> dict:
+    @staticmethod 
+    def get_vr_service(vr_users: list, user_ip: str, service_id: str) -> dict:
+        
         for user in vr_users:
-            if user.id == user_id:
+            if user.ip == user_ip:
+                for service in user.services_set:
+                    if service.id == service_id:
+                        return service
+
+
+
+    @staticmethod
+    def get_vr_user(vr_users: list, user_ip: str) -> dict:
+        for user in vr_users:
+            if user.ip == user_ip:
                 return user
+
+    @staticmethod 
+    def get_vr_user_location(user_ip: str) -> str:
+        """ gets the base station id where the user is connected """
+        host = OnosController.get_host(user_ip)
+        user_location = host.locations[0].elementId
+        return user_location
     
     @staticmethod
-    def remove_vr_service(vr_users: list, user_id: str,  service_id: str) -> VrService:
+    def remove_vr_service(vr_users: list, user_ip: str,  service_id: str) -> VrService:
         """ removes a service from where it is deployed """
         extracted_service = None
         service_index = 0
         for user in vr_users:
-            if user.id == user_id:
+            if user.ip == user_ip:
                 for service in user.services_set:
                     if service.id == service_id:
                         break
@@ -72,7 +90,6 @@ class VrController:
                 break
         return extracted_service
 
-    """ NEED TO TEST """
     @staticmethod
     def deploy_vr_service(vr_users:list, user_ip: str, service: VrService) -> None:
         for user in vr_users:

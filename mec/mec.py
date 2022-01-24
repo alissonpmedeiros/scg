@@ -4,6 +4,7 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 
+
 """ munch dictionaries module """
 from munch import DefaultMunch
 
@@ -12,9 +13,7 @@ from encoder import JsonEncoder
 
 """ importing vr module """
 from vr import VrService
-
-""" onos sdn controller module """
-from onos import OnosController
+from vr_controller import VrController
 
 """ import base station module """
 from base_station import BaseStationController
@@ -220,8 +219,7 @@ class MecController:
     def discover_mec(base_station_set: list, mec_set: list, vr_ip: str, service: VrService) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
         
-        host = OnosController.get_host(vr_ip)
-        host_location = host.locations[0].elementId
+        host_location = VrController.get_vr_user_location(vr_ip)
         
         current_base_station = BaseStationController.get_base_station(base_station_set, host_location)
         
