@@ -42,10 +42,36 @@ class ScgController:
         self.vr_users = VrController.load_vr_users()
         
         self.offload_services()
+
+    
+    def caculate_average_ETE(self):
+        total_latency = 0
+        services_cont = 0
+        for user in self.vr_users:
+            for service_id in user.services_ids:
+                user_location = VrController.get_vr_user_location(user_ip=user.ip)
+                if any (service['id'] == service_id for service in user.services_set):    
+                    """ checks whether a service IS deployed on the HMD """
+
+                    hmd_latency = self.get_hmd_latency(user_ip=user.ip)
+                    total_latency += hmd_latency
+                else:
+                    """ otherwise, the service is deployed on MEC servers"""
+                    service_location = MecAgent.get_service_bs_location(self.base_station_set, self.mec_set, service_id)
+                    
+                    """ measures the latency between bs where the user is connected and the mec where the service is deployed """
+                    current_service_latency = self.calculate_ETE(src_location=user_location, dst_location=service_location)
+                    total_latency += current_service_latency
+                
+                services_cont += 1
+        
+        average_latency = total_latency/services_cont
+        return average_latency
+
            
 
     def calculate_ETE(self, src_location: str, dst_location: str) -> float:
-        """ calculates the end-to-end latency between two entities """
+        """ calculates the end-to-end latency between a vr user and the mec where the service is deployed on """
         
         path, net_latency = Dijkstra.init_algorithm(base_station_set=self.base_station_set, start_node=src_location, target_node=dst_location)
 
@@ -86,10 +112,7 @@ class ScgController:
                 
         else:
             print("**** no candidates ****")
-            """ Migration should be performed but there is no more mec available to host the service. We should consider a service migration violation... """
-
-    def offload_service_instance(self) -> None:
-        pass            
+            """ Migration should be performed but there is no more mec available to host the service. We should consider a service migration violation... """          
     
     def offload_services(self) -> None:
         for user in self.vr_users:
@@ -161,6 +184,11 @@ class ScgController:
                     service_location = MecAgent.get_service_bs_location(self.base_station_set, self.mec_set, service_id)
                     
                     """ measures the latency between bs where the user is connected and the mec where the service is deployed """
+                    if service_location is None or user_location is None:
+                        print("service location: {}".format(service_location))
+                        print("user location: {}".format(user_location))
+                        a = input("")
+            
                     current_service_latency = self.calculate_ETE(src_location=user_location, dst_location=service_location)
 
                     hmd_latency = self.get_hmd_latency(user_ip=user.ip)
@@ -205,6 +233,10 @@ def start_system() -> None:
     MecController.print_mecs(scg.base_station_set, scg.mec_set)
     while True:
         scg.trade_off()
+        average_latency = scg.caculate_average_ETE()
+        print("\n AVERAGE LATENCY: {} \n".format(average_latency))
+        time.sleep(2)
+        #a = input("")
 
 if __name__=='__main__':
     start_system()
