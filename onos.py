@@ -20,6 +20,7 @@ class OnosController:
         """ provides an http request to onos server API """
         
         URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/' + resource 
+        time.sleep(0.001)        
         try: 
             response = requests.get(URL, auth=(self.user, self.password), verify=False)
             result = DefaultMunch.fromDict(response.json())
@@ -147,6 +148,42 @@ class OnosController:
             topology.append(device)
         
         return topology
-            
 
+    @classmethod            
+    def delete_hosts(self) -> None:
+        """ deletes all hosts """
+        hosts = OnosController.get_hosts()  
+        for host in hosts['hosts']:
+            URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/hosts/{}'.format(host.id)
+            try: 
+                requests.delete(URL, auth=(self.user, self.password), verify=False)
+            except HTTPError as http_err:
+                print(f'HTTP error occurred: {http_err}')
 
+            time.sleep(0.0001)
+    
+    @classmethod            
+    def delete_devices(self) -> None:
+        """ deletes all devices """
+        devices = OnosController.get_devices()  
+        for device in devices:
+            URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/devices/{}'.format(device.id)
+            try: 
+                requests.delete(URL, auth=(self.user, self.password), verify=False)
+            except HTTPError as http_err:
+                print(f'HTTP error occurred: {http_err}')
+
+            time.sleep(0.0001)
+
+if __name__=='__main__':
+    
+    '''
+    devices = OnosController.get_devices()
+    hosts = OnosController.get_hosts()
+    #pprint.pprint(hosts)
+    for host in hosts['hosts']:
+        pprint.pprint(host)
+        a = input()
+    '''
+    OnosController.delete_devices()
+    OnosController.delete_hosts()
