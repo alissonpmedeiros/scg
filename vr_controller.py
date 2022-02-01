@@ -19,8 +19,10 @@ class VrController:
     """ represents a Vr controller """
 
     @staticmethod
-    def init_vr_users(vr_users: list, services_per_user: int) -> None:
-        files_directory =  './user/'
+    def init_vr_users(services_per_user: int) -> None:
+        vr_users = []
+        new_vr_users = []
+        files_directory =  '/home/ubuntu/scg/user/'
         file_name = 'users.txt'
 
         if os.path.isfile('{}{}'.format(files_directory, file_name)):
@@ -29,14 +31,14 @@ class VrController:
         users = OnosController.get_hosts()
         for user in users['hosts']:
             new_user = DefaultMunch.fromDict(HMD(ip=user.ipAddresses[0], mac_address=user.mac))
-            vr_users.append(new_user)
 
             for i in range(0, services_per_user):
                 new_service = VrService(is_mobile=True)
                 new_user.services_set.append(new_service)
                 new_user.services_ids.append(new_service.id)
-
-        new_vr_users = []
+            
+            vr_users.append(new_user)
+            
         for user in vr_users:
             new_vr_users.append(user.to_dict())
 

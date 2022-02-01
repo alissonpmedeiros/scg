@@ -10,7 +10,7 @@ import pprint, time
 class OnosController:
     """ SDN controller representation for ONOS """
     
-    server_IP: str = '130.92.70.174'
+    server_IP: str = '130.92.70.173'
     OF_port: str = '8181'
     user: str = 'onos'
     password: str = 'rocks' 
@@ -154,13 +154,14 @@ class OnosController:
         """ deletes all hosts """
         hosts = OnosController.get_hosts()  
         for host in hosts['hosts']:
+            print(host)
             URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/hosts/{}'.format(host.id)
             try: 
                 requests.delete(URL, auth=(self.user, self.password), verify=False)
             except HTTPError as http_err:
                 print(f'HTTP error occurred: {http_err}')
 
-            time.sleep(0.0001)
+            time.sleep(0.001)
     
     @classmethod            
     def delete_devices(self) -> None:
@@ -173,7 +174,7 @@ class OnosController:
             except HTTPError as http_err:
                 print(f'HTTP error occurred: {http_err}')
 
-            time.sleep(0.0001)
+            time.sleep(0.001)
 
 if __name__=='__main__':
     
@@ -182,8 +183,8 @@ if __name__=='__main__':
     hosts = OnosController.get_hosts()
     #pprint.pprint(hosts)
     for host in hosts['hosts']:
-        pprint.pprint(host)
-        a = input()
+        print(host['ipAddresses'][0])
+        #a = input()
     '''
     OnosController.delete_devices()
     OnosController.delete_hosts()

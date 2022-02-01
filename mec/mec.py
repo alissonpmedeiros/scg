@@ -289,9 +289,7 @@ class MecController:
     @staticmethod
     def init_servers(overall_mecs: int) -> None:
         """ first of all, clean devices and hosts on onos sdn controller """
-        OnosController.delete_devices()
-        OnosController.delete_hosts()
-
+    
         files_directory =  './mec/'
         file_name_servers = 'mecs.txt'
 

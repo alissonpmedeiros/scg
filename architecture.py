@@ -26,7 +26,7 @@ import time, json, os
 class ScgController:
     """ SCG controller representation """
     services_per_user = 4
-    overall_mecs: int = field(default = 100)
+    overall_mecs: int = field(default = 28)
     base_station_set: List[dict] = field(default_factory=list, init=False)
     mec_set: List[Mec] = field(default_factory=list, init=False)
     vr_users: List[list] = field(default_factory=list, init=False)
@@ -38,7 +38,7 @@ class ScgController:
         
         BaseStationController.build_network_topology(base_station_set=self.base_station_set, mec_set=self.mec_set)
         
-        VrController.init_vr_users(vr_users=self.vr_users, services_per_user=self.services_per_user)
+        VrController.init_vr_users(services_per_user=self.services_per_user)
         self.vr_users = VrController.load_vr_users()
         
         self.offload_services()
