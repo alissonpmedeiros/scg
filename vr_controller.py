@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 """ vr module """
 from vr import HMD, VrService
 
+""" base station module """
+from base_station import BaseStationController
+
 """ onos modules """
 from onos import OnosController
 
@@ -62,8 +65,6 @@ class VrController:
                     if service.id == service_id:
                         return service
 
-
-
     @staticmethod
     def get_vr_user(vr_users: list, user_ip: str) -> dict:
         for user in vr_users:
@@ -98,3 +99,14 @@ class VrController:
             if user.ip == user_ip:
                 user.services_set.append(service)
                 break
+
+    @staticmethod
+    def get_hmd_latency(base_station_set: list, vr_users:list, user_ip: str) -> float:
+        """ gets hmd latency, including the wireless latency where the user is connected to """
+        user_location = VrController.get_vr_user_location(user_ip=user_ip)
+        bs_location = BaseStationController.get_base_station(base_station_set=base_station_set, bs_id=user_location)
+        user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
+
+        latency = round(bs_location.wireless_latency + user.computing_latency, 2) 
+
+        return latency
