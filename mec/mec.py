@@ -103,7 +103,10 @@ class MecAgent:
     id: str = field(init=False)
 
     @staticmethod
-    def available_resources(mec_set: list,  mec_id: str, service: VrService) -> bool:
+    def available_resources(
+        mec_set: list,  
+        mec_id: str, 
+        service: VrService) -> bool:
         """ checks resource availity at MEC server. """
 
         """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
@@ -118,7 +121,10 @@ class MecAgent:
                     return False
 
     @staticmethod
-    def check_deployment(mec_set: list,  mec_id: str, service: VrService) -> bool:
+    def check_deployment(
+        mec_set: list,  
+        mec_id: str, 
+        service: VrService) -> bool:
         """ checks if a service can be deployed on mec server i on the fly """
        
         """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
@@ -143,7 +149,10 @@ class MecAgent:
                 mec.services_set.append(service)
         
     @staticmethod
-    def remove_service(mec_set: list, mec_id: str, service_id: str) -> VrService:
+    def remove_service(
+        mec_set: list, 
+        mec_id: str, 
+        service_id: str) -> VrService:
         """ removes a service from where it is deployed """
         extracted_service = None
         service_index = 0
@@ -179,7 +188,10 @@ class MecAgent:
                     return mec.id
 
     @staticmethod
-    def get_service_bs_location(base_station_set: list, mec_set: list, service_id: str) -> str:
+    def get_service_bs_location(
+        base_station_set: list, 
+        mec_set: list, 
+        service_id: str) -> str:
         """ gets the base station where mec used to deploy the service is connected """
         mec_location = MecAgent.get_service_server_id(mec_set, service_id)
         for base_station in base_station_set:
@@ -208,14 +220,21 @@ class MecController:
             return result
 
     @staticmethod
-    def discover_mec(base_station_set: list, mec_set: list, vr_ip: str, service: VrService) -> str:
+    def discover_mec(
+        base_station_set: list, 
+        mec_set: list, 
+        vr_ip: str, 
+        service: VrService) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
         
         host_location = VrController.get_vr_user_location(vr_ip)
         
         current_base_station = BaseStationController.get_base_station(base_station_set, host_location)
         
-        if MecAgent.check_deployment(mec_set=mec_set, mec_id=current_base_station.mec_id, service=service):        
+        if MecAgent.check_deployment(
+            mec_set=mec_set, 
+            mec_id=current_base_station.mec_id, 
+            service=service):        
             """ mec server attached to the base station where the user is connected can deploy the vr service """
             return current_base_station.mec_id
             
@@ -225,8 +244,13 @@ class MecController:
             best_destination = ''
             shortest_latency = float('inf')
             for link in current_base_station.links:
-                bs_destination = BaseStationController.get_base_station(base_station_set, link.dst.device)
-                if MecAgent.check_deployment(mec_set, bs_destination.mec_id, service):
+                bs_destination = BaseStationController.get_base_station(
+                    base_station_set, 
+                    link.dst.device)
+                if MecAgent.check_deployment(
+                    mec_set, 
+                    bs_destination.mec_id, 
+                    service):
                     """ we need to take care of the network latency """
                     if link.latency < shortest_latency:
                         best_destination = bs_destination.id
@@ -234,7 +258,9 @@ class MecController:
             
             if best_destination != '':
                 """ a nearby mec can deploy the service """
-                bs_destination = BaseStationController.get_base_station(base_station_set, best_destination)
+                bs_destination = BaseStationController.get_base_station(
+                    base_station_set, 
+                    best_destination)
                 return bs_destination.mec_id 
             else:
                 """ otherwise, we should call Dijkstra algorithm for all nodes. The initial node is where the user is connected """
@@ -243,7 +269,10 @@ class MecController:
                 for base_station in base_station_set:
                     if base_station.id != current_base_station.id and MecAgent.check_deployment(mec_set, base_station.mec_id, service):
                         """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-                        aux_path, aux_shortest_latency = Dijkstra.init_algorithm(base_station_set=base_station_set, start_node=current_base_station.id, target_node=base_station.id)
+                        aux_path, aux_shortest_latency = Dijkstra.init_algorithm(
+                            base_station_set=base_station_set, 
+                            start_node=current_base_station.id, 
+                            target_node=base_station.id)
                         
                         if aux_shortest_latency <= shortest_latency:
                             path = aux_path
@@ -255,7 +284,9 @@ class MecController:
 
                 #print(" -> ".join(path))
                 """ gets last element of the path, which corresponds to the base station which contains a mec server that can accomodate the service """
-                bs_destination =  BaseStationController.get_base_station(base_station_set, path[-1])
+                bs_destination =  BaseStationController.get_base_station(
+                    base_station_set, 
+                    path[-1])
                 return bs_destination.mec_id
 
 

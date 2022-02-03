@@ -45,7 +45,10 @@ class VrController:
         for user in vr_users:
             new_vr_users.append(user.to_dict())
 
-        JsonEncoder.encoder(new_vr_users, files_directory, file_name)
+        JsonEncoder.encoder(
+            new_vr_users, 
+            files_directory, 
+            file_name)
 
     @staticmethod
     def load_vr_users() -> dict:
@@ -57,7 +60,10 @@ class VrController:
             return result 
 
     @staticmethod 
-    def get_vr_service(vr_users: list, user_ip: str, service_id: str) -> dict:
+    def get_vr_service(
+        vr_users: list, 
+        user_ip: str, 
+        service_id: str) -> dict:
         
         for user in vr_users:
             if user.ip == user_ip:
@@ -79,7 +85,10 @@ class VrController:
         return user_location
     
     @staticmethod
-    def remove_vr_service(vr_users: list, user_ip: str,  service_id: str) -> VrService:
+    def remove_vr_service(
+        vr_users: list, 
+        user_ip: str,  
+        service_id: str) -> VrService:
         """ removes a service from where it is deployed """
         extracted_service = None
         service_index = 0
@@ -94,17 +103,25 @@ class VrController:
         return extracted_service
 
     @staticmethod
-    def deploy_vr_service(vr_users:list, user_ip: str, service: VrService) -> None:
+    def deploy_vr_service(
+        vr_users:list, 
+        user_ip: str, 
+        service: VrService) -> None:
         for user in vr_users:
             if user.ip == user_ip:
                 user.services_set.append(service)
                 break
 
     @staticmethod
-    def get_hmd_latency(base_station_set: list, vr_users:list, user_ip: str) -> float:
+    def get_hmd_latency(
+        base_station_set: list, 
+        vr_users:list, 
+        user_ip: str) -> float:
         """ gets hmd latency, including the wireless latency where the user is connected to """
         user_location = VrController.get_vr_user_location(user_ip=user_ip)
-        bs_location = BaseStationController.get_base_station(base_station_set=base_station_set, bs_id=user_location)
+        bs_location = BaseStationController.get_base_station(
+            base_station_set=base_station_set, 
+            bs_id=user_location)
         user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
 
         latency = round(bs_location.wireless_latency + user.computing_latency, 2) 
@@ -134,20 +151,29 @@ class VrController:
 
             if choice == -1:
                 if position == 0: 
-                    """ can't get the previous quota, because we hitted the first one, then we go further and get the next quota instead of the previous one """
+                    """ 
+                    can't get the previous quota, because we hitted the first one, then 
+                    we go further and get the next quota instead of the previous one 
+                    """
                     position = 1
                 else:
                     """ otherwise we just get the previous quota position"""
                     position -=1
             else:
-                """ can't get the next quota, because we hitted the last one, then we go back and get the previous quota instead of the next one """
+                """ 
+                can't get the next quota, because we hitted the last one, then 
+                we go back and get the previous quota instead of the next one 
+                """
                 if position == 4:
                     position -=1
                 else:
                     """ otherwise we just get the next quota position """
                     position +=1
 
-            """ at this point we know exactly the position of the quota that must replace the current service quota """
+            """ 
+            at this point we know exactly the position of the 
+            quota that must replace the current service quota 
+            """
             new_quota_name = quotas_set[position]
             new_service = VrService()
             new_quota = DefaultMunch.fromDict(new_service.quota.get_quota(new_quota_name))

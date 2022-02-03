@@ -83,7 +83,8 @@ class VrService:
         """ if cpu_only is True, then the quotas 'large' and 'xlarge' are excluded """
         if self.cpu_only:
             """ selects a random quote for each service """
-            quota_choice = random.choice([quota for quota in quotas_set if quota not in ['medium', 'large', 'xlarge']])
+            quota_choice = random.choice([
+                quota for quota in quotas_set if quota not in ['medium', 'large', 'xlarge']])
             self.quota = ServiceQuota(quota_choice)
         else:
             quota_choice = random.choice(quotas_set)

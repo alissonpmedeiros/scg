@@ -9,7 +9,9 @@ class Graph(object):
         
     def construct_graph(self, nodes, init_graph):
         """
-        This method makes sure that the graph is symmetrical. In other words, if there's a path from node A to B with a value V, there needs to be a path from node B to node A with a value V.
+        This method makes sure that the graph is symmetrical. In other words, 
+        if there's a path from node A to B with a value V, there needs to be 
+        a path from node B to node A with a value V.
         """
         graph = {}
         for node in nodes:
@@ -86,7 +88,11 @@ class Dijkstra:
         return previous_nodes, shortest_path
 
     @staticmethod
-    def result(previous_nodes, shortest_path, start_node, target_node):
+    def result(
+        previous_nodes, 
+        shortest_path, 
+        start_node, 
+        target_node):
         """ returns the shortest path between the source and destination node and the path cost """
 
         path = []
@@ -105,7 +111,10 @@ class Dijkstra:
         return path, shortest_path[target_node]
 
     @staticmethod
-    def init_algorithm(base_station_set: list, start_node: str, target_node: str ):
+    def init_algorithm(
+        base_station_set: list, 
+        start_node: str, 
+        target_node: str ):
         """ inits Dijkstra algorithm """
         
         nodes = []
@@ -128,9 +137,15 @@ class Dijkstra:
         """ constructs the graph """
         graph = Graph(nodes, init_graph)
 
-        previous_nodes, shortest_path = Dijkstra.dijkstra_algorithm(graph=graph, start_node=start_node)
+        previous_nodes, shortest_path = Dijkstra.dijkstra_algorithm(
+            graph=graph, 
+            start_node=start_node)
 
-        return Dijkstra.result(previous_nodes, shortest_path, start_node=start_node, target_node=target_node)
+        return Dijkstra.result(
+            previous_nodes, 
+            shortest_path, 
+            start_node=start_node, 
+            target_node=target_node)
 
 
     

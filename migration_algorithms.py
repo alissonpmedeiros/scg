@@ -134,7 +134,8 @@ class SCG:
                         new_service_latency = ScgController.calculate_ETE(
                             base_station_set=base_station_set, 
                             mec_set=mec_set, 
-                            src_location=user_location, dst_location=mec_candidate_location)
+                            src_location=user_location, 
+                            dst_location=mec_candidate_location)
 
                         if new_service_latency < hmd_latency:
                             extracted_service = VrController.remove_vr_service(
