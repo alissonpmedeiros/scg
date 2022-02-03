@@ -55,20 +55,9 @@ class BaseStationController:
 
         """ gets base stations topology from onos """
         bs_topology = OnosController.get_topology()
-        total_mecs_without_gpus = int(len(bs_topology) * 0.2)
-        mecs_without_gpus = 0
         i = 0
 
-        for base_station in bs_topology:
-            """ if-else statement controls how many mec servers without gpus must exist in the system (20%) """
-            if mec_set[i].overall_gpu == 0 and mecs_without_gpus < total_mecs_without_gpus:
-                mecs_without_gpus += 1
-            else:
-                while True:
-                    i+=1
-                    if mec_set[i].overall_gpu != 0:
-                        break
-            
+        for base_station in bs_topology:    
             """ gets a mec server id and stores it on the base station object"""
             base_station['mec_id'] = mec_set[i].id 
             base_station_set.append(base_station)

@@ -4,7 +4,7 @@
 from dataclasses import dataclass, field
 
 """ mec modules """
-from mec.mec import MecController, MecResources, MecWorkloads, Mec, MecAgent
+from mec.mec import MecController, MecResources, Mec, MecAgent
 
 """ base station modules """
 from base_station import BaseStationController
@@ -35,7 +35,6 @@ class ScgController:
     def __post_init__(self):
         MecController.init_servers(self.overall_mecs)
         self.mec_set = MecController.load_mec_servers()
-        
         BaseStationController.build_network_topology(base_station_set=self.base_station_set, mec_set=self.mec_set)
         
         VrController.init_vr_users(services_per_user=self.services_per_user)
@@ -59,7 +58,7 @@ class ScgController:
                     service_location = MecAgent.get_service_bs_location(self.base_station_set, self.mec_set, service_id)
                     
                     """ measures the latency between bs where the user is connected and the mec where the service is deployed """
-                    current_service_latency = self.calculate_ETE(src_location=user_location, dst_location=service_location)
+                    current_service_latency = ScgController.calculate_ETE(base_station_set=self.base_station_set, mec_set=self.mec_set, src_location=user_location, dst_location=service_location)
                     total_latency += current_service_latency
                 
                 services_cont += 1
@@ -67,15 +66,15 @@ class ScgController:
         average_latency = total_latency/services_cont
         return average_latency
 
-           
-    def calculate_ETE(self, src_location: str, dst_location: str) -> float:
+    @staticmethod           
+    def calculate_ETE(base_station_set: list, mec_set: list, src_location: str, dst_location: str) -> float:
         """ calculates the end-to-end latency between a vr user and the mec where the service is deployed on """
         
-        path, net_latency = Dijkstra.init_algorithm(base_station_set=self.base_station_set, start_node=src_location, target_node=dst_location)
+        path, net_latency = Dijkstra.init_algorithm(base_station_set=base_station_set, start_node=src_location, target_node=dst_location)
 
-        base_station = BaseStationController.get_base_station(base_station_set=self.base_station_set, bs_id=dst_location)
+        base_station = BaseStationController.get_base_station(base_station_set=base_station_set, bs_id=dst_location)
 
-        mec = MecController.get_mec(mec_set=self.mec_set, mec_id=base_station.mec_id)
+        mec = MecController.get_mec(mec_set=mec_set, mec_id=base_station.mec_id)
 
         computing_latency = mec.computing_latency 
 

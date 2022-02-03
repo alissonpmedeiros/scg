@@ -65,17 +65,6 @@ class MecResources:
 
 
 
-@dataclass
-class MecWorkloads:
-    """ generates cpu and gpu workloads for mec servers"""
-
-    mec_cpus: int = 0
-    mec_gpus: int = 0
-
-    def __post_init__(self):
-        pass
-
-
 
 @dataclass_json
 @dataclass
@@ -123,7 +112,7 @@ class MecAgent:
         for mec in mec_set:
             if mec.id == mec_id:
                 """ returns True if there is available resources after deploy a vr service """
-                if quota['cpu'] + mec.allocated_cpu <= mec.cpu_threshold and quota['gpu'] + mec.allocated_gpu <= mec.gpu_threshold:
+                if quota.cpu + mec.allocated_cpu <= mec.cpu_threshold and quota.gpu + mec.allocated_gpu <= mec.gpu_threshold:
                     return True
                 else:
                     return False
@@ -138,7 +127,7 @@ class MecAgent:
         for mec in mec_set:
             if mec.id == mec_id:
                 """ returns True if there is available resources after deploy a vr service """
-                if quota['cpu'] + mec.allocated_cpu <= mec.overall_cpu and quota['gpu'] + mec.allocated_gpu <= mec.overall_gpu:
+                if quota.cpu + mec.allocated_cpu <= mec.overall_cpu and quota.gpu + mec.allocated_gpu <= mec.overall_gpu:
                     return True
                 else:
                     return False
@@ -149,8 +138,8 @@ class MecAgent:
         
         for mec in mec_set:
             if mec.id == mec_id:
-                mec.allocated_cpu += service.quota.resources['cpu']
-                mec.allocated_gpu += service.quota.resources['gpu']
+                mec.allocated_cpu += service.quota.resources.cpu
+                mec.allocated_gpu += service.quota.resources.gpu
                 mec.services_set.append(service)
         
     @staticmethod
@@ -168,8 +157,8 @@ class MecAgent:
                 #print("service index: {}".format(service_index))
 
                 """ updates the allocated resources of mec """
-                mec.allocated_cpu -= extracted_service.quota.resources['cpu']
-                mec.allocated_gpu -= extracted_service.quota.resources['gpu']
+                mec.allocated_cpu -= extracted_service.quota.resources.cpu
+                mec.allocated_gpu -= extracted_service.quota.resources.gpu
                 break
         return extracted_service
 

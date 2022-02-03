@@ -14,8 +14,8 @@ from onos import OnosController
 from encoder import JsonEncoder
 
 """ other modules """
-from munch import DefaultMunch
-import os, json
+from munch import DefaultMunch, Munch
+import os, json, random
 from pprint import pprint as pprint
 @dataclass 
 class VrController:
@@ -110,3 +110,71 @@ class VrController:
         latency = round(bs_location.wireless_latency + user.computing_latency, 2) 
 
         return latency
+        
+    @staticmethod
+    def change_quota(service: VrService):
+        """ changes a vr service quota """
+        quotas_set = ['small', 'tiny', 'medium', 'large', 'xlarge']
+        
+        """
+        choice options to decide whether to change the quota workload or not:
+        -1: previous quota from quota_set
+         0: nothing changes
+         1: next quota from quota_set
+        """
+        choice = random.randint(-1, 1)
+        if choice!= 0:
+            quota_name = service.quota.name
+            """ gets quota position """
+            position = 0
+            for quota in quotas_set:
+                if quota == quota_name:
+                    break
+                position +=1
+
+            if choice == -1:
+                if position == 0: 
+                    """ can't get the previous quota, because we hitted the first one, then we go further and get the next quota instead of the previous one """
+                    position = 1
+                else:
+                    """ otherwise we just get the previous quota position"""
+                    position -=1
+            else:
+                """ can't get the next quota, because we hitted the last one, then we go back and get the previous quota instead of the next one """
+                if position == 4:
+                    position -=1
+                else:
+                    """ otherwise we just get the next quota position """
+                    position +=1
+
+            """ at this point we know exactly the position of the quota that must replace the current service quota """
+            new_quota_name = quotas_set[position]
+            new_service = VrService()
+            new_quota = DefaultMunch.fromDict(new_service.quota.get_quota(new_quota_name))
+            service.quota.name = new_quota_name
+            service.quota.resources = new_quota
+            
+            
+
+    @staticmethod
+    def check_service_workload(mec_set: list, vr_users: list):
+        for mec in mec_set:
+            for service in mec.services_set:
+                if service.is_mobile:
+                    if service.iterations_count >= service.iterations:
+                        #print(service)
+                        VrController.change_quota(service)
+                        service.iterations_count = 0
+                    else:
+                        service.iterations_count +=1
+                    
+        
+        for user in vr_users:
+            for service in user.services_set:
+                if service.iterations_count >= service.iterations:
+                    VrController.change_quota(service)
+                    service.iterations_count = 0
+                else:
+                    service.iterations_count +=1
+
+    

@@ -18,7 +18,7 @@ from pprint import pprint as pprint
 """ VARIABLES """
 net = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
 
-vr_users = 500
+vr_users = 10
 aps_set = []
 vr_users_set = []
 plot_dimensions = 240
