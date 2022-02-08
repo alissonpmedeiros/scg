@@ -3,7 +3,7 @@ import requests
 from requests.exceptions import HTTPError
 from dataclasses import dataclass
 from munch import Munch, DefaultMunch
-import pprint, time
+import pprint, time, os
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class OnosController:
         """ provides an http request to onos server API """
         
         URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/' + resource 
-        time.sleep(0.001)        
+        time.sleep(0.00001)        
         try: 
             response = requests.get(URL, auth=(self.user, self.password), verify=False)
             result = DefaultMunch.fromDict(response.json())
@@ -154,12 +154,16 @@ class OnosController:
         """ deletes all hosts """
         hosts = OnosController.get_hosts()  
         for host in hosts['hosts']:
-            print(host)
+            #print(host)
             URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/hosts/{}'.format(host.id)
+            cmd = 'curl -X DELETE {} --user onos:rocks'.format(URL)
+            os.system(cmd)
+            '''
             try: 
                 requests.delete(URL, auth=(self.user, self.password), verify=False)
             except HTTPError as http_err:
                 print(f'HTTP error occurred: {http_err}')
+            '''
 
             time.sleep(0.001)
     

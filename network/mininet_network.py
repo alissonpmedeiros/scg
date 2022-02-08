@@ -10,15 +10,16 @@ from mn_wifi.net import Mininet_wifi
 from mn_wifi.link import wmediumd, ITSLink
 from mn_wifi.wmediumdConnector import interference
 from mininet.node import Controller, RemoteController, OVSSwitch
-import threading, signal, sys, json, pickle
+import threading, signal, sys, json, random
 from pprint import pprint as pprint
 
 
 
 """ VARIABLES """
 net = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
+random_mac = lambda : ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)])
 
-vr_users = 10
+vr_users = 1000
 aps_set = []
 vr_users_set = []
 plot_dimensions = 240
@@ -58,8 +59,8 @@ def topology(args):
         sta_args = dict()
         if '-s' in args:
             sta_args['position'] = '{},{},0'.format(plot_dimensions/2, plot_dimensions/2)
-
-        sta = net.addStation('HMD{}'.format(i), mac='00:00:00:00:00:0{}'.format(i), ip='10.0.{}.{}/16'.format(network_adress, host_adress), active_scan=1, **sta_args)
+        mac_address=random_mac()
+        sta = net.addStation('HMD{}'.format(i), mac=mac_address, ip='10.0.{}.{}/16'.format(network_adress, host_adress), active_scan=1, **sta_args)
         vr_users_set.append(sta)    
 
         host_adress += 1
@@ -115,7 +116,8 @@ def topology(args):
     CLI_THREAD.daemon = True
 
     
-    
+    '''
+    '''
     """ runs the ping.sh script for each node ping all other nodes  """
     while True:
         for user in vr_users_set:

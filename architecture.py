@@ -4,7 +4,8 @@
 from dataclasses import dataclass, field
 
 """ mec modules """
-from mec.mec import MecController, Mec, MecAgent
+from mec.mec import Mec, MecAgent
+from mec.mec_controller import MecController
 
 """ base station modules """
 from base_station import BaseStationController
@@ -25,7 +26,7 @@ import time, json, os
 @dataclass
 class ScgController:
     """ SCG controller representation """
-    services_per_user = 4
+    services_per_user = 1
     overall_mecs: int = field(default = 28)
     base_station_set: List[dict] = field(default_factory=list, init=False)
     mec_set: List[Mec] = field(default_factory=list, init=False)
@@ -53,7 +54,7 @@ class ScgController:
                 if any (service['id'] == service_id for service in user.services_set):    
                     """ checks whether a service IS deployed on the HMD """
 
-                    hmd_latency = self.get_hmd_latency(user_ip=user.ip)
+                    hmd_latency = VrController.get_hmd_latency(base_station_set=self.base_station_set, vr_users=self.vr_users, user_ip=user.ip)
                     total_latency += hmd_latency
                 else:
                     """ otherwise, the service is deployed on MEC servers"""
@@ -131,10 +132,31 @@ class ScgController:
                         mec_id_dst, 
                         extract_service)
                 else:
-                    print("could not deploy the following service: {}".format(extract_service))
+                    print("could not OFFLOAD the following service: {}".format(extract_service))
 
+
+    def calculate_gpu_usage(self) -> float:
+        total_services = 0
+        total_gpus = 0
+
+        
+        for user in self.vr_users:
+            total_services += len(user.services_ids)
+            for service in user.services_set:
+                total_gpus += service.quota.resources.gpu
                 
-
+            
+        for mec in self.mec_set:
+            for service in mec.services_set:
+                if service.is_mobile:
+                    total_gpus += service.quota.resources.gpu
+        
+        
+        result = (round(total_gpus /  total_services), 2)
+        return result                
+    
+    def calculate_migration_rate(self) -> None:
+        pass
 
               
    

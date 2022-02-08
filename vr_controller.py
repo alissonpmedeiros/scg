@@ -10,12 +10,16 @@ from base_station import BaseStationController
 """ onos modules """
 from onos import OnosController
 
+""" mec modules """
+from mec.mec import MecAgent
+
 """ json encoder module """
 from encoder import JsonEncoder
 
 """ other modules """
 from munch import DefaultMunch, Munch
-import os, json, random
+import orjson as json
+import os, random
 from pprint import pprint as pprint
 @dataclass 
 class VrController:
@@ -52,10 +56,11 @@ class VrController:
 
     @staticmethod
     def load_vr_users() -> dict:
+        print('*** loading vr users ***')
         files_directory =  './user/'
         file_name = 'users.txt'
         with open('{}{}'.format(files_directory, file_name)) as json_file:
-            data = json.load(json_file)
+            data = json.loads(json_file.read())
             result = DefaultMunch.fromDict(data)
             return result 
 
@@ -181,20 +186,9 @@ class VrController:
             service.quota.resources = new_quota
             
             
-
+    """ NEED TO BE TESTED! """
     @staticmethod
-    def check_service_workload(mec_set: list, vr_users: list):
-        for mec in mec_set:
-            for service in mec.services_set:
-                if service.is_mobile:
-                    if service.iterations_count >= service.iterations:
-                        #print(service)
-                        VrController.change_quota(service)
-                        service.iterations_count = 0
-                    else:
-                        service.iterations_count +=1
-                    
-        
+    def check_vr_service_workload(mec_set: list, vr_users: list):
         for user in vr_users:
             for service in user.services_set:
                 if service.iterations_count >= service.iterations:

@@ -36,19 +36,19 @@ class ServiceQuota:
         return DefaultMunch.fromDict(quota)
 
     def quota_tiny(self):
-        quota =  { "cpu" : 2, "gpu" : 0}
+        quota =  { "cpu" : 2, "gpu" : 1}
         return DefaultMunch.fromDict(quota)
     
     def quota_medium(self):
-        quota =  { "cpu" : 4, "gpu" : 2}
+        quota =  { "cpu" : 2, "gpu" : 2}
         return DefaultMunch.fromDict(quota)  
 
     def quota_large(self):
-        quota = { "cpu" : 8, "gpu" : 4}
+        quota = { "cpu" : 4, "gpu" : 2}
         return DefaultMunch.fromDict(quota) 
 
     def quota_xlarge(self):
-        quota = { "cpu" : 10, "gpu" : 4}
+        quota = { "cpu" : 4, "gpu" : 4}
         return DefaultMunch.fromDict(quota)
 
 

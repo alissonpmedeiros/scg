@@ -1,6 +1,6 @@
 
-from base_station import BaseStationController
-from mec.mec import MecController, MecAgent
+from mec.mec import MecAgent
+from mec.mec_controller import MecController
 from architecture import ScgController
 from vr_controller import VrController
 from dataclasses import dataclass
@@ -10,6 +10,8 @@ import time
 @dataclass
 class SCG:
     """ implements SCG algorithm """
+    
+
 
     @staticmethod
     def reverse_offloading( 
@@ -32,14 +34,20 @@ class SCG:
             user_ip=user_ip, 
             service=extracted_service)
 
+    """ ADJUST THIS METHOD TO USE ONLY CALCULATE NET LATENCY INSTEAD OF ETE LATENCY. THEN, THIS METHOD SHOULD BE USED WIHTIN CLASS 'NetLatencyMigration' """
     @staticmethod
     def migration(  
         base_station_set: list, 
         mec_set:list, 
         vr_users: list, 
         user_ip: str, 
-        service_id: str):
-        """ provides the service migration of service i, which is bases on the current distance between user_ip and where the service is deployed """
+        service_id: str,
+        sucessful_migrations: int,
+        unsuccessful_migrations: int):
+        """ 
+        provides the service migration of service i, which is based on the 
+        current distance between user_ip and where the service is deployed 
+        """
         
         user_location = VrController.get_vr_user_location(user_ip=user_ip)
         
@@ -81,12 +89,10 @@ class SCG:
                     mec_set, 
                     mec_id_candidate, 
                     extracted_service)
-                print("\n*** Performing migration ***")
-                print("service {} move from MEC {} to {}".format(
-                    service_id, 
-                    service_server_id, 
-                    mec_id_candidate))
-                print("new latency: {}\n".format(new_service_latency))
+                #print("\n*** Performing migration ***")
+                #print("service {} move from MEC {} to {}".format(service_id, service_server_id, mec_id_candidate))
+                #print("new latency: {}\n".format(new_service_latency))
+                sucessful_migrations+=1
                 
         else:
             print("**** no candidates ****")
@@ -96,19 +102,25 @@ class SCG:
             ACCEPTANCE RATION COMES HERE...
             
             """ 
+            unsuccessful_migrations+=1
 
     @staticmethod
     def trade_off(
         base_station_set: list, 
         mec_set:list, 
-        vr_users: list ):
+        vr_users: list,
+        sucessful_migrations: int,
+        unsuccessful_migrations: int):
         """ provide the trade-off analysis between migration and offloading the service back to the HMD"""
 
         for user in vr_users:
             for service_id in user.services_ids:
                 user_location = VrController.get_vr_user_location(user_ip=user.ip)
                 if any (service['id'] == service_id for service in user.services_set):    
-                    """ checks whether a service IS deployed on the HMD, then we need to check the feasability of offloading this particular service to mec servers """
+                    """ 
+                    checks whether a service IS deployed on the HMD, then we need to check 
+                    the feasability of offloading this particular service to mec servers 
+                    """
 
                     hmd_latency = VrController.get_hmd_latency(
                         base_station_set=base_station_set, 
@@ -147,18 +159,19 @@ class SCG:
                                 mec_set, 
                                 mec_id_candidate, 
                                 extracted_service)
-                            print("\n*** Performing migration ***")
-                            print("service {} move from HMD {} to MEC {}".format(
-                                service_id, 
-                                user.ip, 
-                                mec_id_candidate))
-                            print("hmd latency: {}".format(hmd_latency))
-                            print("new latency: {}\n".format(new_service_latency))
+                            #print("\n*** Performing migration ***")
+                            #print("service {} move from HMD {} to MEC {}".format(service_id, user.ip, mec_id_candidate))
+                            #print("hmd latency: {}".format(hmd_latency))
+                            #print("new latency: {}\n".format(new_service_latency))
                             #a = input("")
                             
                     else:
                         print("**** no candidates ****")
-                        """ Migration should be performed but there is no more mec available to host the service. We should consider a service migration violation... """
+                        """
+                        Migration should be considered. However, there are no mec servers available. 
+                        The service stays on the HMD. 
+                        We should consider a service migration violation... 
+                        """
                     
                 else:
                     """ otherwise, the service is deployed on MEC servers"""
@@ -167,10 +180,14 @@ class SCG:
                         mec_set, 
                         service_id)
                     
-                    """ measures the latency between bs where the user is connected and the mec where the service is deployed """
+                    """ 
+                    measures the latency between bs where the user 
+                    is connected and the mec where the service is deployed 
+                    """
                     if service_location is None or user_location is None:
                         print("service location: {}".format(service_location))
                         print("user location: {}".format(user_location))
+                        print('GOT AN ERROR: SERVICE LOCATION OR USER LOCATION NOT FOUND!')
                         a = input("")
             
                     current_service_latency = ScgController.calculate_ETE(
@@ -184,34 +201,40 @@ class SCG:
                         vr_users=vr_users, 
                         user_ip=user.ip)
 
-                    print('\n')
-                    print('service id: {}'.format(service_id))
-                    print('service location: {}'.format(service_location))
-                    print('service latency: {}'.format(current_service_latency))
-                    print('hmd {} has latency: {}'.format(user.ip, hmd_latency))
+                    #print('\n')
+                    #print('service id: {}'.format(service_id))
+                    #print('service location: {}'.format(service_location))
+                    #print('service latency: {}'.format(current_service_latency))
+                    #print('hmd {} has latency: {}'.format(user.ip, hmd_latency))
 
                     if current_service_latency <= hmd_latency:
-                        print('service remains on mec servers. \nstarting migration check')
+                        #print('service remains on mec servers. \nstarting migration check')
                         SCG.migration(
                             base_station_set=base_station_set, 
                             mec_set=mec_set, 
                             vr_users=vr_users, 
                             user_ip=user.ip, 
-                            service_id=service_id)
+                            service_id=service_id,
+                            sucessful_migrations=sucessful_migrations,
+                            unsuccessful_migrations=unsuccessful_migrations)
                     else:
-                        print('service should be reverse offloaded to hmd')
-                        SCG.reverse_offloading(mec_set=mec_set, 
-                        vr_users=vr_users, 
-                        user_ip=user.ip, 
-                        service_id=service_id)
+                        #print('service should be reverse offloaded to hmd')
+                        SCG.reverse_offloading(
+                            mec_set=mec_set, 
+                            vr_users=vr_users, 
+                            user_ip=user.ip, 
+                            service_id=service_id)
                
 
-            time.sleep(0.1)
+            #time.sleep(0.1)
 
+    @staticmethod
+    def react(mec_set: list):
+        pass
 
 @dataclass
 class AlwaysMigrate:
-    """ implements the no migration behaviour """
+    """ implements the migration behaviour enabled by handover """
     
     @staticmethod
     def migration(base_station_set: list, mec_set:list, vr_users: list ):
@@ -221,6 +244,14 @@ class AlwaysMigrate:
 @dataclass
 class NoMigration:
     """ implements the no migration behaviour """
+    
+    @staticmethod
+    def migration(base_station_set: list, mec_set:list, vr_users: list ):
+        pass
+
+@dataclass
+class NetLatencyMigration:
+    """ implements the migration behaviour based on net latency """
     
     @staticmethod
     def migration(base_station_set: list, mec_set:list, vr_users: list ):
