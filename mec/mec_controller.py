@@ -25,89 +25,90 @@ from pprint import pprint
 import orjson as json
 import os
 
+
 class MecController:
     """ represents a MEC controller for MEC servers """
 
     @staticmethod
     def load_mec_servers() -> dict:
-        print('*** loading mec servers ***')
-        files_directory =  './mec/'
-        file_name_servers = 'mecs.txt'
-        with open('{}{}'.format(files_directory, file_name_servers)) as json_file:
+        print("*** loading mec servers ***")
+        files_directory = "./mec/"
+        file_name_servers = "mecs.txt"
+        with open("{}{}".format(files_directory, file_name_servers)) as json_file:
             data = json.loads(json_file.read())
             result = DefaultMunch.fromDict(data)
             return result
 
     @staticmethod
     def discover_mec(
-        base_station_set: list, 
-        mec_set: list, 
-        vr_ip: str, 
-        service: VrService) -> str:
+        base_station_set: list, mec_set: list, vr_ip: str, service: VrService, hosts: dict, 
+    ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
-        
-        host_location = VrController.get_vr_user_location(vr_ip)
-        
-        current_base_station = BaseStationController.get_base_station(base_station_set, host_location)
-        
+
+        host_location = VrController.get_vr_user_location(hosts=hosts, user_ip=vr_ip)
+
+        current_base_station = BaseStationController.get_base_station(
+            base_station_set, host_location
+        )
+
         if MecAgent.check_deployment(
-            mec_set=mec_set, 
-            mec_id=current_base_station.mec_id, 
-            service=service):        
+            mec_set=mec_set, mec_id=current_base_station.mec_id, service=service
+        ):
             """ mec server attached to the base station where the user is connected can deploy the vr service """
             return current_base_station.mec_id
-            
+
         else:
             """ otherwise, we need to look for nearby mec server """
-            
-            best_destination = ''
-            shortest_latency = float('inf')
+
+            best_destination = ""
+            shortest_latency = float("inf")
             for link in current_base_station.links:
                 bs_destination = BaseStationController.get_base_station(
-                    base_station_set, 
-                    link.dst.device)
-                if MecAgent.check_deployment(
-                    mec_set, 
-                    bs_destination.mec_id, 
-                    service):
+                    base_station_set, link.dst.device
+                )
+                if MecAgent.check_deployment(mec_set, bs_destination.mec_id, service):
                     """ we need to take care of the network latency """
                     if link.latency < shortest_latency:
                         best_destination = bs_destination.id
 
-            
-            if best_destination != '':
+            if best_destination != "":
                 """ a nearby mec can deploy the service """
                 bs_destination = BaseStationController.get_base_station(
-                    base_station_set, 
-                    best_destination)
-                return bs_destination.mec_id 
+                    base_station_set, best_destination
+                )
+                return bs_destination.mec_id
             else:
                 """ otherwise, we should call Dijkstra algorithm for all nodes. The initial node is where the user is connected """
-                shortest_latency = float('inf')
+                shortest_latency = float("inf")
                 path = []
                 for base_station in base_station_set:
-                    if base_station.id != current_base_station.id and MecAgent.check_deployment(mec_set, base_station.mec_id, service):
+                    if (
+                        base_station.id != current_base_station.id
+                        and MecAgent.check_deployment(
+                            mec_set, base_station.mec_id, service
+                        )
+                    ):
                         """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
                         aux_path, aux_shortest_latency = Dijkstra.init_algorithm(
-                            base_station_set=base_station_set, 
-                            start_node=current_base_station.id, 
-                            target_node=base_station.id)
-                        
+                            base_station_set=base_station_set,
+                            start_node=current_base_station.id,
+                            target_node=base_station.id,
+                        )
+
                         if aux_shortest_latency <= shortest_latency:
                             path = aux_path
                             shortest_latency = aux_shortest_latency
-                
+
                 """ we need to take care of the case where there is no more mec available """
                 if not path:
-                    return None  
+                    return None
 
-                #print(" -> ".join(path))
+                # print(" -> ".join(path))
                 """ gets last element of the path, which corresponds to the base station which contains a mec server that can accomodate the service """
-                bs_destination =  BaseStationController.get_base_station(
-                    base_station_set, 
-                    path[-1])
+                bs_destination = BaseStationController.get_base_station(
+                    base_station_set, path[-1]
+                )
                 return bs_destination.mec_id
-
 
     @staticmethod
     def init_static_services(mec_set: list, mec: Mec) -> None:
@@ -120,19 +121,19 @@ class MecController:
 
             new_service = VrService(cpu_only=cpu_only)
 
-            if MecAgent.available_resources(mec_set, mec.id, new_service):        
+            if MecAgent.available_resources(mec_set, mec.id, new_service):
                 MecAgent.deploy_service(mec_set, mec.id, new_service)
             else:
-                break   
+                break
 
     @staticmethod
     def init_servers(overall_mecs: int) -> None:
         """ first of all, clean devices and hosts on onos sdn controller """
-    
-        files_directory =  './mec/'
-        file_name_servers = 'mecs.txt'
 
-        if os.path.isfile('{}{}'.format(files_directory, file_name_servers)):
+        files_directory = "./mec/"
+        file_name_servers = "mecs.txt"
+
+        if os.path.isfile("{}{}".format(files_directory, file_name_servers)):
             return
 
         """ init mec servers and vr services """
@@ -142,27 +143,27 @@ class MecController:
         mec_resources = MecResources()
         cpu_set = mec_resources.generate_cpu_resources(overall_mecs)
         gpu_set = mec_resources.generate_gpu_resources(overall_mecs)
-        
+
         for i in range(0, overall_mecs):
             """ creating mec server i """
             overall_mec_cpu = cpu_set[i]
-            overall_mec_gpu = gpu_set[i]    
+            overall_mec_gpu = gpu_set[i]
             new_mec = DefaultMunch.fromDict(Mec(overall_mec_cpu, overall_mec_gpu))
 
             """ stores mec server on scg controller's mec set """
             mec_set.append(new_mec)
-        
+
         """ instantiating services on each mec server """
         for mec in mec_set:
             MecController.init_static_services(mec_set=mec_set, mec=mec)
-        
+
         """ transforming mecs to dict """
-        new_mec_set = [] 
+        new_mec_set = []
         for mec in mec_set:
             new_mec_set.append(mec.to_dict())
         mec_set = new_mec_set
 
-        #a = input("")    
+        # a = input("")
         """ encoding json to txt file """
         JsonEncoder.encoder(mec_set, files_directory, file_name_servers)
 
@@ -170,83 +171,89 @@ class MecController:
     def get_mec(mec_set: list, mec_id: str) -> Mec:
         """ returns a MEC server """
         for mec in mec_set:
-            if mec.id  == mec_id:
-                return mec   
+            if mec.id == mec_id:
+                return mec
 
     @staticmethod
     def print_mecs(base_station_set: list, mec_set: list):
         print("\n###############  LISTING MECS ###################\n")
         for base_station in base_station_set:
-            
+
             mec = MecController.get_mec(mec_set, base_station.mec_id)
             print("BS: {}".format(base_station.id))
             print("ID: {}".format(mec.id))
-            print("CPU: {} | ALOCATED CPU: {}".format(mec.overall_cpu, mec.allocated_cpu))
-            print("GPU: {} | ALLOCATED GPU: {}".format(mec.overall_gpu, mec.allocated_gpu))
-            '''
+            print(
+                "CPU: {} | ALOCATED CPU: {}".format(mec.overall_cpu, mec.allocated_cpu)
+            )
+            print(
+                "GPU: {} | ALLOCATED GPU: {}".format(mec.overall_gpu, mec.allocated_gpu)
+            )
+            """
             print("LATENCY: {}".format(mec.computing_latency))
             print("Services:")
             for service in mec.services_set:
                 print(service.id)
-            '''
+            """
             print("-------------------------------")
         print("################    END     ##################\n")
 
-    
     """ NEED TO BE TESTED! """
     """ THIS METHOD COULD BE REWRITEN CONSIDERING A SINGLE INSTANCE OF A FATHER CLASS FOR MIFRATION ALGORITHMS  """
+
     @staticmethod
     def check_mec_service_workload(mec_set: list, vr_users: list, SCG: bool):
         for mec in mec_set:
             for service in mec.services_set:
                 if service.is_mobile:
                     extracted_service = MecAgent.remove_service(
-                                                                mec_set,  
-                                                                mec.id, 
-                                                                service.id)
+                        mec_set, mec.id, service.id
+                    )
                     """ 
                     makes sure there will be a service copy in case the mec 
                     server cannot host the service witht the new quota
                     """
                     extracted_service_copy = extracted_service
 
-                    if extracted_service.iterations_count >= extracted_service.iterations:
+                    if (
+                        extracted_service.iterations_count
+                        >= extracted_service.iterations
+                    ):
                         VrController.change_quota(extracted_service)
                         if MecAgent.check_deployment(
-                                                    mec_set=mec_set,
-                                                    mec_id=mec.id,
-                                                    service=extracted_service):
-                            
+                            mec_set=mec_set, mec_id=mec.id, service=extracted_service
+                        ):
+
                             """ checks whether the service fits in the mec """
                             extracted_service.iterations_count = 0
                             MecAgent.deploy_service(
-                                                    mec_set=mec_set,
-                                                    mec_id=mec.id,
-                                                    service=extracted_service)
+                                mec_set=mec_set,
+                                mec_id=mec.id,
+                                service=extracted_service,
+                            )
                         else:
-                            """ 
-                            REACT approach comes here... migrate services from one mec 
-                            to another in order allow the current mec to host the service  
+                            """
+                            REACT approach comes here... migrate services from one mec
+                            to another in order allow the current mec to host the service
                             """
                             if SCG:
                                 a = input("\nREACT ENABLED!\n")
                                 REACT.solidarity_approach(
-                                                        mec_set=mec_set, 
-                                                        current_mec_id=mec.id, 
-                                                        extracted_service=extracted_service)
-                                        
+                                    mec_set=mec_set,
+                                    current_mec_id=mec.id,
+                                    extracted_service=extracted_service,
+                                )
 
                             else:
                                 """ otherwise, service copy remains on its mec server"""
                                 extracted_service_copy.iterations_count = 0
                                 MecAgent.deploy_service(
-                                                        mec_set=mec_set,
-                                                        mec_id=mec.id,
-                                                        service=extracted_service_copy)
+                                    mec_set=mec_set,
+                                    mec_id=mec.id,
+                                    service=extracted_service_copy,
+                                )
 
                     else:
-                        extracted_service.iterations_count +=1
+                        extracted_service.iterations_count += 1
                         MecAgent.deploy_service(
-                                                mec_set=mec_set,
-                                                mec_id=mec.id,
-                                                service=extracted_service)
+                            mec_set=mec_set, mec_id=mec.id, service=extracted_service
+                        )

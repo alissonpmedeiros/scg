@@ -83,9 +83,9 @@ class VrController:
                 return user
 
     @staticmethod 
-    def get_vr_user_location(user_ip: str) -> str:
+    def get_vr_user_location(hosts: dict, user_ip: str) -> str:
         """ gets the base station id where the user is connected """
-        host = OnosController.get_host(user_ip)
+        host = OnosController.get_host(hosts=hosts, host_IP=user_ip)
         user_location = host.locations[0].elementId
         return user_location
     
@@ -121,9 +121,11 @@ class VrController:
     def get_hmd_latency(
         base_station_set: list, 
         vr_users:list, 
-        user_ip: str) -> float:
+        user_ip: str,
+        hosts: dict, 
+    ) -> float:
         """ gets hmd latency, including the wireless latency where the user is connected to """
-        user_location = VrController.get_vr_user_location(user_ip=user_ip)
+        user_location = VrController.get_vr_user_location(hosts=hosts, user_ip=user_ip)
         bs_location = BaseStationController.get_base_station(
             base_station_set=base_station_set, 
             bs_id=user_location)

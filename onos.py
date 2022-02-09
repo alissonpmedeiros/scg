@@ -1,26 +1,31 @@
 #!/usr/bin/python3
 import requests
 from requests.exceptions import HTTPError
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from munch import Munch, DefaultMunch
+
+""" other modules """
+from typing import List
 import pprint, time, os
 
 
-@dataclass(frozen=True)
+@dataclass()
 class OnosController:
     """ SDN controller representation for ONOS """
-    
+    hosts: List[dict] = field(default_factory=list, init=False)
     server_IP: str = '130.92.70.173'
     OF_port: str = '8181'
     user: str = 'onos'
     password: str = 'rocks' 
 
+    def __post_init__(self):
+        self.hosts = OnosController.get_hosts()
+    
     @classmethod
     def request(self, resource: str) -> dict:
         """ provides an http request to onos server API """
         
-        URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/' + resource 
-        time.sleep(0.00001)        
+        URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/' + resource      
         try: 
             response = requests.get(URL, auth=(self.user, self.password), verify=False)
             result = DefaultMunch.fromDict(response.json())
@@ -28,6 +33,10 @@ class OnosController:
         except HTTPError as http_err:
             print(f'HTTP error occurred: {http_err}')
 
+
+    def reload_hosts(self) -> None:
+        self.hosts = OnosController.get_hosts()
+    
     @staticmethod
     def get_hosts() -> dict:
         """ get the list of mininet hosts, including stations and hosts """
@@ -36,8 +45,9 @@ class OnosController:
         hosts = OnosController.request(resource)
         return hosts
 
+
     @staticmethod
-    def get_host(host_IP: str) -> list:
+    def get_host(hosts: dict, host_IP: str) -> list:
         """ get a specific host info based on its IP""" 
         """
         usage -> host['key']
@@ -45,8 +55,6 @@ class OnosController:
         id, mac, vlan, innerVlan, outerTpid, configured, suspended,
         ipAddresses[0], locations[0]['elementId'] 
         """
-        
-        hosts = OnosController.get_hosts()
         for host in hosts.hosts:
             if host.ipAddresses[0] == host_IP:
                 return host
@@ -192,3 +200,4 @@ if __name__=='__main__':
     '''
     OnosController.delete_devices()
     OnosController.delete_hosts()
+ 

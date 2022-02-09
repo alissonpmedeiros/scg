@@ -10,7 +10,7 @@ from mn_wifi.net import Mininet_wifi
 from mn_wifi.link import wmediumd, ITSLink
 from mn_wifi.wmediumdConnector import interference
 from mininet.node import Controller, RemoteController, OVSSwitch
-import threading, signal, sys, json, random
+import threading, signal, sys, json, random, os
 from pprint import pprint as pprint
 
 
@@ -107,15 +107,20 @@ def topology(args):
     info("*** Starting network\n")
     net.build()
     c1.start()
+    i = 1
     for ap in aps_set:
         ap.start([c1])
+        """ forcing ovs switches to use OpenFlow 13 """
+        os.system('ovs-vsctl set bridge BS{} protocols=OpenFlow13'.format(i))
+        i+=1
 
+    
 
     info("*** Running CLI\n")
     CLI_THREAD = threading.Thread(target=lambda: CLI(net))
     CLI_THREAD.daemon = True
 
-    
+
     '''
     '''
     """ runs the ping.sh script for each node ping all other nodes  """
