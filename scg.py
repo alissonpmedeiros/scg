@@ -3,6 +3,7 @@
 """ dataclasses modules """
 from dataclasses import dataclass, field
 
+""" onos controller modules """
 from onos import OnosController
 
 """ mec modules """
@@ -17,7 +18,6 @@ from graph import Dijkstra
 
 """ vr controller modules """
 from vr_controller import VrController
-
 
 """ other modules """
 from typing import List
@@ -67,7 +67,6 @@ class ScgController:
                 
                 else:
                     """ otherwise, the service is deployed on MEC servers"""
-                    # WE ARE CALLING GET_HOSTS EVERY TIME, WE SHOULD DO THIS ONCE PER ITERATION!
                     user_location = VrController.get_vr_user_location(hosts=self.onos.hosts, user_ip=user.ip)
 
                     service_location = MecAgent.get_service_bs_location(
@@ -145,11 +144,10 @@ class ScgController:
                     )
 
     def calculate_gpu_usage(self) -> float:
-        total_services = 0
+        total_services = len(self.vr_users)
         total_gpus = 0
 
         for user in self.vr_users:
-            total_services += len(user.services_ids)
             for service in user.services_set:
                 total_gpus += service.quota.resources.gpu
 
@@ -158,8 +156,8 @@ class ScgController:
                 if service.is_mobile:
                     total_gpus += service.quota.resources.gpu
 
-        result = (round(total_gpus / total_services), 2)
+        result = round((total_gpus / total_services), 2)
+        #print('total services: {} | total gpus: {}'.format(total_services, total_gpus))
         return result
 
-    def calculate_migration_rate(self) -> None:
-        pass
+    

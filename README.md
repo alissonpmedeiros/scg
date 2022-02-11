@@ -31,10 +31,10 @@ ONOS sdn controller is used to provide the mobility connectivity automation for 
  
 
 3. Onos SSH:
-    - In case you need to ssh onos: ```ssh -p 8101 onos@130.92.70.173  ```
+    - In case you need to ssh onos: ```ssh -p 8101 onos@ONOS-VM-IP```
 
 
-4. Install ONOS apps. To do so, go to **http://130.92.70.173:8181/onos/ui/login.html** and access *Applications* and install the following apps:
+4. Install ONOS apps. To do so, go to **http://ONOS-VM-IP:8181/onos/ui/login.html** and access *Applications* and install the following apps:
 
     - OpenFlow Base Provider
     - OpenFlow Provider Suite
@@ -81,8 +81,8 @@ To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
 The data will be stored at **~/mec/mecs.txt** and **~/user/users.txt**. To start the system, runs the following script:
 
 2. To start the system, runs the following script:
-    - ``` python3 architecture.py ``` 
+    - ``` python3 main.py ``` 
 
 
-2. 
+3. Every time the script **main.py** runs, we have to delete the *users.txt* file because the VR users will have different MAC addresses. 
 ---

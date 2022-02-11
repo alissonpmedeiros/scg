@@ -89,7 +89,7 @@ class VrService:
         else:
             quota_choice = random.choice(quotas_set)
             self.quota = ServiceQuota(quota_choice)
-    
+        
 @dataclass
 class VrApp:
     """ represents a VR application """

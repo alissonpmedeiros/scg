@@ -10,9 +10,6 @@ from base_station import BaseStationController
 """ onos modules """
 from onos import OnosController
 
-""" mec modules """
-from mec.mec import MecAgent
-
 """ json encoder module """
 from encoder import JsonEncoder
 
@@ -75,6 +72,15 @@ class VrController:
                 for service in user.services_set:
                     if service.id == service_id:
                         return service
+
+    @staticmethod 
+    def get_vr_service_owner(vr_users: list, service: VrService) -> dict:
+        for user in vr_users:
+            for service_id in user.services_ids:
+                if service_id == service.id:
+                    return user
+
+        return None
 
     @staticmethod
     def get_vr_user(vr_users: list, user_ip: str) -> dict:
@@ -188,15 +194,6 @@ class VrController:
             service.quota.resources = new_quota
             
             
-    """ NEED TO BE TESTED! """
-    @staticmethod
-    def check_vr_service_workload(mec_set: list, vr_users: list):
-        for user in vr_users:
-            for service in user.services_set:
-                if service.iterations_count >= service.iterations:
-                    VrController.change_quota(service)
-                    service.iterations_count = 0
-                else:
-                    service.iterations_count +=1
+
 
     

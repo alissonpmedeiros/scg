@@ -178,7 +178,7 @@ class MecAgent:
         base_station_set: list, 
         mec_set: list, 
         service_id: str) -> str:
-        """ gets the base station where mec used to deploy the service is connected """
+        """ gets the base station where the mec (used to deploy the service) is attached to """
         mec_location = MecAgent.get_service_server_id(mec_set, service_id)
         for base_station in base_station_set:
             if base_station.mec_id == mec_location:

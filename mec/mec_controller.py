@@ -14,9 +14,6 @@ from base_station import BaseStationController
 """ import mec modules """
 from mec.mec import Mec, MecAgent, MecResources
 
-""" import react module """
-from react import REACT
-
 """ import graph modules """
 from graph import Dijkstra
 
@@ -200,60 +197,3 @@ class MecController:
     """ NEED TO BE TESTED! """
     """ THIS METHOD COULD BE REWRITEN CONSIDERING A SINGLE INSTANCE OF A FATHER CLASS FOR MIFRATION ALGORITHMS  """
 
-    @staticmethod
-    def check_mec_service_workload(mec_set: list, vr_users: list, SCG: bool):
-        for mec in mec_set:
-            for service in mec.services_set:
-                if service.is_mobile:
-                    extracted_service = MecAgent.remove_service(
-                        mec_set, mec.id, service.id
-                    )
-                    """ 
-                    makes sure there will be a service copy in case the mec 
-                    server cannot host the service witht the new quota
-                    """
-                    extracted_service_copy = extracted_service
-
-                    if (
-                        extracted_service.iterations_count
-                        >= extracted_service.iterations
-                    ):
-                        VrController.change_quota(extracted_service)
-                        if MecAgent.check_deployment(
-                            mec_set=mec_set, mec_id=mec.id, service=extracted_service
-                        ):
-
-                            """ checks whether the service fits in the mec """
-                            extracted_service.iterations_count = 0
-                            MecAgent.deploy_service(
-                                mec_set=mec_set,
-                                mec_id=mec.id,
-                                service=extracted_service,
-                            )
-                        else:
-                            """
-                            REACT approach comes here... migrate services from one mec
-                            to another in order allow the current mec to host the service
-                            """
-                            if SCG:
-                                a = input("\nREACT ENABLED!\n")
-                                REACT.solidarity_approach(
-                                    mec_set=mec_set,
-                                    current_mec_id=mec.id,
-                                    extracted_service=extracted_service,
-                                )
-
-                            else:
-                                """ otherwise, service copy remains on its mec server"""
-                                extracted_service_copy.iterations_count = 0
-                                MecAgent.deploy_service(
-                                    mec_set=mec_set,
-                                    mec_id=mec.id,
-                                    service=extracted_service_copy,
-                                )
-
-                    else:
-                        extracted_service.iterations_count += 1
-                        MecAgent.deploy_service(
-                            mec_set=mec_set, mec_id=mec.id, service=extracted_service
-                        )

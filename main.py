@@ -1,51 +1,54 @@
-from dataclasses import dataclass
-from architecture import ScgController
-from migration_algorithms import Migration
-from mec.mec_controller import MecController
-from migration_algorithms import SCG
+"""scg system imports"""
+from migration import SCG
+from workloads import WorkloadController
+from scg import ScgController
+
+"""other imports"""
 import time
 from pprint import pprint as pprint
 
-from vr import VrService
-from vr_controller import VrController
 
-
-
-
+"""variables"""
+scg_controller = ScgController()
+migration_algorithm = SCG()
 
 def start_system() -> None:
-    scg = ScgController()
-    scg_enabled = False
-    #MecController.print_mecs(scg.base_station_set, scg.mec_set)
-    
-    migration = Migration()
-
-    
     while True:
-        '''
-        '''
-        VrController.check_vr_service_workload(scg.mec_set, scg.vr_users)
-        MecController.check_mec_service_workload(scg.mec_set, scg.vr_users, scg_enabled)
-        
-        start = time.time()
-        '''
-        '''
-        print("*** starting trade-off ***")
-        SCG.trade_off(
-                        base_station_set=scg.base_station_set, 
-                        mec_set=scg.mec_set, 
-                        vr_users=scg.vr_users, 
-                        migration=migration,
-                        hosts=scg.onos.hosts)
-        print("*** finishing trade-off trade-off ***")
-        average_latency = scg.caculate_average_ETE()
-        print("\n #################################")
-        print("AVERAGE LATENCY: {}".format(average_latency))
-        print("SUCESSFUL MIGRATIONS: {}".format(migration.sucessful_migrations))
-        print("UNSUCCESFUL MIGRATIONS: {}".format(migration.unsuccessful_migrations))
-        end = time.time()
-        print(f"Runtime of the program is {end - start}")
-        scg.onos.reload_hosts()
-if __name__=='__main__':
+        # SERVICE MIGRATION ALGORITHM OBJECT MUST BE SPECIFIED HERE
+        WorkloadController.check_workloads(
+            base_station_set=scg_controller.base_station_set,
+            mec_set=scg_controller.mec_set, 
+            vr_users=scg_controller.vr_users,
+            hosts=scg_controller.onos.hosts,
+            migration=migration_algorithm,
+        )
+        migration_algorithm.check_services(
+            base_station_set=scg_controller.base_station_set,
+            mec_set=scg_controller.mec_set, 
+            vr_users=scg_controller.vr_users,
+            hosts=scg_controller.onos.hosts
+        )
+
+        #MecController.print_mecs(scg.base_station_set, scg.mec_set)
+        #a = input()
+
+        #start = time.time()
+        #end = time.time()
+        migration_algorithm.get_migrations()
+        print('\n')
+        scg_controller.onos.reload_hosts()
+
+
+if __name__ == "__main__":
     start_system()
-    
+
+"""
+ANALYZE THE FOLLOWING ASPECTS:
+WITH REACT ENABLED
+MIGRATION TRIGGERED BY COMPUTING LATENCY ANALYSIS
+MIGRATION TRIGGERED BY NETWORK LATENCY ANALYSIS
+NO MIGRATION
+UAV MECHANISM
+
+
+"""
