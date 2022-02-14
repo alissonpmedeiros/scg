@@ -1,4 +1,4 @@
-from migration import Migration
+from migration.migration import Migration
 from vr_controller import VrController
 from mec.mec import MecAgent
 

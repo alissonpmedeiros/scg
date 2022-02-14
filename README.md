@@ -16,10 +16,10 @@ ONOS sdn controller is used to provide the mobility connectivity automation for 
     - ```sudo adduser sdn --system --group```
     - ```sudo apt install openjdk-11-jdk  curl```
     - ```sudo su ```
-      ```cat >> /etc/environment <<EOL ```
-      ```JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 ```
-      ```JRE_HOME=/usr/lib/jvm/java-11-openjdk-amd64/jre ```
-      ```EOL ```
+    - ```cat >> /etc/environment <<EOL ```
+    - ```JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 ```
+    - ```JRE_HOME=/usr/lib/jvm/java-11-openjdk-amd64/jre ```
+    - ```EOL ```
     - ```cd /opt ```
     - PS: use the version 2.7. ``` wget -c https://repo1.maven.org/maven2/org/onosproject/onos-releases/2.7.0/onos-2.7.0.tar.gz```
     - ```sudo tar xzf onos-$ONOS_VERSION.tar.gz ```
@@ -62,11 +62,11 @@ To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
 1. Mininet wifi instalation:
 
     - packages:
-        ```sudo apt-get install network-manager```
-        ```sudo service stop network-manager```
-        ```sudo apt install linux-generic-hwe-20.04```
-        ```linux-modules-5.4.0-1030-kvm_5.4.0-1030.31_amd64.deb``` 
-        ```linux-image-5.4.0-1030-kvm_5.4.0-1030.31_amd64.deb``` 
+        * ```sudo apt-get install network-manager```
+        * ```sudo service stop network-manager```
+        * ```sudo apt install linux-generic-hwe-20.04```
+        * ```linux-modules-5.4.0-1030-kvm_5.4.0-1030.31_amd64.deb``` 
+        * ```linux-image-5.4.0-1030-kvm_5.4.0-1030.31_amd64.deb``` 
 
     - reboot the OS after installing the packages for wmedium.
     - ```git clone https://github.com/intrig-unicamp/mininet-wifi.git```
@@ -84,5 +84,5 @@ The data will be stored at **~/mec/mecs.txt** and **~/user/users.txt**. To start
     - ``` python3 main.py ``` 
 
 
-3. Every time the script **main.py** runs, we have to delete the *users.txt* file because the VR users will have different MAC addresses. 
+3. Every time the script **mininet_network.py** runs, we have to delete the *users.txt* file because VR users will have different MAC addresses. 
 ---

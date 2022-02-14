@@ -18,7 +18,8 @@ class Migration(ABC):
     unsuccessful_migrations = 0
 
     def get_migrations(self):
-        pass
+        print("SUCESSFUL MIGRATIONS: {}".format(self.sucessful_migrations))
+        print("UNSUCCESFUL MIGRATIONS: {}".format(self.unsuccessful_migrations))
 
     def check_services(
         self,
@@ -26,28 +27,6 @@ class Migration(ABC):
         mec_set: list,
         vr_users: list,
         hosts: list,
-    ):
-        pass
-
-
-
-
-    def service_migration(
-        self,
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list,
-        hosts: list,
-        service: VrService
-    ):
-        pass    
-
-
-class SCG(Migration):
-    """ implements SCG algorithm """
-
-    def check_services(
-        self, base_station_set, mec_set, vr_users, hosts
     ):
         for user in vr_users:
             for service in user.services_set:
@@ -69,9 +48,29 @@ class SCG(Migration):
                         service=service
                     )
 
+
+
+
+    def service_migration(
+        self,
+        base_station_set: list,
+        mec_set: list,
+        vr_users: list,
+        hosts: list,
+        service: VrService
+    ):
+        pass    
+
+
+class SCG(Migration):
+    """ implements SCG algorithm """
+
+    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, hosts: list):
+        return super().check_services(base_station_set, mec_set, vr_users, hosts)
+
     def get_migrations(self):
-        print("SUCESSFUL MIGRATIONS: {}".format(self.sucessful_migrations))
-        print("UNSUCCESFUL MIGRATIONS: {}".format(self.unsuccessful_migrations))
+        return super().get_migrations()
+        
 
     def service_migration(
         self,
@@ -88,7 +87,7 @@ class SCG(Migration):
             hosts=hosts,
             service=service,
         )
-
+        time.sleep(1)
 
     @classmethod
     def reverse_offloading(
@@ -131,7 +130,7 @@ class SCG(Migration):
         service_location = MecAgent.get_service_bs_location(
             base_station_set, mec_set, service_id
         )
-        previous_service_latency = ScgController.calculate_ETE(
+        previous_service_latency = ScgController.get_ETE_latency(
             base_station_set=base_station_set,
             mec_set=mec_set,
             src_location=user_location,
@@ -151,7 +150,7 @@ class SCG(Migration):
         )
 
         if mec_candidate_location is not None:
-            new_service_latency = ScgController.calculate_ETE(
+            new_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 src_location=user_location,
@@ -163,7 +162,7 @@ class SCG(Migration):
                     mec_set, service_server_id, service_id
                 )
                 MecAgent.deploy_service(mec_set, mec_id_candidate, extracted_service)
-                print("*** Performing migration ***")
+                #print("*** Performing migration ***")
                 # print("service {} move from MEC {} to {}".format(service_id, service_server_id, mec_id_candidate))
                 # print("new latency: {}\n".format(new_service_latency))
                 self.sucessful_migrations += 1
@@ -172,7 +171,6 @@ class SCG(Migration):
             print("*** Migration failed. Error: no candidates ***")
             self.unsuccessful_migrations += 1
 
-    # ADJUST THIS FUNCTION TO RECEIVE A SERVICE AND PERFORM THE TRADE-OFF ANALYSIS
     @classmethod
     def trade_off(
         self, 
@@ -192,11 +190,7 @@ class SCG(Migration):
         )
         
         if any(service.id == user_service.id for user_service in service_owner.services_set):
-            """
-            checks whether a service IS deployed on the HMD, then we need to check
-            the feasability of offloading this particular service to mec servers
-            """
-
+            """ checks whether a service IS deployed on the HMD """
             hmd_latency = VrController.get_hmd_latency(
                 base_station_set=base_station_set,
                 vr_users=vr_users,
@@ -223,7 +217,7 @@ class SCG(Migration):
             )
 
             if mec_candidate_location is not None:
-                new_service_latency = ScgController.calculate_ETE(
+                new_service_latency = ScgController.get_ETE_latency(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     src_location=service_owner_location,
@@ -267,18 +261,6 @@ class SCG(Migration):
             '''
             '''
             if service_location is None or service_owner_location is None:
-                for mec in mec_set:
-                    for s in mec.services_set:
-                        if s.id == service.id:
-                            print('FOUND SERVICE {} ON MEC {}'.format(s.id, mec.id))
-
-                for user in vr_users:
-                    for s in user.services_set:
-                        if s.id == service.id:
-                            print('FOUND SERVICE {} ON VR USER {}'.format(s.id, mec.id))
-
-                #a = input('')
-
                 print("\nservice ID: {}".format(service.id))
                 print("\nservice location: {}".format(service_location))
                 print("\nservice owner: {}".format(service_owner))
@@ -288,7 +270,7 @@ class SCG(Migration):
                 )
                 a = input("")
 
-            current_service_latency = ScgController.calculate_ETE(
+            current_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 src_location=service_owner_location,
@@ -346,11 +328,6 @@ class REACT(Migration):
 
 # TO ANALYZE THE IMPACT OF REACT, WE HAVE TO ADAPT THE SYSTEM DO CATCH A SITUATION WHERE THE BEST SERVER IS ALWAYS CONSIDER, REGARDLESS THE RESOURCE AVAILABILITY            
 
-class AlwaysMigrate(Migration):
-    """ implements the migration behaviour enabled by handover """
-
-    def service_migration(base_station_set: list, mec_set: list, vr_users: list):
-        pass
 
 
 class NoMigration(Migration):

@@ -1,7 +1,9 @@
 """scg system imports"""
-from migration import SCG
+from migration.migration import SCG
+from migration.always_migrate import AlwaysMigrate
 from workloads import WorkloadController
 from scg import ScgController
+from mec.mec_controller import MecController
 
 """other imports"""
 import time
@@ -13,6 +15,8 @@ scg_controller = ScgController()
 migration_algorithm = SCG()
 
 def start_system() -> None:
+    #MecController.print_mecs(scg_controller.base_station_set, scg_controller.mec_set)
+    #a = input()
     while True:
         # SERVICE MIGRATION ALGORITHM OBJECT MUST BE SPECIFIED HERE
         WorkloadController.check_workloads(
@@ -29,12 +33,12 @@ def start_system() -> None:
             hosts=scg_controller.onos.hosts
         )
 
-        #MecController.print_mecs(scg.base_station_set, scg.mec_set)
-        #a = input()
 
         #start = time.time()
         #end = time.time()
         migration_algorithm.get_migrations()
+        latency = scg_controller.get_average_ETE_latency()
+        print('ETE latency: {}'.format(latency))
         print('\n')
         scg_controller.onos.reload_hosts()
 

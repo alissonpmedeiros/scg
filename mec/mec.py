@@ -92,7 +92,8 @@ class MecAgent:
     def available_resources(
         mec_set: list,  
         mec_id: str, 
-        service: VrService) -> bool:
+        service: VrService
+    ) -> bool:
         """ checks resource availity at MEC server. """
 
         """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
@@ -110,7 +111,8 @@ class MecAgent:
     def check_deployment(
         mec_set: list,  
         mec_id: str, 
-        service: VrService) -> bool:
+        service: VrService
+    ) -> bool:
         """ checks if a service can be deployed on mec server i on the fly """
        
         """ gets a quota description as a dict with the keys 'gpu' and 'cpu' """   
@@ -175,9 +177,8 @@ class MecAgent:
 
     @staticmethod
     def get_service_bs_location(
-        base_station_set: list, 
-        mec_set: list, 
-        service_id: str) -> str:
+        base_station_set: list, mec_set: list, service_id: str
+    ) -> str:
         """ gets the base station where the mec (used to deploy the service) is attached to """
         mec_location = MecAgent.get_service_server_id(mec_set, service_id)
         for base_station in base_station_set:

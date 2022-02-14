@@ -42,10 +42,10 @@ class MecController:
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
-        host_location = VrController.get_vr_user_location(hosts=hosts, user_ip=vr_ip)
+        user_location = VrController.get_vr_user_location(hosts=hosts, user_ip=vr_ip)
 
         current_base_station = BaseStationController.get_base_station(
-            base_station_set, host_location
+            base_station_set, user_location
         )
 
         if MecAgent.check_deployment(

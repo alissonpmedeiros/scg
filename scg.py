@@ -49,7 +49,7 @@ class ScgController:
 
         self.offload_services()
 
-    def caculate_average_ETE(self):
+    def get_average_ETE_latency(self):
         total_latency = 0
         services_cont = 0
         for user in self.vr_users:
@@ -77,7 +77,7 @@ class ScgController:
                     measures the latency between bs where the user is 
                     connected and the mec where the service is deployed 
                     """
-                    current_service_latency = ScgController.calculate_ETE(
+                    current_service_latency = ScgController.get_ETE_latency(
                         base_station_set=self.base_station_set,
                         mec_set=self.mec_set,
                         src_location=user_location,
@@ -93,7 +93,7 @@ class ScgController:
         return average_latency
 
     @staticmethod
-    def calculate_ETE(
+    def get_ETE_latency(
         base_station_set: list, mec_set: list, src_location: str, dst_location: str
     ) -> float:
         """
