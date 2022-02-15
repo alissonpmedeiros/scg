@@ -38,14 +38,13 @@ class MecController:
 
     @staticmethod
     def discover_mec(
-        base_station_set: list, mec_set: list, vr_ip: str, service: VrService, hosts: dict, 
+        base_station_set: list, mec_set: list, user: dict, service: VrService, 
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
-        user_location = VrController.get_vr_user_location(hosts=hosts, user_ip=vr_ip)
 
         current_base_station = BaseStationController.get_base_station(
-            base_station_set, user_location
+            base_station_set, user.current_location
         )
 
         if MecAgent.check_deployment(

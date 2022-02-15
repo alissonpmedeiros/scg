@@ -3,6 +3,8 @@
 """ dataclasses modules """
 from dataclasses import dataclass, field
 
+from vr import HMD
+
 """ onos controller modules """
 from onos import OnosController
 
@@ -33,7 +35,7 @@ class ScgController:
     overall_mecs: int = field(default=28)
     base_station_set: List[dict] = field(default_factory=list, init=False)
     mec_set: List[Mec] = field(default_factory=list, init=False)
-    vr_users: List[list] = field(default_factory=list, init=False)
+    vr_users: List[HMD] = field(default_factory=list, init=False)
     onos: OnosController = field(init=False)
 
     def __post_init__(self):
@@ -54,20 +56,18 @@ class ScgController:
         services_cont = 0
         for user in self.vr_users:
             for service_id in user.services_ids:
-                if any(service["id"] == service_id for service in user.services_set):
+                if any(service_id == service.id for service in user.services_set):
                     """ checks whether a service IS deployed on the HMD """
 
                     hmd_latency = VrController.get_hmd_latency(
                         base_station_set=self.base_station_set,
                         vr_users=self.vr_users,
                         user_ip=user.ip,
-                        hosts=self.onos.hosts
                     )
                     total_latency += hmd_latency
                 
                 else:
                     """ otherwise, the service is deployed on MEC servers"""
-                    user_location = VrController.get_vr_user_location(hosts=self.onos.hosts, user_ip=user.ip)
 
                     service_location = MecAgent.get_service_bs_location(
                         self.base_station_set, self.mec_set, service_id
@@ -80,7 +80,7 @@ class ScgController:
                     current_service_latency = ScgController.get_ETE_latency(
                         base_station_set=self.base_station_set,
                         mec_set=self.mec_set,
-                        src_location=user_location,
+                        src_location=user.current_location,
                         dst_location=service_location,
                     )
                     
@@ -89,7 +89,7 @@ class ScgController:
                 
                 services_cont += 1
 
-        average_latency = total_latency / services_cont
+        average_latency = round((total_latency / services_cont), 2)
         return average_latency
 
     @staticmethod
@@ -122,24 +122,23 @@ class ScgController:
     def offload_services(self) -> None:
         for user in self.vr_users:
             for service_id in user.services_ids:
-                extract_service = VrController.remove_vr_service(
+                extracted_service = VrController.remove_vr_service(
                     vr_users=self.vr_users, user_ip=user.ip, service_id=service_id
                 )
 
                 mec_id_dst = MecController.discover_mec(
                     base_station_set=self.base_station_set,
                     mec_set=self.mec_set,
-                    vr_ip=user.ip,
-                    service=extract_service,
-                    hosts=self.onos.hosts
+                    user=user,
+                    service=extracted_service,
                 )
 
                 if mec_id_dst is not None:
-                    MecAgent.deploy_service(self.mec_set, mec_id_dst, extract_service)
+                    MecAgent.deploy_service(self.mec_set, mec_id_dst, extracted_service)
                 else:
                     print(
                         "could not OFFLOAD the following service: {}".format(
-                            extract_service
+                            extracted_service
                         )
                     )
 

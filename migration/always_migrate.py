@@ -15,17 +15,16 @@ class AlwaysMigrate(Migration):
         return super().get_migrations()
     
     def check_services(
-        self, base_station_set: list, mec_set: list, vr_users: list, hosts: list
+        self, base_station_set: list, mec_set: list, vr_users: list
     ):
-        return super().check_services(base_station_set, mec_set, vr_users, hosts)
+        return super().check_services(base_station_set, mec_set, vr_users)
     
     
     def service_migration(
         self, 
         base_station_set: list, 
         mec_set: list, 
-        vr_users: list, 
-        hosts: list, 
+        vr_users: list,
         service: VrService,
     ):
         
@@ -36,11 +35,9 @@ class AlwaysMigrate(Migration):
         AlwaysMigrate.perform_migration(
             base_station_set=base_station_set,
             mec_set=mec_set,
-            hosts=hosts,
             user=service_owner,
             service=service,
         )
-        time.sleep(1)
 
 
     @classmethod
@@ -48,7 +45,6 @@ class AlwaysMigrate(Migration):
         self,
         base_station_set: list,
         mec_set: list,
-        hosts: list, 
         user: dict,
         service: VrService,
     ):
@@ -57,16 +53,14 @@ class AlwaysMigrate(Migration):
         current distance between user_ip and where the service is deployed
         """
 
-        user_bs_location = VrController.get_vr_user_location(hosts=hosts, user_ip=user.ip)
-
         service_bs_location = MecAgent.get_service_bs_location(
             base_station_set, mec_set, service.id
         )
         
-        if user_bs_location != service_bs_location:
+        if user.current_location != service_bs_location:
             service_server_id = MecAgent.get_service_server_id(mec_set, service.id)
             user_bs = BaseStationController.get_base_station(
-                base_station_set=base_station_set, bs_id=user_bs_location
+                base_station_set=base_station_set, bs_id=user.current_location
             )
 
 

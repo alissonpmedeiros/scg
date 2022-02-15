@@ -119,6 +119,8 @@ class HMD:
     """ represents a VR HMD instance """
     ip: str
     mac_address: str
+    previous_location: str 
+    current_location:  str 
     cpu: int = 0
     gpu: int = 0
     id: str = field(init=False)

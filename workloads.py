@@ -8,8 +8,7 @@ class WorkloadController:
     def check_workloads(
         base_station_set: list, 
         mec_set: list, 
-        vr_users: list, 
-        hosts: list,
+        vr_users: list,
         migration: Migration,
     ):
         WorkloadController.check_vr_service_workload(vr_users)
@@ -17,7 +16,6 @@ class WorkloadController:
             base_station_set=base_station_set,
             mec_set=mec_set, 
             vr_users=vr_users,
-            hosts=hosts,
             migration=migration,
         )
 
@@ -36,7 +34,6 @@ class WorkloadController:
         base_station_set: list,
         mec_set: list, 
         vr_users: list,
-        hosts: list,
         migration: Migration,
     ):
         for mec in mec_set:
@@ -72,7 +69,6 @@ class WorkloadController:
                                 base_station_set=base_station_set,
                                 mec_set=mec_set,
                                 vr_users=vr_users,
-                                hosts=hosts,
                                 service=service,
                             )
                         

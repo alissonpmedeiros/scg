@@ -34,7 +34,14 @@ class VrController:
 
         users = OnosController.get_hosts()
         for user in users['hosts']:
-            new_user = DefaultMunch.fromDict(HMD(ip=user.ipAddresses[0], mac_address=user.mac))
+            new_user = DefaultMunch.fromDict(
+                HMD(
+                    ip=user.ipAddresses[0], 
+                    mac_address=user.mac,
+                    previous_location=user.locations[0].elementId,
+                    current_location=user.locations[0].elementId,
+                    )
+            )
 
             for i in range(0, services_per_user):
                 new_service = VrService(is_mobile=True)
@@ -88,12 +95,6 @@ class VrController:
             if user.ip == user_ip:
                 return user
 
-    @staticmethod 
-    def get_vr_user_location(hosts: dict, user_ip: str) -> str:
-        """ gets the base station id where the user is connected """
-        host = OnosController.get_host(hosts=hosts, host_IP=user_ip)
-        user_location = host.locations[0].elementId
-        return user_location
     
     @staticmethod
     def remove_vr_service(
@@ -128,13 +129,12 @@ class VrController:
         base_station_set: list, 
         vr_users:list, 
         user_ip: str,
-        hosts: dict, 
     ) -> float:
         """ gets hmd latency, including the wireless latency where the user is connected to """
-        user_location = VrController.get_vr_user_location(hosts=hosts, user_ip=user_ip)
+        user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
         bs_location = BaseStationController.get_base_station(
             base_station_set=base_station_set, 
-            bs_id=user_location)
+            bs_id=user.current_location)
         user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
 
         latency = round(bs_location.wireless_latency + user.computing_latency, 2) 
@@ -192,8 +192,21 @@ class VrController:
             new_quota = DefaultMunch.fromDict(new_service.quota.get_quota(new_quota_name))
             service.quota.name = new_quota_name
             service.quota.resources = new_quota
-            
-            
 
+    @staticmethod
+    def update_user_location(vr_users: list, user_ip: str, new_location: str) -> None:
+        for user in vr_users:
+            if user.ip == user_ip:
+                user.previous_location = user.current_location
+                user.current_location = new_location
+                
 
-    
+    @staticmethod
+    def update_users_location(vr_users: list) -> None:
+        current_users = OnosController.get_hosts()
+        for user in current_users['hosts']:
+            VrController.update_user_location(
+                vr_users=vr_users, 
+                user_ip=user.ipAddresses[0], 
+                new_location=user.locations[0]['elementId']
+            )

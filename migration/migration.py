@@ -26,29 +26,24 @@ class Migration(ABC):
         base_station_set: list,
         mec_set: list,
         vr_users: list,
-        hosts: list,
     ):
         for user in vr_users:
-            for service in user.services_set:
-                self.service_migration(
-                    base_station_set=base_station_set,
-                    mec_set=mec_set,
-                    vr_users=vr_users,
-                    hosts=hosts,
-                    service=service
-                )
-        for mec in mec_set:
-            for service in mec.services_set:
-                if service.is_mobile:
+            if user.current_location != user.previous_location:
+                print('UPDATING USER {} LOCATION: NEW {} | PREVIOUS: {}'.format(user.ip, user.current_location, user.previous_location))
+                for service_id in user.services_ids:
+                    service = None
+                    if any(service_id == service.id for service in user.services_set): 
+                        service=user.services_set[0]
+                    else: 
+                        service = MecAgent.get_service(mec_set, service_id)
                     self.service_migration(
                         base_station_set=base_station_set,
                         mec_set=mec_set,
                         vr_users=vr_users,
-                        hosts=hosts,
-                        service=service
+                        service=service,
                     )
-
-
+        time.sleep(0.5)
+        
 
 
     def service_migration(
@@ -56,7 +51,6 @@ class Migration(ABC):
         base_station_set: list,
         mec_set: list,
         vr_users: list,
-        hosts: list,
         service: VrService
     ):
         pass    
@@ -65,8 +59,8 @@ class Migration(ABC):
 class SCG(Migration):
     """ implements SCG algorithm """
 
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, hosts: list):
-        return super().check_services(base_station_set, mec_set, vr_users, hosts)
+    def check_services(self, base_station_set: list, mec_set: list, vr_users: list):
+        return super().check_services(base_station_set, mec_set, vr_users)
 
     def get_migrations(self):
         return super().get_migrations()
@@ -76,18 +70,16 @@ class SCG(Migration):
         self,
         base_station_set: list,
         mec_set: list,
-        vr_users: list,
-        hosts: list, 
+        vr_users: list, 
         service: VrService,
     ):
         SCG.trade_off(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
-            hosts=hosts,
             service=service,
         )
-        time.sleep(1)
+        
 
     @classmethod
     def reverse_offloading(
@@ -114,16 +106,15 @@ class SCG(Migration):
         self,
         base_station_set: list,
         mec_set: list,
+        vr_users: list,
         user_ip: str,
-        service_id: str,
-        hosts: list, 
+        service_id: str, 
     ):
         """
         provides the service migration of service i, which is based on the
         current distance between user_ip and where the service is deployed
         """
-
-        user_location = VrController.get_vr_user_location(hosts=hosts, user_ip=user_ip)
+        user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
 
         service_content = MecAgent.get_service(mec_set, service_id)
         service_server_id = MecAgent.get_service_server_id(mec_set, service_id)
@@ -133,16 +124,15 @@ class SCG(Migration):
         previous_service_latency = ScgController.get_ETE_latency(
             base_station_set=base_station_set,
             mec_set=mec_set,
-            src_location=user_location,
+            src_location=user.current_location,
             dst_location=service_location,
         )
 
         mec_id_candidate = MecController.discover_mec(
             base_station_set=base_station_set,
             mec_set=mec_set,
-            vr_ip=user_ip,
+            user=user,
             service=service_content,
-            hosts=hosts,
         )
 
         mec_candidate_location = MecAgent.get_mec_bs_location(
@@ -153,7 +143,7 @@ class SCG(Migration):
             new_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
-                src_location=user_location,
+                src_location=user.current_location,
                 dst_location=mec_candidate_location,
             )
 
@@ -176,8 +166,7 @@ class SCG(Migration):
         self, 
         base_station_set: list, 
         mec_set: list, 
-        vr_users: list, 
-        hosts: list, 
+        vr_users: list,
         service: VrService,
     ):
         """ provide the trade-off analysis between migration and offloading the service back to the HMD"""
@@ -185,9 +174,7 @@ class SCG(Migration):
         service_owner = VrController.get_vr_service_owner(
             vr_users=vr_users, service=service
         )
-        service_owner_location = VrController.get_vr_user_location(
-            hosts=hosts, user_ip=service_owner.ip
-        )
+        
         
         if any(service.id == user_service.id for user_service in service_owner.services_set):
             """ checks whether a service IS deployed on the HMD """
@@ -195,7 +182,6 @@ class SCG(Migration):
                 base_station_set=base_station_set,
                 vr_users=vr_users,
                 user_ip=service_owner.ip,
-                hosts=hosts,
             )
 
             vr_service_content = VrController.get_vr_service(
@@ -207,9 +193,8 @@ class SCG(Migration):
             mec_id_candidate = MecController.discover_mec(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
-                vr_ip=service_owner.ip,
+                user=service_owner,
                 service=vr_service_content,
-                hosts=hosts
             )
 
             mec_candidate_location = MecAgent.get_mec_bs_location(
@@ -220,7 +205,7 @@ class SCG(Migration):
                 new_service_latency = ScgController.get_ETE_latency(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
-                    src_location=service_owner_location,
+                    src_location=service_owner.current_location,
                     dst_location=mec_candidate_location,
                 )
 
@@ -260,11 +245,11 @@ class SCG(Migration):
             """
             '''
             '''
-            if service_location is None or service_owner_location is None:
+            if service_location is None or service_owner.current_location is None:
                 print("\nservice ID: {}".format(service.id))
                 print("\nservice location: {}".format(service_location))
                 print("\nservice owner: {}".format(service_owner))
-                print("\nservice owner location: {}".format(service_owner_location))
+                print("\nservice owner location: {}".format(service_owner.current_location))
                 print(
                     "GOT AN ERROR: SERVICE LOCATION OR USER LOCATION NOT FOUND!"
                 )
@@ -273,7 +258,7 @@ class SCG(Migration):
             current_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
-                src_location=service_owner_location,
+                src_location=service_owner.current_location,
                 dst_location=service_location,
             )
 
@@ -281,7 +266,6 @@ class SCG(Migration):
                 base_station_set=base_station_set,
                 vr_users=vr_users,
                 user_ip=service_owner.ip,
-                hosts=hosts,
             )
 
             # print('\n')
@@ -295,9 +279,9 @@ class SCG(Migration):
                 SCG.perform_migration(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
+                    vr_users=vr_users,
                     user_ip=service_owner.ip,
                     service_id=service.id,
-                    hosts=hosts,
                 )
             else:
                 #print("*** Performing reverse offloading ***")
@@ -317,7 +301,6 @@ class REACT(Migration):
         mec_set: list,
         vr_users: list,
         migration: MigrationController,
-        hosts: list, 
         service: VrService,
     ):
         REACTApproach.solidarity(
