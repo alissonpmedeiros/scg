@@ -1,19 +1,26 @@
 """scg system imports"""
-from migration.always_migrate import AlwaysMigrate
 from migration.scg import SCG
+from migration.no_migration import NoMigration
+from migration.always_migrate import AlwaysMigrate
 from vr_controller import VrController
 from workloads import WorkloadController
 from scg_controller import ScgController
-from mec.mec_controller import MecController
 
 """other imports"""
-import time
+import time, sys
 from pprint import pprint as pprint
 
 
 """variables"""
 scg_controller = ScgController()
-migration_algorithm = SCG()
+migration_algorithm = None
+
+if sys.argv[1] == 'no':
+    migration_algorithm=NoMigration()
+elif sys.argv[1] == 'scg':
+    migration_algorithm=SCG()
+elif sys.argv[1] == 'always':
+    migration_algorithm=AlwaysMigrate()
 
 def start_system() -> None:
     #MecController.print_mecs(scg_controller.base_station_set, scg_controller.mec_set)
@@ -47,10 +54,6 @@ def start_system() -> None:
         
 
         VrController.update_users_location(scg_controller.vr_users)
-        #pprint(scg_controller.vr_users)
-        #a = input("")
-        #scg_controller.onos.reload_hosts() WE NO LONGER NEED THIS METHOD
-        # WE HAVE TO ADAPT THE WHOLE SYSTEM TO NOT USE THE RELOAD HOSTS ANYMORE. CHECK THE DEPENDENCIES. IT SHOULD BE REPLACED BY SCG_CONTROLER.VR_USERS
 
 if __name__ == "__main__":
     start_system()

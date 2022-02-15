@@ -259,22 +259,22 @@ class SCG(Migration):
         shortest_latency = float("inf")
         path = []
         for base_station in base_station_set:
-            if (
-                base_station.id != current_base_station.id
-                and MecAgent.check_deployment(
+            if ( 
+                MecAgent.check_deployment(
                     mec_set, base_station.mec_id, service
                 )
             ):
                 """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-                aux_path, aux_shortest_latency = Dijkstra.init_algorithm(
+                aux_path, new_latency = Dijkstra.init_algorithm(
                     base_station_set=base_station_set,
+                    mec_set=mec_set,
                     start_node=current_base_station.id,
                     target_node=base_station.id,
                 )
 
-                if aux_shortest_latency <= shortest_latency:
+                if new_latency <= shortest_latency:
                     path = aux_path
-                    shortest_latency = aux_shortest_latency
+                    shortest_latency = new_latency
 
         """ we need to take care of the case where there is no more mec available """
         if not path:

@@ -1,4 +1,5 @@
 from pprint import pprint as pprint
+from base_station import BaseStationController
 import sys
 
  
@@ -113,6 +114,7 @@ class Dijkstra:
     @staticmethod
     def init_algorithm(
         base_station_set: list, 
+        mec_set: list,
         start_node: str, 
         target_node: str ):
         """ inits Dijkstra algorithm """
@@ -132,7 +134,15 @@ class Dijkstra:
             scr = base_station.id
             for link in base_station.links:
                 dst = link.dst.device
-                init_graph[scr][dst] = link.latency
+                dst_bs = BaseStationController.get_base_station(
+                    base_station_set=base_station_set, bs_id=dst
+                )
+                dst_bs_mec = None
+                for mec in mec_set:
+                    if mec.id == dst_bs.mec_id:
+                        dst_bs_mec = mec
+                        break
+                init_graph[scr][dst] = link.latency + dst_bs_mec.computing_latency
 
         """ constructs the graph """
         graph = Graph(nodes, init_graph)

@@ -100,8 +100,9 @@ class ScgController:
         calculates the end-to-end latency between a vr
         user and the mec where the service is deployed on
         """
-        path, net_latency = Dijkstra.init_algorithm(
+        path, ete_latency = Dijkstra.init_algorithm(
             base_station_set=base_station_set,
+            mec_set=mec_set,
             start_node=src_location,
             target_node=dst_location,
         )
@@ -109,14 +110,6 @@ class ScgController:
             base_station_set=base_station_set, 
             bs_id=dst_location
         )
-        mec = MecController.get_mec(mec_set=mec_set, mec_id=base_station.mec_id)
-
-        computing_latency = mec.computing_latency
-
-        ete_latency = net_latency + computing_latency
-
-        # print(" -> ".join(path))
-        # print("latency: {}".format(ete_latency))
         return round(ete_latency, 2)
 
     def offload_services(self) -> None:
