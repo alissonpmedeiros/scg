@@ -1,7 +1,7 @@
 import time
 from vr import VrService
 from mec.mec import MecAgent
-from scg import ScgController
+from scg_controller import ScgController
 from vr_controller import VrController
 from migration.migration import Migration
 from mec.mec_controller import MecController

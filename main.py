@@ -1,9 +1,9 @@
 """scg system imports"""
-from migration.migration import SCG
 from migration.always_migrate import AlwaysMigrate
+from migration.scg import SCG
 from vr_controller import VrController
 from workloads import WorkloadController
-from scg import ScgController
+from scg_controller import ScgController
 from mec.mec_controller import MecController
 
 """other imports"""
