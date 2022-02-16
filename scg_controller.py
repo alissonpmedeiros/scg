@@ -77,14 +77,17 @@ class ScgController:
                     measures the latency between bs where the user is 
                     connected and the mec where the service is deployed 
                     """
-                    current_service_latency = ScgController.get_ETE_latency(
+                    network_latency, computing_latency, ete_latency = ScgController.get_ETE_latency(
                         base_station_set=self.base_station_set,
                         mec_set=self.mec_set,
                         src_location=user.current_location,
                         dst_location=service_location,
                     )
-                    
-                    total_latency += current_service_latency
+                    #print('computing latency: {}'.format(computing_latency))
+                    #print('network latency: {}'.format(network_latency))
+                    #print('ete latency: {}'.format(ete_latency))
+                    #a = input('')
+                    total_latency += ete_latency
 
                 
                 services_cont += 1
@@ -100,17 +103,27 @@ class ScgController:
         calculates the end-to-end latency between a vr
         user and the mec where the service is deployed on
         """
+        src_bs = BaseStationController.get_base_station(
+            base_station_set, src_location
+        )
+        src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
         path, ete_latency = Dijkstra.init_algorithm(
             base_station_set=base_station_set,
             mec_set=mec_set,
             start_node=src_location,
+            start_node_computing_delay=src_mec.computing_latency,
             target_node=dst_location,
         )
         base_station = BaseStationController.get_base_station(
             base_station_set=base_station_set, 
-            bs_id=dst_location
+            bs_id=path[-1]
         )
-        return round(ete_latency, 2)
+        mec = MecController.get_mec(mec_set, base_station.mec_id)
+        
+        computing_latency = round(mec.computing_latency, 2) 
+        ete_latency = round(ete_latency, 2)
+        network_latency = ete_latency - computing_latency
+        return network_latency, computing_latency, ete_latency
 
     def offload_services(self) -> None:
         for user in self.vr_users:

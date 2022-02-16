@@ -1,51 +1,65 @@
 from mec.mec import MecAgent
 from vr import VrService
 import random
+from pprint import pprint as pprint
 
 class REACTApproach:
 
     @staticmethod
-    def get_victim_services(mec_set: list, current_mec_id: str, service: VrService) -> list:
+    def get_victim_services(
+        mec_set: list, mec_id: str, service: VrService, sucessful_migrations: int, unsuccessful_migrations: int
+    ) -> list:
         target_cpu = 0
         target_gpu = 0
         victim_service_set = []
         
         """ remove services from the current mec where the service has to be deployed """
-        for mec in mec_set:
-            if mec.id == current_mec_id:
+        for mec in mec_set: # WE STILL HAVE TO CHECK IF THERE ARE ENOUGHT SERVICES TO BE MIGRATED, OTHERWISE WE SHOULD TRIGGER A VIOLATION AND NOT MIGRATE THE SERVICE, WE SHOULD THEN LOOK FOR ANOTHER MEC SERVER
+            if mec.id == mec_id:
                 for service in mec.services_set:
                     if not service.is_mobile:
                         target_cpu += service.quota.resources.cpu
                         target_gpu += service.quota.resources.gpu
                         removed_service = MecAgent.remove_service(
                             mec_set,  
-                            current_mec_id, 
+                            mec_id, 
                             service.id
                         )
                         victim_service_set.append(removed_service)
                         if target_cpu >= service.quota.resources.cpu and target_gpu >= service.quota.resources.gpu:
                             break
+        if target_cpu < service.quota.resources.cpu and target_gpu < service.quota.resources.gpu:
+            unsuccessful_migrations +=1
+            return None
                         
-
+        #NO NEED TO DEPLOY THE SERVICE.
         """ after removing the victim services, deploy the current service """
+        """
         MecAgent.deploy_service(
             mec_set=mec_set,
-            mec_id=current_mec_id,
+            mec_id=mec_id,
             service=service
         )
-        
+        """
+        overall_victims = len(victim_service_set)
+        #print('migrating {} services')
+        #pprint(victim_service_set)
+        #a = input('')
+        sucessful_migrations += overall_victims
         return victim_service_set
     
 
     @staticmethod
-    def solidarity(mec_set: list, current_mec_id: str, service: VrService):
+    def solidarity(mec_set: list, mec_id: str, service: VrService, sucessful_migrations: int, unsuccessful_migrations: int):
         """ 
         now we need to redistribute the removed service from the previous mec to new victims mecs 
         """
         victim_service_set = REACTApproach.get_victim_services(
             mec_set=mec_set,
-            current_mec_id=current_mec_id,
+            mec_id=mec_id,
             service=service,
+            sucessful_migrations=sucessful_migrations,
+            unsuccessful_migrations=unsuccessful_migrations,
         )
 
         while victim_service_set:
@@ -56,7 +70,7 @@ class REACTApproach:
             victim_mec_index = 0
             while True:
                 victim_mec_index = random.randint(0,27)
-                if mec_set[victim_mec_index].id != current_mec_id and MecAgent.check_deployment(
+                if mec_set[victim_mec_index].id != mec_id and MecAgent.check_deployment(
                     mec_set=mec_set,
                     mec_id=mec_set[victim_mec_index].id,
                     service=removed_service

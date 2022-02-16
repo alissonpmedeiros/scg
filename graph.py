@@ -48,7 +48,7 @@ class Graph(object):
 class Dijkstra:
 
     @staticmethod
-    def dijkstra_algorithm(graph, start_node):
+    def dijkstra_algorithm(graph, start_node, start_node_computing_delay:float ):
         unvisited_nodes = list(graph.get_nodes())
     
         """We'll use this dict to save the cost of visiting each node and update it as we move along the graph"""   
@@ -61,8 +61,8 @@ class Dijkstra:
         max_value = sys.maxsize
         for node in unvisited_nodes:
             shortest_path[node] = max_value
-        """However, we initialize the starting node's value with 0"""   
-        shortest_path[start_node] = 0
+        """However, we initialize the starting node's value with its computing_delay"""   
+        shortest_path[start_node] = start_node_computing_delay
         
         """The algorithm executes until we visit all nodes"""
         while unvisited_nodes:
@@ -115,7 +115,8 @@ class Dijkstra:
     def init_algorithm(
         base_station_set: list, 
         mec_set: list,
-        start_node: str, 
+        start_node: str,
+        start_node_computing_delay: float, 
         target_node: str ):
         """ inits Dijkstra algorithm """
         
@@ -143,13 +144,15 @@ class Dijkstra:
                         dst_bs_mec = mec
                         break
                 init_graph[scr][dst] = link.latency + dst_bs_mec.computing_latency
-
+        #pprint(init_graph)
         """ constructs the graph """
         graph = Graph(nodes, init_graph)
 
         previous_nodes, shortest_path = Dijkstra.dijkstra_algorithm(
             graph=graph, 
-            start_node=start_node)
+            start_node=start_node,
+            start_node_computing_delay=start_node_computing_delay,
+        )
 
         return Dijkstra.result(
             previous_nodes, 

@@ -5,6 +5,7 @@ from vr_controller import VrController
 from scg_controller import ScgController
 from migration.migration import Migration
 from base_station import BaseStationController
+from mec.mec_controller import MecController
 
 
 class SCG(Migration):    
@@ -23,7 +24,7 @@ class SCG(Migration):
         vr_users: list, 
         service: VrService,
     ):
-        SCG.trade_off(
+        self.trade_off(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
@@ -31,7 +32,7 @@ class SCG(Migration):
         )
         
 
-    @classmethod
+    
     def reverse_offloading(
         self, 
         mec_set: list, 
@@ -51,7 +52,7 @@ class SCG(Migration):
         )
 
     """ ADJUST THIS METHOD TO USE ONLY CALCULATE NET LATENCY INSTEAD OF ETE LATENCY. THEN, THIS METHOD SHOULD BE USED WIHTIN CLASS 'NetLatencyMigration' """
-    @classmethod
+    
     def perform_migration(
         self,
         base_station_set: list,
@@ -71,14 +72,14 @@ class SCG(Migration):
         service_location = MecAgent.get_service_bs_location(
             base_station_set, mec_set, service_id
         )
-        previous_service_latency = ScgController.get_ETE_latency(
+        computing_latency, network_latency, previous_service_latency = ScgController.get_ETE_latency(
             base_station_set=base_station_set,
             mec_set=mec_set,
             src_location=user.current_location,
             dst_location=service_location,
         )
 
-        mec_id_candidate = SCG.discover_mec(
+        mec_id_candidate = self.discover_mec(
             base_station_set=base_station_set,
             mec_set=mec_set,
             user=user,
@@ -90,7 +91,7 @@ class SCG(Migration):
         )
 
         if mec_candidate_location is not None:
-            new_service_latency = ScgController.get_ETE_latency(
+            computing_latency, network_latency, new_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 src_location=user.current_location,
@@ -111,7 +112,7 @@ class SCG(Migration):
             print("*** Migration failed. Error: no candidates ***")
             self.unsuccessful_migrations += 1
 
-    @classmethod
+    
     def trade_off(
         self, 
         base_station_set: list, 
@@ -140,7 +141,7 @@ class SCG(Migration):
                 service_id=service.id,
             )
 
-            mec_id_candidate = SCG.discover_mec(
+            mec_id_candidate = self.discover_mec(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 user=service_owner,
@@ -152,7 +153,7 @@ class SCG(Migration):
             )
 
             if mec_candidate_location is not None:
-                new_service_latency = ScgController.get_ETE_latency(
+                computing_latency, network_latency, new_service_latency = ScgController.get_ETE_latency(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     src_location=service_owner.current_location,
@@ -205,7 +206,7 @@ class SCG(Migration):
                 )
                 a = input("")
 
-            current_service_latency = ScgController.get_ETE_latency(
+            computing_latency, network_latency, current_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 src_location=service_owner.current_location,
@@ -226,7 +227,7 @@ class SCG(Migration):
 
             if current_service_latency <= hmd_latency:
                 # print('service remains on mec servers. \nstarting migration check')
-                SCG.perform_migration(
+                self.perform_migration(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     vr_users=vr_users,
@@ -235,7 +236,7 @@ class SCG(Migration):
                 )
             else:
                 #print("*** Performing reverse offloading ***")
-                SCG.reverse_offloading(
+                self.reverse_offloading(
                     mec_set=mec_set,
                     vr_users=vr_users,
                     user_ip=service_owner.ip,
@@ -245,7 +246,6 @@ class SCG(Migration):
 
 
 
-    @classmethod
     def discover_mec(
         self, base_station_set: list, mec_set: list, user: dict, service: VrService, 
     ) -> str:
@@ -265,10 +265,15 @@ class SCG(Migration):
                 )
             ):
                 """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
+                src_bs = BaseStationController.get_base_station(
+                    base_station_set, current_base_station.id
+                )
+                src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
                 aux_path, new_latency = Dijkstra.init_algorithm(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     start_node=current_base_station.id,
+                    start_node_computing_delay=src_mec.computing_latency,
                     target_node=base_station.id,
                 )
 

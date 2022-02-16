@@ -21,7 +21,7 @@ class Migration(ABC):
     ):
         for user in vr_users:
             if user.current_location != user.previous_location:
-                print('UPDATING USER {} LOCATION: NEW {} | PREVIOUS: {}'.format(user.ip, user.current_location, user.previous_location))
+                #print('UPDATING USER {} LOCATION: NEW {} | PREVIOUS: {}'.format(user.ip, user.current_location, user.previous_location))
                 for service_id in user.services_ids:
                     service = None
                     if any(service_id == service.id for service in user.services_set): 
@@ -34,7 +34,7 @@ class Migration(ABC):
                         vr_users=vr_users,
                         service=service,
                     )
-        time.sleep(0.5)
+        #time.sleep(0.5)
         
 
 
@@ -49,32 +49,6 @@ class Migration(ABC):
 
 
 '''
-class REACT(Migration):
-    
-    @staticmethod
-    def service_migration(
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list,
-        migration: MigrationController,
-        service: VrService,
-    ):
-        REACTApproach.solidarity(
-            mec_set=mec_set, 
-            current_mec_id='TBD', ### TO BE DEFINED! 
-            service=service,
-        )
-
-# TO ANALYZE THE IMPACT OF REACT, WE HAVE TO ADAPT THE SYSTEM DO CATCH A SITUATION WHERE THE BEST SERVER IS ALWAYS CONSIDER, REGARDLESS THE RESOURCE AVAILABILITY            
-
-
-
-class NoMigration(Migration):
-    """ implements the no migration behaviour """
-
-    def service_migration(base_station_set: list, mec_set: list, vr_users: list):
-        pass
-
 
 class NetLatencyMigration(Migration):
     """ implements the migration behaviour based on net latency """

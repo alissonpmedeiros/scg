@@ -85,10 +85,15 @@ class MecController:
                         )
                     ):
                         """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
+                        src_bs = BaseStationController.get_base_station(
+                            base_station_set, current_base_station.id
+                        )
+                        src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
                         aux_path, new_latency = Dijkstra.init_algorithm(
                             base_station_set=base_station_set,
                             mec_set=mec_set,
                             start_node=current_base_station.id,
+                            start_node_computing_delay=src_mec.computing_latency,
                             target_node=base_station.id,
                         )
 
