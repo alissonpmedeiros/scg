@@ -51,45 +51,6 @@ class ScgReact(SCG):
             base_station_set, user.current_location
         )
 
-        ## SCG ##
-        '''
-        scg_shortest_latency = float("inf")
-        scg_path = []
-        for base_station in base_station_set:
-            if ( 
-                MecAgent.check_deployment(
-                    mec_set, base_station.mec_id, service
-                )
-            ):
-                """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-                src_bs = BaseStationController.get_base_station(
-                    base_station_set, current_base_station.id
-                )
-                src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
-                aux_path, new_latency = Dijkstra.init_algorithm(
-                    base_station_set=base_station_set,
-                    mec_set=mec_set,
-                    start_node=current_base_station.id,
-                    start_node_computing_delay=src_mec.computing_latency,
-                    target_node=base_station.id,
-                )
-
-                if new_latency <= scg_shortest_latency:
-                    scg_path = aux_path
-                    scg_shortest_latency = new_latency
-
-        """ we need to take care of the case where there is no more mec available """
-        if not scg_path:
-            return None
-
-        # print(" -> ".join(path))
-        """ gets last element of the path, which corresponds to the base station which contains a mec server that can accomodate the service """
-        scg_bs_destination = BaseStationController.get_base_station(
-            base_station_set, scg_path[-1]
-        )
-
-        '''
-        ## REACT ##
         shortest_latency = float("inf")
         mec_id_candidate = None
         path = []

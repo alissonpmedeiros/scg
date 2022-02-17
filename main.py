@@ -1,11 +1,12 @@
 """scg system imports"""
 from migration.scg import SCG
-from migration.scg_react import ScgReact
-from migration.no_migration import NoMigration
-from migration.always_migrate import AlwaysMigrate
 from vr_controller import VrController
 from workloads import WorkloadController
 from scg_controller import ScgController
+from migration.scg_react import ScgReact
+from migration.no_migration import NoMigration
+from migration.always_migrate import AlwaysMigrate
+from migration.network_migration import MigrationBasedNetwork
 
 """other imports"""
 import time, sys
@@ -24,6 +25,8 @@ elif sys.argv[1] == 'always':
     migration_algorithm=AlwaysMigrate()
 elif sys.argv[1] == 'react':
     migration_algorithm=ScgReact()
+elif sys.argv[1] == 'network':
+    migration_algorithm=MigrationBasedNetwork()
 
 def start_system() -> None:
     #MecController.print_mecs(scg_controller.base_station_set, scg_controller.mec_set)

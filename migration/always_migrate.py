@@ -58,7 +58,6 @@ class AlwaysMigrate(Migration):
         )
         
         if user.current_location != service_bs_location:
-            service_server_id = MecAgent.get_service_server_id(mec_set, service.id)
             user_bs = BaseStationController.get_base_station(
                 base_station_set=base_station_set, bs_id=user.current_location
             )
@@ -67,18 +66,14 @@ class AlwaysMigrate(Migration):
             if MecAgent.check_deployment(
                 mec_set=mec_set, mec_id=user_bs.mec_id, service=service
             ):
-
+                service_server_id = MecAgent.get_service_server_id(mec_set, service.id)
                 extracted_service = MecAgent.remove_service(
                     mec_set, service_server_id, service.id
                 )
                 MecAgent.deploy_service(mec_set, user_bs.mec_id, extracted_service)
-                #print("*** Performing migration ***")
-                # print("service {} moved from MEC {} to {}".format(service.id, service_server_id, mec_id_candidate))
-                # print("new latency: {}\n".format(new_service_latency))
                 self.sucessful_migrations += 1
 
             else:
-                #print("\n*** Migration failed. Error: no candidates ***")
                 self.unsuccessful_migrations += 1
 
 

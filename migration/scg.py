@@ -38,13 +38,13 @@ class SCG(Migration):
         mec_set: list, 
         vr_users: list, 
         user_ip: str, 
-        service_id: str
+        service: VrService
     ) -> None:
         """ offloads a service i back to vr hmd """
 
-        service_server_id = MecAgent.get_service_server_id(mec_set, service_id)
+        service_server_id = MecAgent.get_service_server_id(mec_set, service.id)
         extracted_service = MecAgent.remove_service(
-            mec_set, service_server_id, service_id
+            mec_set, service_server_id, service.id
         )
 
         VrController.deploy_vr_service(
@@ -59,7 +59,7 @@ class SCG(Migration):
         mec_set: list,
         vr_users: list,
         user_ip: str,
-        service_id: str, 
+        service: VrService, 
     ):
         """
         provides the service migration of service i, which is based on the
@@ -67,10 +67,9 @@ class SCG(Migration):
         """
         user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
 
-        service_content = MecAgent.get_service(mec_set, service_id)
-        service_server_id = MecAgent.get_service_server_id(mec_set, service_id)
+        service_server_id = MecAgent.get_service_server_id(mec_set, service.id)
         service_location = MecAgent.get_service_bs_location(
-            base_station_set, mec_set, service_id
+            base_station_set, mec_set, service.id
         )
         computing_latency, network_latency, previous_service_latency = ScgController.get_ETE_latency(
             base_station_set=base_station_set,
@@ -83,14 +82,13 @@ class SCG(Migration):
             base_station_set=base_station_set,
             mec_set=mec_set,
             user=user,
-            service=service_content,
+            service=service,
         )
 
-        mec_candidate_location = MecAgent.get_mec_bs_location(
-            base_station_set, mec_id_candidate
-        )
-
-        if mec_candidate_location is not None:
+        if mec_id_candidate is not None:
+            mec_candidate_location = MecAgent.get_mec_bs_location(
+                base_station_set, mec_id_candidate
+            )
             computing_latency, network_latency, new_service_latency = ScgController.get_ETE_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
@@ -100,7 +98,7 @@ class SCG(Migration):
 
             if new_service_latency < previous_service_latency:
                 extracted_service = MecAgent.remove_service(
-                    mec_set, service_server_id, service_id
+                    mec_set, service_server_id, service.id
                 )
                 MecAgent.deploy_service(mec_set, mec_id_candidate, extracted_service)
                 #print("*** Performing migration ***")
@@ -135,17 +133,12 @@ class SCG(Migration):
                 user_ip=service_owner.ip,
             )
 
-            vr_service_content = VrController.get_vr_service(
-                vr_users=vr_users, 
-                user_ip=service_owner.ip, 
-                service_id=service.id,
-            )
 
             mec_id_candidate = self.discover_mec(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 user=service_owner,
-                service=vr_service_content,
+                service=service,
             )
 
             mec_candidate_location = MecAgent.get_mec_bs_location(
@@ -232,7 +225,7 @@ class SCG(Migration):
                     mec_set=mec_set,
                     vr_users=vr_users,
                     user_ip=service_owner.ip,
-                    service_id=service.id,
+                    service=service,
                 )
             else:
                 #print("*** Performing reverse offloading ***")
@@ -240,7 +233,7 @@ class SCG(Migration):
                     mec_set=mec_set,
                     vr_users=vr_users,
                     user_ip=service_owner.ip,
-                    service_id=service.id,
+                    service=service,
                 )
 
 
