@@ -12,9 +12,9 @@ class REACTApproach:
         target_cpu = 0
         target_gpu = 0
         victim_service_set = []
-        
+
         """ remove services from the current mec where the service has to be deployed """
-        for mec in mec_set: # WE STILL HAVE TO CHECK IF THERE ARE ENOUGHT SERVICES TO BE MIGRATED, OTHERWISE WE SHOULD TRIGGER A VIOLATION AND NOT MIGRATE THE SERVICE, WE SHOULD THEN LOOK FOR ANOTHER MEC SERVER
+        for mec in mec_set: 
             if mec.id == mec_id:
                 for service in mec.services_set:
                     if not service.is_mobile:
@@ -29,6 +29,14 @@ class REACTApproach:
                         if target_cpu >= service.quota.resources.cpu and target_gpu >= service.quota.resources.gpu:
                             break
         if target_cpu < service.quota.resources.cpu and target_gpu < service.quota.resources.gpu:
+            """we have to redeploy the services that were extracted in the previous step"""
+            while victim_service_set:
+                removed_service = victim_service_set.pop()
+                MecAgent.deploy_service(
+                    mec_set=mec_set,
+                    mec_id=mec_id,
+                    service=removed_service
+                )
             unsuccessful_migrations +=1
             return None
                         

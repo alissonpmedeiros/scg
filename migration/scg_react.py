@@ -24,15 +24,15 @@ class ScgReact(SCG):
 
     """inherited from the SCG class"""
     def reverse_offloading(
-        self, mec_set: list, vr_users: list, user_ip: str, service_id: str
+        self, mec_set: list, vr_users: list, user: dict, service: VrService
     ) -> None:
-        return super().reverse_offloading(mec_set, vr_users, user_ip, service_id)
+        return super().reverse_offloading(mec_set, vr_users, user, service)
 
     """inherited from the SCG class"""
     def perform_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, user_ip: str, service_id: str
+        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService
     ):
-        return super().perform_migration(base_station_set, mec_set, vr_users, user_ip, service_id)
+        return super().perform_migration(base_station_set, mec_set, vr_users, user, service)
 
     """inherited from the SCG class"""
     def trade_off(

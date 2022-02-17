@@ -6,34 +6,28 @@ from scg_controller import ScgController
 from migration.scg_react import ScgReact
 from migration.no_migration import NoMigration
 from migration.always_migrate import AlwaysMigrate
-from migration.network_migration import MigrationBasedNetwork
+from migration.network_migration import NetLatencyMigration
 
 """other imports"""
 import time, sys
 from pprint import pprint as pprint
 
 
-"""variables"""
-scg_controller = ScgController()
-migration_algorithm = None
+def check_algorithm():
+    if sys.argv[1] == 'no':
+        return NoMigration()
+    elif sys.argv[1] == 'scg':
+        return SCG()
+    elif sys.argv[1] == 'always':
+        return AlwaysMigrate()
+    elif sys.argv[1] == 'react':
+        return ScgReact()
+    elif sys.argv[1] == 'network':
+        return NetLatencyMigration()
 
-if sys.argv[1] == 'no':
-    migration_algorithm=NoMigration()
-elif sys.argv[1] == 'scg':
-    migration_algorithm=SCG()
-elif sys.argv[1] == 'always':
-    migration_algorithm=AlwaysMigrate()
-elif sys.argv[1] == 'react':
-    migration_algorithm=ScgReact()
-elif sys.argv[1] == 'network':
-    migration_algorithm=MigrationBasedNetwork()
-
-def start_system() -> None:
-    #MecController.print_mecs(scg_controller.base_station_set, scg_controller.mec_set)
-    #a = input()
+def start_system(scg_controller, migration_algorithm) -> None:
     previous_latency = None
     while True:
-        # SERVICE MIGRATION ALGORITHM OBJECT MUST BE SPECIFIED HERE
         WorkloadController.check_workloads(
             base_station_set=scg_controller.base_station_set,
             mec_set=scg_controller.mec_set, 
@@ -46,9 +40,6 @@ def start_system() -> None:
             vr_users=scg_controller.vr_users,
         )
 
-
-        #start = time.time()
-        #end = time.time()
         latency = scg_controller.get_average_ETE_latency()
         
         if latency != previous_latency:
@@ -59,20 +50,12 @@ def start_system() -> None:
             print('\n')
         
         previous_latency = latency
-        
-
         VrController.update_users_location(scg_controller.vr_users)
 
+
 if __name__ == "__main__":
-    start_system()
+    """variables"""
+    scg_controller = ScgController()
+    migration_algorithm = check_algorithm()
+    start_system(scg_controller, migration_algorithm)
 
-"""
-ANALYZE THE FOLLOWING ASPECTS:
-WITH REACT ENABLED
-MIGRATION TRIGGERED BY COMPUTING LATENCY ANALYSIS
-MIGRATION TRIGGERED BY NETWORK LATENCY ANALYSIS
-NO MIGRATION
-UAV MECHANISM
-
-
-"""

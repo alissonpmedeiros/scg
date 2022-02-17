@@ -46,32 +46,3 @@ class Migration(ABC):
         service: VrService
     ):
         pass    
-
-
-'''
-
-class NetLatencyMigration(Migration):
-    """ implements the migration behaviour based on net latency """
-
-    def service_migration(base_station_set: list, mec_set: list, vr_users: list):
-        pass
-
-
-class AUB(Migration):
-    """ implements the algorithm Average Utilization Based (AUB) Migration """
-
-    def service_migration(base_station_set: list, mec_set: list, vr_users: list):
-        pass
-
-        """ 
-        Describe the algorithm: 
-        (i) SFCs should be placed on the paths where link latency is as optimal as possible; 
-        (ii) processing capacity of VNFs can be improved to reduce response latency by allocating more resources to those VNFs. AUB only considers (ii), while SCG consider both. 
-        
-        1. Both under-utilized and over-utilized servers are first identified
-        2. For each over-utilized server, one or more VNFs are selected as victim VNFs based on Eq. (20
-        3. Afterwards, optimal servers are chosen from under-utilized servers for these victim VNFs using policy of choosing target server
-        4.
-        """
-
-'''

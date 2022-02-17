@@ -6,7 +6,7 @@ from migration.migration import Migration
 from base_station import BaseStationController
 from vr_controller import VrController
 
-class MigrationBasedNetwork(Migration):
+class NetLatencyMigration(Migration):
     def get_migrations(self):
         return super().get_migrations()
     
@@ -20,7 +20,7 @@ class MigrationBasedNetwork(Migration):
             vr_users=vr_users, service=service
         )
 
-        MigrationBasedNetwork.perform_migration(
+        NetLatencyMigration.perform_migration(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
@@ -50,7 +50,7 @@ class MigrationBasedNetwork(Migration):
             service_owner = VrController.get_vr_service_owner(
                 vr_users=vr_users, service=service
             )
-            mec_id_candidate = MigrationBasedNetwork.discover_mec(
+            mec_id_candidate = NetLatencyMigration.discover_mec(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 user=service_owner,
@@ -64,7 +64,6 @@ class MigrationBasedNetwork(Migration):
                 extracted_service = MecAgent.remove_service(
                     mec_set, service_server_id, service.id
                 )
-            
                 MecAgent.deploy_service(
                     mec_set, mec_id_candidate, extracted_service
                 )
@@ -89,7 +88,7 @@ class MigrationBasedNetwork(Migration):
         shortest_latency = float("inf")
         path = []
         for base_station in base_station_set:
-            if ( 
+            if (
                 MecAgent.check_deployment(
                     mec_set, base_station.mec_id, service
                 )

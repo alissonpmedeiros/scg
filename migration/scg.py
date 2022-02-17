@@ -37,7 +37,7 @@ class SCG(Migration):
         self, 
         mec_set: list, 
         vr_users: list, 
-        user_ip: str, 
+        user: dict, 
         service: VrService
     ) -> None:
         """ offloads a service i back to vr hmd """
@@ -48,7 +48,7 @@ class SCG(Migration):
         )
 
         VrController.deploy_vr_service(
-            vr_users=vr_users, user_ip=user_ip, service=extracted_service
+            vr_users=vr_users, user_ip=user.ip, service=extracted_service
         )
 
     """ ADJUST THIS METHOD TO USE ONLY CALCULATE NET LATENCY INSTEAD OF ETE LATENCY. THEN, THIS METHOD SHOULD BE USED WIHTIN CLASS 'NetLatencyMigration' """
@@ -58,14 +58,14 @@ class SCG(Migration):
         base_station_set: list,
         mec_set: list,
         vr_users: list,
-        user_ip: str,
+        user: dict,
         service: VrService, 
     ):
         """
         provides the service migration of service i, which is based on the
         current distance between user_ip and where the service is deployed
         """
-        user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
+        
 
         service_server_id = MecAgent.get_service_server_id(mec_set, service.id)
         service_location = MecAgent.get_service_bs_location(
@@ -141,11 +141,11 @@ class SCG(Migration):
                 service=service,
             )
 
-            mec_candidate_location = MecAgent.get_mec_bs_location(
-                base_station_set, mec_id_candidate
-            )
 
-            if mec_candidate_location is not None:
+            if mec_id_candidate is not None:
+                mec_candidate_location = MecAgent.get_mec_bs_location(
+                    base_station_set, mec_id_candidate
+                )
                 computing_latency, network_latency, new_service_latency = ScgController.get_ETE_latency(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
@@ -163,14 +163,14 @@ class SCG(Migration):
                     MecAgent.deploy_service(
                         mec_set, mec_id_candidate, extracted_service
                     )
-                    #print("*** Performing offloading ***")
+                    # Performing offloading ***")
                     # print("service {} move from HMD {} to MEC {}".format(service_id, user.ip, mec_id_candidate))
                     # print("hmd latency: {}".format(hmd_latency))
                     # print("new latency: {}\n".format(new_service_latency))
                     # a = input("")
 
             else:
-                print("**** no candidates ****")
+                #print("**** no candidates ****")
                 """
                 Migration should be considered. However, there are no mec servers available. 
                 The service stays on the HMD. 
@@ -224,7 +224,7 @@ class SCG(Migration):
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     vr_users=vr_users,
-                    user_ip=service_owner.ip,
+                    user=service_owner,
                     service=service,
                 )
             else:
@@ -232,7 +232,7 @@ class SCG(Migration):
                 self.reverse_offloading(
                     mec_set=mec_set,
                     vr_users=vr_users,
-                    user_ip=service_owner.ip,
+                    user=service_owner,
                     service=service,
                 )
 
@@ -244,11 +244,6 @@ class SCG(Migration):
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
-
-        current_base_station = BaseStationController.get_base_station(
-            base_station_set, user.current_location
-        )
-
         shortest_latency = float("inf")
         path = []
         for base_station in base_station_set:
@@ -257,15 +252,15 @@ class SCG(Migration):
                     mec_set, base_station.mec_id, service
                 )
             ):
-                """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
+                """ tests if the mec attached to the base station can deploy the service"""
                 src_bs = BaseStationController.get_base_station(
-                    base_station_set, current_base_station.id
+                    base_station_set, user.current_location
                 )
                 src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
                 aux_path, new_latency = Dijkstra.init_algorithm(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
-                    start_node=current_base_station.id,
+                    start_node=user.current_location,
                     start_node_computing_delay=src_mec.computing_latency,
                     target_node=base_station.id,
                 )
