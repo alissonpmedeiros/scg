@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from mec.mec import MecAgent
 from vr_controller import VrController
 from requests.exceptions import HTTPError
@@ -81,11 +81,16 @@ class WorkloadController:
     @staticmethod
     def get_workloads() -> dict:
         """gets the new workloads from the web servers"""
-        URL = "http://127.0.0.1:5000/"
+        URL = "http://130.92.70.179:5000/"
         try: 
             response = requests.get(URL)
             if response.status_code == 200:
-                data = DefaultMunch.fromDict(response.json()['users'])
-                return data
+                file_directory =  '/home/ubuntu/scg/workloads/'
+                file_name = 'service_workloads.json'
+                with open('{}{}'.format(file_directory, file_name)) as json_file:
+                    data = json.loads(json_file.read())
+                    result = DefaultMunch.fromDict(data)
+                    print('*** GOT WORKLOADS ***')
+                    return result
         except HTTPError as http_err:
             print(f'HTTP error occurred: {http_err}')

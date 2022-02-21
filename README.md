@@ -83,7 +83,9 @@ To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
 1. The web server provides an *async function* to control the number of requests in order to respond to all requests at the same time. 
     - Example: there are 5 migration algorithms, then we have to run ``` python3 ~/scg/main.py {migration_algorithm}``` 5 times, especifying each migration algorithm acronym. 
     - The web server will only respond after receiving 5 requets.
-    - The number of algorithms is specified at ```/scg/web_server.py```
+    - The number of algorithms is specified at ```~/scg/web_server.py```
+    - The web server will store the data at ```~/scg/workloads/service_workloads.json```
+    - Each algorithm will load the data from ```~/scg/workloads/service_workloads.json```. This is done due due to prevent scalability issues of flask web server. 
     - After each iteration of script ```/scg/main.py```, the algorithms that finish their processing tasks first have to wait until all other algorithms finish their tasks. 
     - This action ensures that all algorithms will have the same workload in each iteration.
 ---

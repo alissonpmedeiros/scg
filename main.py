@@ -30,6 +30,7 @@ def check_algorithm():
 
 def start_system(scg_controller, migration_algorithm) -> None:
     previous_latency = None
+    iteration = 1
     while True:
         VrController.update_users_location(scg_controller.vr_users)
         WorkloadController.update_workloads(
@@ -48,6 +49,8 @@ def start_system(scg_controller, migration_algorithm) -> None:
         
         if latency != previous_latency:
             gpu_usage = scg_controller.calculate_gpu_usage()
+            print('ITERATION: {}'.format(iteration))
+            iteration +=1
             print("GPU USAGE: {}".format(gpu_usage))
             migration_algorithm.get_migrations()
             print('AVERAGE ETE LATENCY: {}'.format(latency))
