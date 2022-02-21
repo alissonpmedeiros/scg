@@ -1,12 +1,13 @@
 """scg system imports"""
 from migration.scg import SCG
 from vr_controller import VrController
-from workloads import WorkloadController
+from workloads.workloads import WorkloadController
 from scg_controller import ScgController
 from migration.scg_react import ScgReact
 from migration.no_migration import NoMigration
 from migration.always_migrate import AlwaysMigrate
-from migration.network_migration import NetLatencyMigration
+from migration.net_latency_migration import NetLatencyMigration
+from migration.resource_aware_net_migration import ResourceAwareNetMigration
 
 """other imports"""
 import time, sys
@@ -24,11 +25,14 @@ def check_algorithm():
         return ScgReact()
     elif sys.argv[1] == 'network':
         return NetLatencyMigration()
+    elif sys.argv[1] == 'network-resource':
+        return ResourceAwareNetMigration()
 
 def start_system(scg_controller, migration_algorithm) -> None:
     previous_latency = None
     while True:
-        WorkloadController.check_workloads(
+        VrController.update_users_location(scg_controller.vr_users)
+        WorkloadController.update_workloads(
             base_station_set=scg_controller.base_station_set,
             mec_set=scg_controller.mec_set, 
             vr_users=scg_controller.vr_users,
@@ -50,7 +54,8 @@ def start_system(scg_controller, migration_algorithm) -> None:
             print('\n')
         
         previous_latency = latency
-        VrController.update_users_location(scg_controller.vr_users)
+        '''
+        '''
 
 
 if __name__ == "__main__":
@@ -58,4 +63,5 @@ if __name__ == "__main__":
     scg_controller = ScgController()
     migration_algorithm = check_algorithm()
     start_system(scg_controller, migration_algorithm)
-
+    
+    

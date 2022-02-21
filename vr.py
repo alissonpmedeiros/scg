@@ -57,12 +57,6 @@ class VrService:
     """ represents a VR service""" 
     id: str = field(init=False)
     quota: ServiceQuota = field(init=False)
-    
-    """ number of iterations that will be required to service change its workload"""
-    iterations:int = field(init=False)   
-    
-    """ controls the iterations"""
-    iterations_count:int = field(default=0)
 
     """ cpu_only becomes an optional field"""
     cpu_only: bool = field(default=False, init=True) 
@@ -75,8 +69,6 @@ class VrService:
     def __post_init__(self):
         """ set up the id """
         self.id = str(uuid.uuid4())
-
-        self.iterations = random.randint(20, 100)
     
         quotas_set = ['small', 'tiny', 'medium', 'large', 'xlarge']
         

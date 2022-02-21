@@ -68,6 +68,14 @@ class VrController:
             result = DefaultMunch.fromDict(data)
             return result 
 
+    @staticmethod
+    def get_service(vr_users: list, service_id: str) -> dict:
+        for user in vr_users: 
+            for service in user.services_set:
+                    if service.id == service_id:
+                        return service
+        return None
+
     @staticmethod 
     def get_vr_service(
         vr_users: list, 
@@ -79,6 +87,7 @@ class VrController:
                 for service in user.services_set:
                     if service.id == service_id:
                         return service
+        return None
 
     @staticmethod 
     def get_vr_service_owner(vr_users: list, service: VrService) -> dict:
@@ -94,6 +103,7 @@ class VrController:
         for user in vr_users:
             if user.ip == user_ip:
                 return user
+        return None
 
     
     @staticmethod

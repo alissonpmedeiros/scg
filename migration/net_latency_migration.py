@@ -20,7 +20,7 @@ class NetLatencyMigration(Migration):
             vr_users=vr_users, service=service
         )
 
-        NetLatencyMigration.perform_migration(
+        self.perform_migration(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
@@ -28,7 +28,6 @@ class NetLatencyMigration(Migration):
             service=service,
         )
 
-    @classmethod
     def perform_migration(
         self,
         base_station_set: list,
@@ -50,14 +49,16 @@ class NetLatencyMigration(Migration):
             service_owner = VrController.get_vr_service_owner(
                 vr_users=vr_users, service=service
             )
-            mec_id_candidate = NetLatencyMigration.discover_mec(
+            mec_id_candidate = self.discover_mec(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 user=service_owner,
                 service=service,
             )
             
-            if mec_id_candidate is not None:
+            if mec_id_candidate is not None and MecAgent.check_deployment(
+                    mec_set, mec_id_candidate, service
+                ):
                 service_server_id = MecAgent.get_service_server_id(
                     mec_set, service.id
                 )
@@ -72,9 +73,6 @@ class NetLatencyMigration(Migration):
                 self.unsuccessful_migrations += 1
 
             
-
-
-    @classmethod
     def discover_mec(
         self, base_station_set: list, mec_set: list, user: dict, service: VrService, 
     ) -> str:
@@ -88,21 +86,16 @@ class NetLatencyMigration(Migration):
         shortest_latency = float("inf")
         path = []
         for base_station in base_station_set:
-            if (
-                MecAgent.check_deployment(
-                    mec_set, base_station.mec_id, service
-                )
-            ):
-                """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-                aux_path, new_latency = Dijkstra.init_algorithm(
-                    base_station_set=base_station_set,
-                    start_node=current_base_station.id,
-                    target_node=base_station.id,
-                )
+            """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
+            aux_path, new_latency = Dijkstra.init_algorithm(
+                base_station_set=base_station_set,
+                start_node=current_base_station.id,
+                target_node=base_station.id,
+            )
 
-                if new_latency <= shortest_latency:
-                    path = aux_path
-                    shortest_latency = new_latency
+            if new_latency <= shortest_latency:
+                path = aux_path
+                shortest_latency = new_latency
 
         """ we need to take care of the case where there is no more mec available """
         if not path:
@@ -114,12 +107,6 @@ class NetLatencyMigration(Migration):
             base_station_set, path[-1]
         )
         return bs_destination.mec_id
-
-
-
-
-
-
 
 
 

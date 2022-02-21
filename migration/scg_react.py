@@ -1,7 +1,6 @@
 from vr import VrService
 from graph import Dijkstra
 from mec.mec import MecAgent
-from migration.migration import Migration
 from migration.react import REACTApproach
 from base_station import BaseStationController
 from mec.mec_controller import MecController

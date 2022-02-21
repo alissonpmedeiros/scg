@@ -4,8 +4,12 @@ This repository describes the technology stack setup used by SCG.
 
 ---
 ## Operating system:
-1.  Ubuntu server 20 is used for both mininet and onos VMs
+1.  Ubuntu server 20 is used for both *mininet* and *ONOS* VMs
 
+2. VMs requirements
+    - RAM: 50GB
+    - VCPUs: 32
+    - Storage: 40G
 ---
 
 ## ONOS SDN controller setup
@@ -75,14 +79,27 @@ To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
 
 ---
 
+## Web server setup
+1. The web server provides an *async function* to control the number of requests in order to respond to all requests at the same time. 
+    - Example: there are 5 migration algorithms, then we have to run ``` python3 ~/scg/main.py {migration_algorithm}``` 5 times, especifying each migration algorithm acronym. 
+    - The web server will only respond after receiving 5 requets.
+    - The number of algorithms is specified at ```/scg/web_server.py```
+    - After each iteration of script ```/scg/main.py```, the algorithms that finish their processing tasks first have to wait until all other algorithms finish their tasks. 
+    - This action ensures that all algorithms will have the same workload in each iteration.
+---
+
 ## SCG setup
 
-1. Computing resources (gpu and cpu) for MEC servers and VR services are automatically generated based on the number of base stations and users configured at *mininet_network.py*. 
-The data will be stored at **~/mec/mecs.txt** and **~/user/users.txt**. To start the system, runs the following script:
+1. Computing resources (GPUs and CPUs) for MEC servers and VR services are automatically generated based on the number of base stations and users configured at *mininet_network.py*. The data will be stored at **~/mec/mecs.txt** and **~/user/users.txt**. 
+    - Wait until all services are recognized by the SDN controller
+    - To do so, check **http://ONOS-VM-IP:8181/onos/ui/#/host**
 
-2. To start the system, runs the following script:
-    - ``` python3 main.py ``` 
+2. Every time the script **mininet_network.py** runs, we have to delete the *users.txt* file because VR users will have different MAC addresses. 
+
+3. To start the system, runs the following scripts:
+    - ``` python3 ~/scg/network/mininet_network.py ```
+    - ``` python3 ~/scg/web_server.py ```
+    - ``` python3 ~/scg/main.py {migration_algorithm}``` 
 
 
-3. Every time the script **mininet_network.py** runs, we have to delete the *users.txt* file because VR users will have different MAC addresses. 
 ---
