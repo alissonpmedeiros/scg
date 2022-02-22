@@ -1,10 +1,10 @@
 from vr import VrService
 from graph import Dijkstra
 from mec.mec import MecAgent
+from migration.scg_tradeoff import SCG   
 from migration.react import REACTApproach
 from base_station import BaseStationController
 from mec.mec_controller import MecController
-from migration.scg import SCG   
 
 class ScgReact(SCG):
     """inherited from the SCG class"""

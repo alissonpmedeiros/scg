@@ -2,7 +2,7 @@
 from munch import DefaultMunch
 
 """ np incoder module"""
-from encoder import JsonEncoder
+from encoders.json_encoder import JsonEncoder
 
 """ importing vr module """
 from vr import VrService

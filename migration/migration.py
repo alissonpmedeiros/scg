@@ -10,8 +10,14 @@ class Migration(ABC):
     unsuccessful_migrations = 0
 
     def get_migrations(self):
-        print("SUCESSFUL MIGRATIONS: {}".format(self.sucessful_migrations))
-        print("UNSUCCESFUL MIGRATIONS: {}".format(self.unsuccessful_migrations))
+
+        success = self.sucessful_migrations
+        unsuccess = self.unsuccessful_migrations
+
+        self.sucessful_migrations = 0
+        self.unsuccessful_migrations = 0
+
+        return success, unsuccess
 
     def check_services(
         self,

@@ -1,16 +1,13 @@
 import json, asyncio
 from flask import Flask
 from vr_controller import VrController
-from encoder import JsonEncoder
+
 
 app = Flask(__name__)
 COUNT = 0
 
-MIGRATION_ALGORITHMS = 1
+MIGRATION_ALGORITHMS = 6
 VR_USERS = VrController.load_vr_users()
-
-#FILE_NAME='service_workloads.json'
-#FILE_DIRECTORY='/home/ubuntu/scg/workloads/'
 
 def changing_workloads(vr_users: list):
     """changing service quotas for vr services"""
@@ -22,7 +19,7 @@ def changing_workloads(vr_users: list):
 async def check_requests():
     """async function to control the number of requests untill response to all requests"""
     while COUNT % MIGRATION_ALGORITHMS >= 1:
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.00001)
     return 
 
 

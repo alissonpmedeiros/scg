@@ -11,7 +11,7 @@ from base_station import BaseStationController
 from onos import OnosController
 
 """ json encoder module """
-from encoder import JsonEncoder
+from encoders.json_encoder import JsonEncoder
 
 """ other modules """
 from munch import DefaultMunch, Munch

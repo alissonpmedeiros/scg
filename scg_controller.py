@@ -53,6 +53,8 @@ class ScgController:
 
     def get_average_ETE_latency(self):
         total_latency = 0
+        total_net_latency = 0
+        total_computing_latency = 0
         services_cont = 0
         for user in self.vr_users:
             for service_id in user.services_ids:
@@ -64,6 +66,7 @@ class ScgController:
                         vr_users=self.vr_users,
                         user_ip=user.ip,
                     )
+                    total_computing_latency+=hmd_latency
                     total_latency += hmd_latency
                 
                 else:
@@ -87,13 +90,17 @@ class ScgController:
                     #print('network latency: {}'.format(network_latency))
                     #print('ete latency: {}'.format(ete_latency))
                     #a = input('')
+                    total_net_latency += network_latency
+                    total_computing_latency+=computing_latency
                     total_latency += ete_latency
 
                 
                 services_cont += 1
 
-        average_latency = round((total_latency / services_cont), 2)
-        return average_latency
+        average_net_latency = total_net_latency / services_cont
+        average_computing_latency = total_computing_latency / services_cont
+        average_latency = total_latency / services_cont
+        return average_net_latency, average_computing_latency, average_latency
 
     @staticmethod
     def get_ETE_latency(
@@ -120,8 +127,7 @@ class ScgController:
         )
         mec = MecController.get_mec(mec_set, base_station.mec_id)
         
-        computing_latency = round(mec.computing_latency, 2) 
-        ete_latency = round(ete_latency, 2)
+        computing_latency = mec.computing_latency 
         network_latency = ete_latency - computing_latency
         return network_latency, computing_latency, ete_latency
 
@@ -161,8 +167,6 @@ class ScgController:
                 if service.is_mobile:
                     total_gpus += service.quota.resources.gpu
 
-        result = round((total_gpus / total_services), 2)
+        result = total_gpus / total_services
         #print('total services: {} | total gpus: {}'.format(total_services, total_gpus))
         return result
-
-    
