@@ -9,8 +9,8 @@ COUNT = 0
 MIGRATION_ALGORITHMS = 1
 VR_USERS = VrController.load_vr_users()
 
-FILE_NAME='service_workloads.json'
-FILE_DIRECTORY='/home/ubuntu/scg/workloads/'
+#FILE_NAME='service_workloads.json'
+#FILE_DIRECTORY='/home/ubuntu/scg/workloads/'
 
 def changing_workloads(vr_users: list):
     """changing service quotas for vr services"""
@@ -22,7 +22,7 @@ def changing_workloads(vr_users: list):
 async def check_requests():
     """async function to control the number of requests untill response to all requests"""
     while COUNT % MIGRATION_ALGORITHMS >= 1:
-        await asyncio.sleep(0.0001)
+        await asyncio.sleep(0.1)
     return 
 
 
@@ -32,10 +32,10 @@ async def index():
     COUNT +=1
     if COUNT == MIGRATION_ALGORITHMS:
         changing_workloads(VR_USERS)
-        JsonEncoder.encoder(VR_USERS, FILE_DIRECTORY, FILE_NAME)
+        #JsonEncoder.encoder(VR_USERS, FILE_DIRECTORY, FILE_NAME)
         COUNT = 0
     await check_requests()
-    return json.dumps({'status': True}), 200, {'ContentType':'application/json'} 
+    return json.dumps({'users': VR_USERS}), 200, {'ContentType':'application/json'} 
 
 
 if __name__ == '__main__':

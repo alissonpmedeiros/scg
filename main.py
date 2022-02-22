@@ -47,24 +47,22 @@ def start_system(scg_controller, migration_algorithm) -> None:
 
         latency = scg_controller.get_average_ETE_latency()
         
-        if latency != previous_latency:
-            gpu_usage = scg_controller.calculate_gpu_usage()
-            print('ITERATION: {}'.format(iteration))
-            iteration +=1
-            print("GPU USAGE: {}".format(gpu_usage))
-            migration_algorithm.get_migrations()
-            print('AVERAGE ETE LATENCY: {}'.format(latency))
-            print('\n')
+        #if latency != previous_latency:
+        gpu_usage = scg_controller.calculate_gpu_usage()
+        print('ITERATION: {}'.format(iteration))
+        iteration +=1
+        print("GPU USAGE: {}".format(gpu_usage))
+        migration_algorithm.get_migrations()
+        print('AVERAGE ETE LATENCY: {}'.format(latency))
+        print('\n')
         
-        previous_latency = latency
-        '''
-        '''
-
+        #previous_latency = latency
+        
 
 if __name__ == "__main__":
     """variables"""
     scg_controller = ScgController()
     migration_algorithm = check_algorithm()
     start_system(scg_controller, migration_algorithm)
-    
+    ### TAKE CARE OF THE CASE OF NO MIGRATION, WHERE THE KORLOAD CHANGES AD THERE IS NO MORE AVAILABLE RESSOURCES...
     
