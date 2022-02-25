@@ -1,0 +1,12 @@
+SYSTEM_VARIABLES:
+  RESULTS_DIR: '/home/ubuntu/scg/results/'
+  ALGORITHMS: 6
+  USERS_DIR: '/home/ubuntu/scg/user'
+  USERS_FILE: 'users.txt'
+  
+MEC_SERVERS:
+  GPU_LAM: 110
+  CPU_LAM: 200
+  MECS_WITHOUT_GPUS: 5
+  INITIAL_GPU_LOAD: 0.8 # percentage 
+  INITIAL_CPU_LOAD: 0.8 # percentage

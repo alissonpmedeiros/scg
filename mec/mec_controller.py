@@ -5,21 +5,21 @@ from munch import DefaultMunch
 from encoders.json_encoder import JsonEncoder
 
 """ importing vr module """
-from vr import VrService
-from vr_controller import VrController
+from vr.vr import VrService
+from vr.vr_controller import VrController
 
 """ import base station module """
-from base_station import BaseStationController
+from base_station.bs_controller import BaseStationController
 
 """ import mec modules """
-from mec.mec import Mec, MecAgent, MecResources
+from mec.mec import Mec, MecAgent, MecResourceController
 
 """ import graph modules """
-from graph import Dijkstra
+from graph.graph import Dijkstra
 
 """ other modules """
 from pprint import pprint
-import orjson as json
+import json
 import os
 
 
@@ -142,9 +142,9 @@ class MecController:
         mec_set = []
 
         """ generates cpu and gpu resources for all mec servers """
-        mec_resources = MecResources()
-        cpu_set = mec_resources.generate_cpu_resources(overall_mecs)
-        gpu_set = mec_resources.generate_gpu_resources(overall_mecs)
+        resource_controller = MecResourceController()
+        cpu_set = resource_controller.generate_cpu_resources(overall_mecs)
+        gpu_set = resource_controller.generate_gpu_resources(overall_mecs)
 
         for i in range(0, overall_mecs):
             """ creating mec server i """

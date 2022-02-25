@@ -6,7 +6,7 @@ from dataclasses_json import dataclass_json
 
 
 """ importing vr module """
-from vr import VrService
+from vr.vr import VrService
 
 
 """ other modules """
@@ -16,7 +16,7 @@ from typing import List
 import uuid
 
 @dataclass
-class MecResources:
+class MecResourceController:
     """ generates MEC GPU and CPU workloads """
 
     """ lam: rate or known number of occurences """
@@ -160,8 +160,8 @@ class MecAgent:
         return extracted_service
 
     @staticmethod
-    def get_service(mec_set: list, service_id: str) -> VrService:
-        """ gets a VR service """
+    def get_mec_service(mec_set: list, service_id: str) -> VrService:
+        """ gets a VR service that is deployed on mec server """
         for mec in mec_set:
             for service in mec.services_set:
                 if service.id == service_id:
@@ -174,15 +174,16 @@ class MecAgent:
             for service in mec.services_set:
                 if service.id == service_id:
                     return mec.id
+        return None
 
     @staticmethod
-    def get_service_bs_location(
+    def get_service_bs_id(
         base_station_set: list, mec_set: list, service_id: str
     ) -> str:
         """ gets the base station where the mec (used to deploy the service) is attached to """
-        mec_location = MecAgent.get_service_server_id(mec_set, service_id)
+        service_server_id = MecAgent.get_service_server_id(mec_set, service_id)
         for base_station in base_station_set:
-            if base_station.mec_id == mec_location:
+            if base_station.mec_id == service_server_id:
                 return base_station.id
 
     @staticmethod

@@ -1,18 +1,20 @@
 """scg system imports"""
-from encoders.csv_encoder import CSV
-from vr_controller import VrController
-from migration.scg_tradeoff import SCG
-from migration.scg_react import ScgReact
-from scg_controller import ScgController
-from workloads import WorkloadController
-from migration.no_migration import NoMigration
-from migration.always_migrate import AlwaysMigrate
-from migration.net_latency_migration import NetLatencyMigration
-from migration.resource_aware_net_migration import ResourceAwareNetMigration
+from vr.vr_controller import VrController
+from scg_controller.scg_controller import ScgController
+from workloads.workload_controller import WorkloadController
+
+"""service migration algorithms modules"""
+from migration.algorithms.scg_tradeoff import SCG
+from migration.algorithms.scg_react import ScgReact
+from migration.algorithms.no_migration import NoMigration
+from migration.algorithms.always_migrate import AlwaysMigrate
+from migration.algorithms.net_latency import NetLatencyMigration
+from migration.algorithms.net_latency_resource_aware import NetLatencyMigrationResouceAware
 
 """other imports"""
 import time, sys
 from pprint import pprint as pprint
+from encoders.csv_encoder import CSV
 
 FILE_NAME='{}.csv'.format(sys.argv[1])
 FILE_DIR = '/home/ubuntu/scg/results/'
@@ -30,7 +32,7 @@ def check_algorithm():
     elif sys.argv[1] == 'network':
         return NetLatencyMigration()
     elif sys.argv[1] == 'network-resource':
-        return ResourceAwareNetMigration()
+        return NetLatencyMigrationResouceAware()
 
 def start_system(scg_controller, migration_algorithm) -> list:
     while True:
@@ -46,14 +48,13 @@ def start_system(scg_controller, migration_algorithm) -> list:
             mec_set=scg_controller.mec_set, 
             vr_users=scg_controller.vr_users,
         )
-
         net_latency, computing_latency, ete_latency = scg_controller.get_average_ETE_latency()
         gpu_usage = scg_controller.calculate_gpu_usage()
-        sucessful_migration, unsuccessful_migration = migration_algorithm.get_migrations()
-        data = [gpu_usage, net_latency, computing_latency, ete_latency, sucessful_migration, unsuccessful_migration]
+        successful_migration, unsuccessful_migration = migration_algorithm.get_migrations()
+        data = [gpu_usage, net_latency, computing_latency, ete_latency, successful_migration, unsuccessful_migration]
         
         CSV.save_data(FILE_DIR, FILE_NAME, data)
-
+        time.sleep(5)
 
 if __name__ == "__main__":
     CSV.create_file(FILE_DIR, FILE_NAME)

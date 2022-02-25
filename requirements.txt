@@ -1,2 +1,6 @@
 munch
 requests
+dataclasses
+dataclasses_json
+orjson
+numpy
