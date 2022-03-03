@@ -2,7 +2,7 @@ from vr.vr import VrService
 from mec.mec import MecAgent
 from vr.vr_controller import VrController
 from base_station.bs_controller import BaseStationController
-from migration.algorithms.net_latency import NetLatencyMigration, Dijkstra
+from migration.algorithms.net_latency import NetLatencyMigration, DijkstraController
 
 
 
@@ -13,12 +13,12 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
         return super().get_migrations()
     
     """inherited NetLatencyMigration class"""
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list):
-        return super().check_services(base_station_set, mec_set, vr_users)
+    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+        return super().check_services(base_station_set, mec_set, vr_users, graph)
 
     """inherited NetLatencyMigration class"""
-    def service_migration(self, base_station_set: list, mec_set: list, vr_users: list, service: VrService) -> bool:
-        return super().service_migration(base_station_set, mec_set, vr_users, service)
+    def service_migration(self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict) -> bool:
+        return super().service_migration(base_station_set, mec_set, vr_users, service, graph)
 
     """this method is not inherited from NetLatencyMigration class, we rewrote it to make it a resource-aware algorithm"""
     def perform_migration(
@@ -28,6 +28,7 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
         vr_users: list,
         user: dict,
         service: VrService,
+        graph: dict,
     )-> bool:
         """
         provides the service migration of service i, which is based on the
@@ -46,6 +47,7 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
             mec_set=mec_set,
             user=service_owner,
             service=service,
+            graph=graph
         )
         
         if mec_id_candidate is not None:
@@ -67,7 +69,7 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
 
     """this method is not inherited from NetLatencyMigration class, we rewrote it to make it a resource-aware algorithm"""
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, 
+        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict,
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -85,10 +87,10 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
                 )
             ):
                 """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-                aux_path, new_latency = Dijkstra.init_algorithm(
-                    base_station_set=base_station_set,
+                aux_path, new_latency = DijkstraController.get_shortest_path(
                     start_node=current_base_station.id,
                     target_node=base_station.id,
+                    graph=graph
                 )
 
                 if new_latency <= shortest_latency:

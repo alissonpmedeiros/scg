@@ -1,6 +1,6 @@
 from vr.vr import VrService
 from mec.mec import MecAgent
-from graph.graph import Dijkstra
+from graph.graph import DijkstraController
 from mec.mec_controller import MecController
 from migration.algorithms.scg_tradeoff import SCG   
 from migration.react.react_algorithm import REACTApproach
@@ -8,8 +8,8 @@ from base_station.bs_controller import BaseStationController
 
 class ScgReact(SCG):
     """inherited from the SCG class"""
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list):
-        return super().check_services(base_station_set, mec_set, vr_users)
+    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+        return super().check_services(base_station_set, mec_set, vr_users, graph)
 
     """inherited from the SCG class"""
     def get_migrations(self):
@@ -17,9 +17,9 @@ class ScgReact(SCG):
 
     """inherited from the SCG class"""
     def service_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService
+        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict
     ) -> bool:
-        return super().service_migration(base_station_set, mec_set, vr_users, service)
+        return super().service_migration(base_station_set, mec_set, vr_users, service, graph)
 
     """inherited from the SCG class"""
     def reverse_offloading(
@@ -29,19 +29,19 @@ class ScgReact(SCG):
 
     """inherited from the SCG class"""
     def perform_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService
+        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService, graph: dict
     ) -> bool:
-        return super().perform_migration(base_station_set, mec_set, vr_users, user, service)
+        return super().perform_migration(base_station_set, mec_set, vr_users, user, service, graph)
 
     """inherited from the SCG class"""
     def trade_off(
-        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService
+        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict
     ) -> bool:
-        return super().trade_off(base_station_set, mec_set, vr_users, service)
+        return super().trade_off(base_station_set, mec_set, vr_users, service, graph)
 
     """this method is not inherited from the SCG class, we rewrote it"""
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, 
+        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -62,12 +62,12 @@ class ScgReact(SCG):
                 base_station_set, current_base_station.id
             )
             src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
-            aux_path, new_latency = Dijkstra.init_algorithm(
-                base_station_set=base_station_set,
-                mec_set=mec_set,
+            aux_path, new_latency = DijkstraController.get_shortest_path(
                 start_node=current_base_station.id,
                 start_node_computing_delay=src_mec.computing_latency,
+                start_node_wireless_delay=src_bs.wireless_latency,
                 target_node=base_station.id,
+                graph=graph
             )
 
             if new_latency <= shortest_latency:

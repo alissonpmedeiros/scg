@@ -23,6 +23,7 @@ class Migration(ABC):
         base_station_set: list,
         mec_set: list,
         vr_users: list,
+        graph: dict, 
     ):
         for user in vr_users:
             if user.current_location != user.previous_location:
@@ -37,6 +38,7 @@ class Migration(ABC):
                         mec_set=mec_set,
                         vr_users=vr_users,
                         service=service,
+                        graph=graph,
                     )
         
     def service_migration(
@@ -44,6 +46,7 @@ class Migration(ABC):
         base_station_set: list,
         mec_set: list,
         vr_users: list,
-        service: VrService
+        service: VrService,
+        graph: dict,
     ) -> bool:
         pass    

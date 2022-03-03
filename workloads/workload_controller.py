@@ -17,7 +17,8 @@ class WorkloadController:
         extracted_service: VrService, 
         service_server_id: str, 
         quota_copy: dict, 
-        migration: Migration 
+        migration: Migration,
+        graph: dict, 
     ) -> None:
         """_summary_
 
@@ -46,6 +47,7 @@ class WorkloadController:
                 mec_set=mec_set,
                 vr_users=vr_users,
                 service=extracted_service,
+                graph=graph
             ):
                 extracted_service = MecAgent.remove_service(
                     mec_set, service_server_id, service.id
@@ -59,6 +61,7 @@ class WorkloadController:
         mec_set: list, 
         vr_users: list,
         migration: Migration,
+        graph: dict,
     ):
         """updates vr and mec service workloads"""
         response_vr_users = WorkloadController.get_workloads()
@@ -84,7 +87,7 @@ class WorkloadController:
                     quota_copy = extracted_service.quota
                     extracted_service.quota  = response_service.quota
                     WorkloadController.check_migration_demand(
-                        base_station_set, mec_set, vr_users, service, extracted_service, service_server_id, quota_copy, migration
+                        base_station_set, mec_set, vr_users, service, extracted_service, service_server_id, quota_copy, migration, graph
                     )
                     
                         

@@ -16,7 +16,7 @@ from mec.mec_controller import MecController
 from base_station.bs_controller import BaseStationController
 
 """ graph modules """
-from graph.graph import Dijkstra
+from graph.graph import DijkstraController, GraphController
 
 """ vr controller modules """
 from vr.vr_controller import VrController
@@ -36,19 +36,18 @@ class ScgController:
     base_station_set: List[dict] = field(default_factory=list, init=False)
     mec_set: List[Mec] = field(default_factory=list, init=False)
     vr_users: List[Vr_HMD] = field(default_factory=list, init=False)
+    graph: dict = field(init=False)
     onos: OnosController = field(init=False)
 
     def __post_init__(self):
         self.onos=OnosController()
-        MecController.init_servers(self.overall_mecs)
+        MecController.init_mec_servers(self.overall_mecs)
         self.mec_set = MecController.load_mec_servers()
-        BaseStationController.build_network_topology(
-            base_station_set=self.base_station_set, mec_set=self.mec_set
-        )
-
+        BaseStationController.init_base_stations(mec_set=self.mec_set)
+        self.base_station_set = BaseStationController.load_base_stations()
         VrController.init_vr_users(services_per_user=self.services_per_user)
         self.vr_users = VrController.load_vr_users()
-
+        self.graph = GraphController.get_graph(self.base_station_set, self.mec_set)
         self.offload_services()
 
     def get_average_ETE_latency(self):
@@ -85,18 +84,15 @@ class ScgController:
                         mec_set=self.mec_set,
                         src_location=user.current_location,
                         dst_location=service_location,
+                        graph=self.graph,
                     )
-                    #print('computing latency: {}'.format(computing_latency))
-                    #print('network latency: {}'.format(network_latency))
-                    #print('ete latency: {}'.format(ete_latency))
-                    #a = input('')
                     total_net_latency += network_latency
                     total_computing_latency+=computing_latency
                     total_latency += ete_latency
 
                 
                 services_cont += 1
-
+        
         average_net_latency = round((total_net_latency / services_cont), 3)
         average_computing_latency = round((total_computing_latency / services_cont), 3)
         average_latency = round((total_latency / services_cont), 3)
@@ -104,7 +100,7 @@ class ScgController:
 
     @staticmethod
     def get_ETE_latency(
-        base_station_set: list, mec_set: list, src_location: str, dst_location: str
+        base_station_set: list, mec_set: list, src_location: str, dst_location: str, graph: dict
     ) -> float:
         """
         calculates the end-to-end latency between a vr
@@ -114,12 +110,12 @@ class ScgController:
             base_station_set, src_location
         )
         src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
-        path, ete_latency = Dijkstra.init_algorithm(
-            base_station_set=base_station_set,
-            mec_set=mec_set,
+        path, ete_latency = DijkstraController.get_shortest_path(
             start_node=src_location,
             start_node_computing_delay=src_mec.computing_latency,
+            start_node_wireless_delay=src_bs.wireless_latency,
             target_node=dst_location,
+            graph=graph
         )
         base_station = BaseStationController.get_base_station(
             base_station_set=base_station_set, 
@@ -129,6 +125,11 @@ class ScgController:
         
         computing_latency = mec.computing_latency 
         network_latency = ete_latency - computing_latency
+        #print(network_latency)
+        #print(path)
+        #print(f'e2e: {ete_latency} | computing: {computing_latency} | network: {network_latency}')
+        #print('\n')
+        #a = input('')
         return network_latency, computing_latency, ete_latency
 
     def offload_services(self) -> None:
@@ -173,4 +174,9 @@ class ScgController:
         return result
 
     
-        
+    def count_vr_services_on_HMD(self)-> int:
+        count  = 0
+        for user in self.vr_users:
+            for service in user.services_set:
+                count +=1
+        return count

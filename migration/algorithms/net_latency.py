@@ -1,5 +1,4 @@
 import sys
-from graph.graph import Graph
 from vr.vr import VrService
 from mec.mec import MecAgent
 from migration.migration_ABC import Migration
@@ -10,13 +9,13 @@ class NetLatencyMigration(Migration):
     def get_migrations(self):
         return super().get_migrations()
     
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list):
+    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
         return super().check_services(
-            base_station_set, mec_set, vr_users
+            base_station_set, mec_set, vr_users, graph
         )
 
     def service_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService
+        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict
     ) -> bool:
         service_owner = VrController.get_vr_service_owner(
             vr_users=vr_users, service=service
@@ -28,10 +27,11 @@ class NetLatencyMigration(Migration):
             vr_users=vr_users,
             user=service_owner,
             service=service,
+            graph=graph,
         )
 
     def perform_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService,
+        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService, graph: dict
     ) -> bool:
         """
         provides the service migration of service i, which is based on the
@@ -51,6 +51,7 @@ class NetLatencyMigration(Migration):
             mec_set=mec_set,
             user=service_owner,
             service=service,
+            graph=graph
         )
         
         if mec_id_candidate is not None and MecAgent.check_deployment(
@@ -73,7 +74,7 @@ class NetLatencyMigration(Migration):
 
             
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, 
+        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict,
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -86,10 +87,10 @@ class NetLatencyMigration(Migration):
         path = []
         for base_station in base_station_set:
             """ tests if the base station is not the source base station and the mec attached to the base station instance can deploy the service  """
-            aux_path, new_latency = Dijkstra.init_algorithm(
-                base_station_set=base_station_set,
+            aux_path, new_latency = DijkstraController.get_shortest_path(
                 start_node=current_base_station.id,
                 target_node=base_station.id,
+                graph=graph
             )
 
             if new_latency <= shortest_latency:
@@ -155,7 +156,7 @@ class Dijkstra:
         return previous_nodes, shortest_path
 
     @staticmethod
-    def result(
+    def get_result(
         previous_nodes, 
         shortest_path, 
         start_node, 
@@ -177,38 +178,20 @@ class Dijkstra:
         path.reverse()
         return path, shortest_path[target_node]
 
+
+class DijkstraController:
     @staticmethod
-    def init_algorithm(
-        base_station_set: list, 
+    def get_shortest_path(
         start_node: str, 
-        target_node: str ):
-        """ inits Dijkstra algorithm """
+        target_node: str,
+        graph: dict, 
+    ):
         
-        nodes = []
-        for base_station in base_station_set:
-            nodes.append(base_station.id)
-        
-        
-        """ init the graph with base stations ids """
-        init_graph = {}
-        for node in nodes:
-            init_graph[node] = {}
-
-        """ adds the destinations on each source node and the latency (weight) between them """
-        for base_station in base_station_set:
-            scr = base_station.id
-            for link in base_station.links:
-                dst = link.dst.device
-                init_graph[scr][dst] = link.latency
-
-        """ constructs the graph """
-        graph = Graph(nodes, init_graph)
-
         previous_nodes, shortest_path = Dijkstra.dijkstra_algorithm(
             graph=graph, 
             start_node=start_node)
 
-        return Dijkstra.result(
+        return Dijkstra.get_result(
             previous_nodes, 
             shortest_path, 
             start_node=start_node, 

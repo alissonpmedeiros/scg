@@ -33,6 +33,8 @@ def check_algorithm():
         return NetLatencyMigration()
     elif sys.argv[1] == 'network-resource':
         return NetLatencyMigrationResouceAware()
+    else:
+        print('*** algorithm not found! ***')
 
 def start_system(scg_controller, migration_algorithm) -> list:
     while True:
@@ -42,19 +44,23 @@ def start_system(scg_controller, migration_algorithm) -> list:
             mec_set=scg_controller.mec_set, 
             vr_users=scg_controller.vr_users,
             migration=migration_algorithm,
+            graph=scg_controller.graph,
         )
         migration_algorithm.check_services(
             base_station_set=scg_controller.base_station_set,
             mec_set=scg_controller.mec_set, 
             vr_users=scg_controller.vr_users,
+            graph=scg_controller.graph,
         )
         net_latency, computing_latency, ete_latency = scg_controller.get_average_ETE_latency()
         gpu_usage = scg_controller.calculate_gpu_usage()
         successful_migration, unsuccessful_migration = migration_algorithm.get_migrations()
         data = [gpu_usage, net_latency, computing_latency, ete_latency, successful_migration, unsuccessful_migration]
         
+        #print(f'\n SERVICES ON HMDS: {scg_controller.count_vr_services_on_HMD()} \n')
         CSV.save_data(FILE_DIR, FILE_NAME, data)
-        time.sleep(5)
+        #a = input('')
+        time.sleep(3)
 
 if __name__ == "__main__":
     CSV.create_file(FILE_DIR, FILE_NAME)
@@ -62,4 +68,6 @@ if __name__ == "__main__":
     migration_algorithm = check_algorithm()
     start_system(scg_controller, migration_algorithm)
     
-    
+    """ 
+    2- THE GRAPH SHOULD BE BUILT ONLY ONCE
+    """

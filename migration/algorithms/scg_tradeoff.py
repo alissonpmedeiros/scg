@@ -1,5 +1,5 @@
 from vr.vr import VrService
-from graph.graph import Dijkstra
+from graph.graph import DijkstraController
 from mec.mec import MecAgent
 from vr.vr_controller import VrController
 from mec.mec_controller import MecController
@@ -10,8 +10,8 @@ from base_station.bs_controller import BaseStationController
 
 class SCG(Migration):    
 
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list):
-        return super().check_services(base_station_set, mec_set, vr_users)
+    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+        return super().check_services(base_station_set, mec_set, vr_users, graph)
 
     def get_migrations(self):
         return super().get_migrations()
@@ -23,14 +23,27 @@ class SCG(Migration):
         mec_set: list,
         vr_users: list, 
         service: VrService,
+        graph: dict,
     ) -> bool:
         return self.trade_off(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
             service=service,
+            graph=graph,
         )
-        
+    
+    def offload_service(self, mec_set: list, mec_id_candidate: str, vr_users: list, service_owner_ip: str, service: VrService):
+        """ offloads a vr service from HDM to MEC server """
+        extracted_service = VrController.remove_vr_service(
+            vr_users=vr_users,
+            user_ip=service_owner_ip,
+            service_id=service.id,
+        )
+
+        MecAgent.deploy_service(
+            mec_set, mec_id_candidate, extracted_service
+        )
 
     def trade_off(
         self, 
@@ -38,6 +51,7 @@ class SCG(Migration):
         mec_set: list, 
         vr_users: list,
         service: VrService,
+        graph: dict,
     ) -> bool:
         """ provide the trade-off analysis between migration and offloading the service back to the HMD"""
 
@@ -58,6 +72,7 @@ class SCG(Migration):
                 mec_set=mec_set,
                 user=service_owner,
                 service=service,
+                graph=graph
             )
 
             if mec_id_candidate is not None:
@@ -69,19 +84,14 @@ class SCG(Migration):
                     mec_set=mec_set,
                     src_location=service_owner.current_location,
                     dst_location=mec_candidate_location,
+                    graph=graph
                 )
 
                 if new_service_latency < hmd_latency:
-                    extracted_service = VrController.remove_vr_service(
-                        vr_users=vr_users,
-                        user_ip=service_owner.ip,
-                        service_id=service.id,
-                    )
-
-                    MecAgent.deploy_service(
-                        mec_set, mec_id_candidate, extracted_service
-                    )
-                self.successful_migrations +=1
+                    self.offload_service(mec_set, mec_id_candidate, vr_users, service_owner.ip, service)
+                    self.successful_migrations +=1
+                    #print("*** Performing offloading ***")
+                    return True
                 return True
 
             else:
@@ -109,6 +119,7 @@ class SCG(Migration):
                 mec_set=mec_set,
                 src_location=service_owner.current_location,
                 dst_location=service_location,
+                graph=graph
             )
 
             hmd_latency = VrController.get_hmd_latency(
@@ -125,6 +136,7 @@ class SCG(Migration):
                     vr_users=vr_users,
                     user=service_owner,
                     service=service,
+                    graph=graph
                 )
             else:
                 #print("*** Performing reverse offloading ***")
@@ -168,6 +180,7 @@ class SCG(Migration):
         vr_users: list,
         user: dict,
         service: VrService, 
+        graph: dict,
     ) -> bool:
         """
         provides the service migration of service i, which is based on the
@@ -184,6 +197,7 @@ class SCG(Migration):
             mec_set=mec_set,
             src_location=user.current_location,
             dst_location=service_location,
+            graph=graph
         )
 
         mec_id_candidate = self.discover_mec(
@@ -191,6 +205,7 @@ class SCG(Migration):
             mec_set=mec_set,
             user=user,
             service=service,
+            graph=graph,
         )
 
         if mec_id_candidate is not None:
@@ -202,6 +217,7 @@ class SCG(Migration):
                 mec_set=mec_set,
                 src_location=user.current_location,
                 dst_location=mec_candidate_location,
+                graph=graph
             )
 
             if new_service_latency < previous_service_latency:
@@ -216,7 +232,7 @@ class SCG(Migration):
             return True
 
         else:
-            print("*** Migration failed. Error: no candidates ***")
+            #print("*** Migration failed. Error: no candidates ***")
             self.unsuccessful_migrations += 1
             return False
 
@@ -224,7 +240,7 @@ class SCG(Migration):
     
 
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, 
+        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict,
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -241,12 +257,14 @@ class SCG(Migration):
                     base_station_set, user.current_location
                 )
                 src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
-                aux_path, new_latency = Dijkstra.init_algorithm(
+                aux_path, new_latency = DijkstraController.get_shortest_path(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     start_node=user.current_location,
                     start_node_computing_delay=src_mec.computing_latency,
+                    start_node_wireless_delay=src_bs.wireless_latency,
                     target_node=base_station.id,
+                    graph=graph,
                 )
 
                 if new_latency <= shortest_latency:

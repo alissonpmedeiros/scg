@@ -19,11 +19,18 @@ from pprint import pprint as pprint
 net = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
 random_mac = lambda : ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)])
 
-vr_users = 500
+vr_users = 100
 aps_set = []
 vr_users_set = []
 plot_dimensions = 240
 
+filePath = '/home/ubuntu/scg/user/users.txt'
+
+if os.path.exists(filePath):
+    print(f'***removing file at {filePath} ***')
+    os.remove(filePath)
+else:
+    print("*** Can not delete the file as it doesn't exists ***")
 
 
 def signal_handler(sig, frame):

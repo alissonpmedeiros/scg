@@ -1,10 +1,7 @@
-import time
 from vr.vr import VrService
 from mec.mec import MecAgent
-from scg_controller.scg_controller import ScgController
 from vr.vr_controller import VrController
 from migration.migration_ABC import Migration
-from mec.mec_controller import MecController
 from base_station.bs_controller import BaseStationController
 
 class AlwaysMigrate(Migration):
@@ -15,9 +12,9 @@ class AlwaysMigrate(Migration):
         return super().get_migrations()
     
     def check_services(
-        self, base_station_set: list, mec_set: list, vr_users: list
+        self, base_station_set: list, mec_set: list, vr_users: list, graph: dict
     ):
-        return super().check_services(base_station_set, mec_set, vr_users)
+        return super().check_services(base_station_set, mec_set, vr_users, graph)
     
     
     def service_migration(
@@ -26,6 +23,7 @@ class AlwaysMigrate(Migration):
         mec_set: list, 
         vr_users: list,
         service: VrService,
+        graph: dict,
      ) -> bool:
         
         service_owner = VrController.get_vr_service_owner(
@@ -37,6 +35,7 @@ class AlwaysMigrate(Migration):
             mec_set=mec_set,
             user=service_owner,
             service=service,
+            graph=graph,
         )
             
     def perform_migration(
@@ -45,6 +44,7 @@ class AlwaysMigrate(Migration):
         mec_set: list,
         user: dict,
         service: VrService,
+        graph: dict,
     ) -> bool:
         """
         provides the service migration of service i, which is based on the

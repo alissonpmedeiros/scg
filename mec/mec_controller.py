@@ -15,10 +15,10 @@ from base_station.bs_controller import BaseStationController
 from mec.mec import Mec, MecAgent, MecResourceController
 
 """ import graph modules """
-from graph.graph import Dijkstra
+from graph.graph import DijkstraController
 
 """ other modules """
-from pprint import pprint
+from pprint import pprint as pprint
 import json
 import os
 
@@ -89,11 +89,10 @@ class MecController:
                             base_station_set, current_base_station.id
                         )
                         src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
-                        aux_path, new_latency = Dijkstra.init_algorithm(
-                            base_station_set=base_station_set,
-                            mec_set=mec_set,
+                        aux_path, new_latency = DijkstraController.get_shortest_path(
                             start_node=current_base_station.id,
                             start_node_computing_delay=src_mec.computing_latency,
+                            start_node_wireless_delay=src_bs.wireless_latency,
                             target_node=base_station.id,
                         )
 
@@ -129,7 +128,7 @@ class MecController:
                 break
 
     @staticmethod
-    def init_servers(overall_mecs: int) -> None:
+    def init_mec_servers(overall_mecs: int) -> None:
         """ first of all, clean devices and hosts on onos sdn controller """
 
         files_directory = "./mec/"

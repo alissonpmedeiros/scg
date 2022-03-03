@@ -1,6 +1,5 @@
 import json
 import numpy as np
-
 class NpEncoder(json.JSONEncoder):
     """ converting NumPy numbers to a Python int before serializing the objec """
 
@@ -18,8 +17,8 @@ class NpEncoder(json.JSONEncoder):
 class JsonEncoder():
     """ encoding json to txt file """
     @staticmethod
-    def encoder(mec_set, files_directory, file_name):    
-        mecs = json.dumps(mec_set, cls=NpEncoder)
+    def encoder(object_set, files_directory, file_name):  
+        data = json.dumps(object_set, cls=NpEncoder)
         f = open("{}{}".format(files_directory, file_name), "w+")
-        f.write(mecs)
+        f.write(data)
         f.close()
