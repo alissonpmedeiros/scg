@@ -1,39 +1,47 @@
+
+"""base station modules"""
+from base_station.base_station import BaseStation
+
+"""graph modules"""
+from graph.graph import Graph
+
+"""mec modules"""
+from mec.mec import Mec
+from mec.mec_agent import MecAgent
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
+from vr.vr_controller import VrController
+
+"""migration modules"""
+from migration.migration_ABC import Migration
+
+"""other modules"""
 import requests, socket
-from mec.mec import MecAgent
+from typing import List
 from munch import DefaultMunch
 from requests.exceptions import HTTPError
-from vr.vr import VrService
-from vr.vr_controller import VrController
-from migration.migration_ABC import Migration
 
 class WorkloadController:
     
     @staticmethod
     def check_migration_demand(
-        base_station_set: list, 
-        mec_set: list, 
-        vr_users: list, 
+        base_station_set: List[BaseStation], 
+        mec_set: List[Mec], 
+        vr_users: List[VrHMD], 
         service: VrService, 
         extracted_service: VrService, 
         service_server_id: str, 
         quota_copy: dict, 
         migration: Migration,
-        graph: dict, 
+        graph: Graph, 
     ) -> None:
-        """_summary_
-
+        """
         Checks whether a service fits on a mec server, otherwise, this method  chekcs the migration. 
         If migration is not possible, it will revert the service to the previous service quota.  
-
-        Arguments:
-            base_station_set -- _description_
-            mec_set -- _description_
-            vr_users -- _description_
-            service -- _description_
-            service_server_id -- _description_
-            quota_copy -- _description_
-            migration -- _description_
         """
+        
         if MecAgent.check_deployment(
             mec_set=mec_set, mec_id=service_server_id, service=extracted_service
         ):
@@ -57,11 +65,11 @@ class WorkloadController:
 
     @staticmethod
     def update_workloads(
-        base_station_set: list, 
-        mec_set: list, 
-        vr_users: list,
+        base_station_set: List[BaseStation], 
+        mec_set: List[Mec], 
+        vr_users: List[VrHMD],
         migration: Migration,
-        graph: dict,
+        graph: Graph,
     ):
         """updates vr and mec service workloads"""
         response_vr_users = WorkloadController.get_workloads()
@@ -87,7 +95,15 @@ class WorkloadController:
                     quota_copy = extracted_service.quota
                     extracted_service.quota  = response_service.quota
                     WorkloadController.check_migration_demand(
-                        base_station_set, mec_set, vr_users, service, extracted_service, service_server_id, quota_copy, migration, graph
+                        base_station_set, 
+                        mec_set, 
+                        vr_users, 
+                        service, 
+                        extracted_service, 
+                        service_server_id, 
+                        quota_copy, 
+                        migration, 
+                        graph
                     )
                     
                         

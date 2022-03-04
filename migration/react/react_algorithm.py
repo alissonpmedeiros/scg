@@ -1,13 +1,17 @@
-from mec.mec import MecAgent
-from vr.vr import VrService
+from mec.mec import Mec
+from mec.mec_agent import MecAgent
+from vr.vr_service import VrService
+
+"""other modules"""
 import random
+from typing import List
 from pprint import pprint as pprint
 
 class REACTApproach:
 
     @staticmethod
     def get_victim_services(
-        mec_set: list, mec_id: str, service: VrService, sucessful_migrations: int, unsuccessful_migrations: int
+        mec_set: List[Mec], mec_id: str, service: VrService, sucessful_migrations: int, unsuccessful_migrations: int
     ) -> list:
         target_cpu = 0
         target_gpu = 0
@@ -58,7 +62,7 @@ class REACTApproach:
     
 
     @staticmethod
-    def solidarity(mec_set: list, mec_id: str, service: VrService, sucessful_migrations: int, unsuccessful_migrations: int):
+    def solidarity(mec_set: List[Mec], mec_id: str, service: VrService, sucessful_migrations: int, unsuccessful_migrations: int):
         """ 
         now we need to redistribute the removed service from the previous mec to new victims mecs 
         """

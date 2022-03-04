@@ -1,15 +1,17 @@
 import json, asyncio
 from flask import Flask
+from typing import List
+from vr.vr_hmd import VrHMD
 from vr.vr_controller import VrController
 
 app = Flask(__name__)
 COUNT = 0
 
-MIGRATION_ALGORITHMS = 1
+MIGRATION_ALGORITHMS = 6
 VR_USERS = VrController.load_vr_users()
 
 
-def changing_workloads(vr_users: list):
+def changing_workloads(vr_users: List[VrHMD]):
     """changing service quotas for vr services"""
     print('*** GENERATING WORKLOADS ***')
     for user in vr_users:

@@ -3,22 +3,23 @@
 """ dataclasses modules """
 from dataclasses import dataclass, field
 
-from vr.vr import Vr_HMD
-
 """ onos controller modules """
 from sdn.onos import OnosController
 
 """ mec modules """
-from mec.mec import Mec, MecAgent
+from mec.mec import Mec
+from mec.mec_agent import MecAgent
 from mec.mec_controller import MecController
 
 """ base station modules """
-from base_station.bs_controller import BaseStationController
+from base_station.bs_controller import BaseStation, BaseStationController
 
 """ graph modules """
-from graph.graph import DijkstraController, GraphController
+from graph.dijkstra import DijkstraController
+from graph.graph import Graph, GraphController
 
 """ vr controller modules """
+from vr.vr_hmd import VrHMD
 from vr.vr_controller import VrController
 
 """ other modules """
@@ -33,24 +34,34 @@ class ScgController:
 
     services_per_user = 1
     overall_mecs: int = field(default=28)
-    base_station_set: List[dict] = field(default_factory=list, init=False)
-    mec_set: List[Mec] = field(default_factory=list, init=False)
-    vr_users: List[Vr_HMD] = field(default_factory=list, init=False)
-    graph: dict = field(init=False)
+    graph: Graph = field(init=False)
     onos: OnosController = field(init=False)
+    mec_set: List[Mec] = field(default_factory=list, init=False)
+    vr_users: List[VrHMD] = field(default_factory=list, init=False)
+    base_station_set: List[BaseStation] = field(default_factory=list, init=False)
 
     def __post_init__(self):
+        """starting onos sdn controller instance"""
         self.onos=OnosController()
+        
+        """starting mecs, base stations, and vr users"""
         MecController.init_mec_servers(self.overall_mecs)
         self.mec_set = MecController.load_mec_servers()
+        
         BaseStationController.init_base_stations(mec_set=self.mec_set)
-        self.base_station_set = BaseStationController.load_base_stations()
         VrController.init_vr_users(services_per_user=self.services_per_user)
+        
+        """loading mecs, base stations, and vr users files"""
+        self.base_station_set = BaseStationController.load_base_stations()
         self.vr_users = VrController.load_vr_users()
+        
+        """init graph with all sources and destinations nodes """
         self.graph = GraphController.get_graph(self.base_station_set, self.mec_set)
+        
+        """initially offloads all services to the network edge"""
         self.offload_services()
 
-    def get_average_ETE_latency(self):
+    def get_average_E2E_latency(self):
         total_latency = 0
         total_net_latency = 0
         total_computing_latency = 0
@@ -79,7 +90,7 @@ class ScgController:
                     measures the latency between bs where the user is 
                     connected and the mec where the service is deployed 
                     """
-                    network_latency, computing_latency, ete_latency = ScgController.get_ETE_latency(
+                    network_latency, computing_latency, ete_latency = ScgController.get_E2E_latency(
                         base_station_set=self.base_station_set,
                         mec_set=self.mec_set,
                         src_location=user.current_location,
@@ -99,8 +110,8 @@ class ScgController:
         return average_net_latency, average_computing_latency, average_latency
 
     @staticmethod
-    def get_ETE_latency(
-        base_station_set: list, mec_set: list, src_location: str, dst_location: str, graph: dict
+    def get_E2E_latency(
+        base_station_set: List[BaseStation], mec_set: List[Mec], src_location: str, dst_location: str, graph: Graph
     ) -> float:
         """
         calculates the end-to-end latency between a vr
@@ -119,17 +130,13 @@ class ScgController:
         )
         base_station = BaseStationController.get_base_station(
             base_station_set=base_station_set, 
-            bs_id=path[-1]
+            #gets last element of the path, which corresponds to the base station destination with the optimal mec service in terms of latency"""
+            bs_id=path[-1] 
         )
         mec = MecController.get_mec(mec_set, base_station.mec_id)
         
         computing_latency = mec.computing_latency 
         network_latency = ete_latency - computing_latency
-        #print(network_latency)
-        #print(path)
-        #print(f'e2e: {ete_latency} | computing: {computing_latency} | network: {network_latency}')
-        #print('\n')
-        #a = input('')
         return network_latency, computing_latency, ete_latency
 
     def offload_services(self) -> None:
@@ -144,6 +151,7 @@ class ScgController:
                     mec_set=self.mec_set,
                     user=user,
                     service=extracted_service,
+                    graph=self.graph
                 )
 
                 if mec_id_dst is not None:
@@ -174,7 +182,7 @@ class ScgController:
         return result
 
     
-    def count_vr_services_on_HMD(self)-> int:
+    def get_vr_services_on_HMD(self)-> int:
         count  = 0
         for user in self.vr_users:
             for service in user.services_set:

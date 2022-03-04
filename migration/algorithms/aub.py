@@ -1,5 +1,25 @@
+"""graph module"""
+from graph.graph import Graph
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
+from vr.vr_controller import VrController
+
+"""mec modules"""
+from mec.mec import Mec 
+from mec.mec_agent import MecAgent
+
+"""migration module"""
 from migration.migration_ABC import Migration
-from vr.vr import VrService
+
+"""base station modules"""
+from base_station.base_station import BaseStation
+from base_station.bs_controller import BaseStationController
+
+"""other imports"""
+from typing import List
+
 
 class AUB(Migration):
     """ implements the algorithm Average Utilization Based (AUB) Migration """
@@ -19,16 +39,16 @@ class AUB(Migration):
         return super().get_migrations()
     
     def check_services(
-        self, base_station_set: list, mec_set: list, vr_users: list
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD]
     ):
         return super().check_services(base_station_set, mec_set, vr_users)
     
     
     def service_migration(
         self, 
-        base_station_set: list, 
-        mec_set: list, 
-        vr_users: list,
+        base_station_set: List[BaseStation], 
+        mec_set: List[Mec], 
+        vr_users: List[VrHMD],
         service: VrService,
     ):
         pass

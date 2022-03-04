@@ -1,4 +1,5 @@
 """scg system imports"""
+from migration.migration_ABC import Migration
 from vr.vr_controller import VrController
 from scg_controller.scg_controller import ScgController
 from workloads.workload_controller import WorkloadController
@@ -36,7 +37,7 @@ def check_algorithm():
     else:
         print('*** algorithm not found! ***')
 
-def start_system(scg_controller, migration_algorithm) -> list:
+def start_system(scg_controller: ScgController, migration_algorithm: Migration) -> list:
     while True:
         VrController.update_users_location(scg_controller.vr_users)
         WorkloadController.update_workloads(
@@ -52,12 +53,12 @@ def start_system(scg_controller, migration_algorithm) -> list:
             vr_users=scg_controller.vr_users,
             graph=scg_controller.graph,
         )
-        net_latency, computing_latency, ete_latency = scg_controller.get_average_ETE_latency()
+        net_latency, computing_latency, ete_latency = scg_controller.get_average_E2E_latency()
         gpu_usage = scg_controller.calculate_gpu_usage()
         successful_migration, unsuccessful_migration = migration_algorithm.get_migrations()
         data = [gpu_usage, net_latency, computing_latency, ete_latency, successful_migration, unsuccessful_migration]
         
-        #print(f'\n SERVICES ON HMDS: {scg_controller.count_vr_services_on_HMD()} \n')
+        #print(f'\n SERVICES ON HMDS: {scg_controller.get_vr_services_on_HMD()} \n')
         CSV.save_data(FILE_DIR, FILE_NAME, data)
         #a = input('')
         time.sleep(3)
@@ -68,6 +69,3 @@ if __name__ == "__main__":
     migration_algorithm = check_algorithm()
     start_system(scg_controller, migration_algorithm)
     
-    """ 
-    2- THE GRAPH SHOULD BE BUILT ONLY ONCE
-    """

@@ -1,14 +1,37 @@
-from vr.vr import VrService
-from mec.mec import MecAgent
-from graph.graph import DijkstraController
+"""graph module"""
+from graph.graph import Graph
+from graph.dijkstra import DijkstraController
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
+from vr.vr_controller import VrController
+
+"""mec modules"""
+from mec.mec import Mec 
+from mec.mec_agent import MecAgent
 from mec.mec_controller import MecController
-from migration.algorithms.scg_tradeoff import SCG   
+
+"""migration module"""
+from migration.algorithms.scg_tradeoff import SCG 
+
+"""react algorithm modules"""
 from migration.react.react_algorithm import REACTApproach
+
+"""base station modules"""
+from base_station.base_station import BaseStation
 from base_station.bs_controller import BaseStationController
+
+"""scg controller module"""
+from scg_controller.scg_controller import ScgController
+
+"""other imports"""
+from typing import List
+
 
 class ScgReact(SCG):
     """inherited from the SCG class"""
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+    def check_services(self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph):
         return super().check_services(base_station_set, mec_set, vr_users, graph)
 
     """inherited from the SCG class"""
@@ -17,31 +40,31 @@ class ScgReact(SCG):
 
     """inherited from the SCG class"""
     def service_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph, service: VrService
     ) -> bool:
-        return super().service_migration(base_station_set, mec_set, vr_users, service, graph)
+        return super().service_migration(base_station_set, mec_set, vr_users, graph, service)
 
     """inherited from the SCG class"""
     def reverse_offloading(
-        self, mec_set: list, vr_users: list, user: dict, service: VrService
+        self, mec_set: List[Mec], vr_users: List[VrHMD], user: VrHMD, service: VrService
     ) -> bool:
         return super().reverse_offloading(mec_set, vr_users, user, service)
 
     """inherited from the SCG class"""
     def perform_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], user: VrHMD, graph: Graph, service: VrService
     ) -> bool:
-        return super().perform_migration(base_station_set, mec_set, vr_users, user, service, graph)
+        return super().perform_migration(base_station_set, mec_set, user, graph, service)
 
     """inherited from the SCG class"""
     def trade_off(
-        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph, service: VrService
     ) -> bool:
-        return super().trade_off(base_station_set, mec_set, vr_users, service, graph)
+        return super().trade_off(base_station_set, mec_set, vr_users, graph, service)
 
     """this method is not inherited from the SCG class, we rewrote it"""
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], user: VrHMD, graph: Graph, service: VrService
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 

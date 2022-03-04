@@ -1,8 +1,25 @@
-from vr.vr import VrService
-from mec.mec import MecAgent
+"""graph module"""
+from graph.graph import Graph
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
 from vr.vr_controller import VrController
+
+"""mec modules"""
+from mec.mec import Mec 
+from mec.mec_agent import MecAgent
+
+"""base station modules"""
+from base_station.base_station import BaseStation
 from base_station.bs_controller import BaseStationController
+
+"""migration module"""
 from migration.algorithms.net_latency import NetLatencyMigration, DijkstraController
+
+"""other imports"""
+from typing import List
+
 
 
 
@@ -13,22 +30,21 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
         return super().get_migrations()
     
     """inherited NetLatencyMigration class"""
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+    def check_services(self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph):
         return super().check_services(base_station_set, mec_set, vr_users, graph)
 
     """inherited NetLatencyMigration class"""
-    def service_migration(self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict) -> bool:
-        return super().service_migration(base_station_set, mec_set, vr_users, service, graph)
+    def service_migration(self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD],  graph: Graph, service: VrService) -> bool:
+        return super().service_migration(base_station_set, mec_set, vr_users, graph, service)
 
     """this method is not inherited from NetLatencyMigration class, we rewrote it to make it a resource-aware algorithm"""
     def perform_migration(
         self,
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list,
-        user: dict,
+        base_station_set: List[BaseStation],
+        mec_set: List[Mec],
+        vr_users: List[VrHMD],
         service: VrService,
-        graph: dict,
+        graph: Graph,
     )-> bool:
         """
         provides the service migration of service i, which is based on the
@@ -69,7 +85,7 @@ class NetLatencyMigrationResouceAware(NetLatencyMigration):
 
     """this method is not inherited from NetLatencyMigration class, we rewrote it to make it a resource-aware algorithm"""
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict,
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], user: VrHMD, service: VrService, graph: Graph,
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 

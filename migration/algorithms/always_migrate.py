@@ -1,8 +1,24 @@
-from vr.vr import VrService
-from mec.mec import MecAgent
+"""graph module"""
+from graph.graph import Graph
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
 from vr.vr_controller import VrController
+
+"""mec modules"""
+from mec.mec import Mec 
+from mec.mec_agent import MecAgent
+
+"""migration module"""
 from migration.migration_ABC import Migration
+
+"""base station modules"""
+from base_station.base_station import BaseStation
 from base_station.bs_controller import BaseStationController
+
+"""other imports"""
+from typing import List
 
 class AlwaysMigrate(Migration):
     """ implements the migration behaviour trigered by handover """
@@ -12,18 +28,18 @@ class AlwaysMigrate(Migration):
         return super().get_migrations()
     
     def check_services(
-        self, base_station_set: list, mec_set: list, vr_users: list, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph
     ):
         return super().check_services(base_station_set, mec_set, vr_users, graph)
     
     
     def service_migration(
         self, 
-        base_station_set: list, 
-        mec_set: list, 
-        vr_users: list,
+        base_station_set: List[BaseStation], 
+        mec_set: List[Mec], 
+        vr_users: List[VrHMD],
+        graph: Graph,
         service: VrService,
-        graph: dict,
      ) -> bool:
         
         service_owner = VrController.get_vr_service_owner(
@@ -35,16 +51,14 @@ class AlwaysMigrate(Migration):
             mec_set=mec_set,
             user=service_owner,
             service=service,
-            graph=graph,
         )
             
     def perform_migration(
         self,
-        base_station_set: list,
-        mec_set: list,
-        user: dict,
+        base_station_set: List[BaseStation],
+        mec_set: List[Mec],
+        user: VrHMD,
         service: VrService,
-        graph: dict,
     ) -> bool:
         """
         provides the service migration of service i, which is based on the

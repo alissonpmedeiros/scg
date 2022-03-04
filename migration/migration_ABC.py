@@ -1,6 +1,11 @@
 from abc import ABC
-from vr.vr import VrService
-from mec.mec import MecAgent
+from typing import List
+from graph.graph import Graph
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
+from mec.mec import Mec
+from mec.mec_agent import MecAgent
+from base_station.base_station import BaseStation
 
 
 """abstract base classes let you define a class with abstract methods, which all subclasses must implement in order to be initialized"""
@@ -20,10 +25,10 @@ class Migration(ABC):
 
     def check_services(
         self,
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list,
-        graph: dict, 
+        base_station_set: List[BaseStation],
+        mec_set: List[Mec],
+        vr_users: List[VrHMD],
+        graph: Graph, 
     ):
         for user in vr_users:
             if user.current_location != user.previous_location:
@@ -37,16 +42,16 @@ class Migration(ABC):
                         base_station_set=base_station_set,
                         mec_set=mec_set,
                         vr_users=vr_users,
-                        service=service,
                         graph=graph,
+                        service=service,
                     )
         
     def service_migration(
         self,
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list,
+        base_station_set: List[BaseStation],
+        mec_set: List[Mec],
+        vr_users: List[VrHMD],
+        graph: Graph,
         service: VrService,
-        graph: dict,
     ) -> bool:
         pass    

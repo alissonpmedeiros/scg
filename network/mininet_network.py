@@ -1,7 +1,4 @@
 #!/usr/bin/python
-
-'Example for Handover'
-
 import sys, os, time
 
 from mininet.log import setLogLevel, info
@@ -19,16 +16,16 @@ from pprint import pprint as pprint
 net = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
 random_mac = lambda : ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)])
 
-vr_users = 100
+vr_users = 1000
 aps_set = []
 vr_users_set = []
 plot_dimensions = 240
 
-filePath = '/home/ubuntu/scg/user/users.txt'
+file_path = '/home/ubuntu/scg/user/users.txt'
 
-if os.path.exists(filePath):
-    print(f'***removing file at {filePath} ***')
-    os.remove(filePath)
+if os.path.exists(file_path):
+    print(f'*** Removing file at {file_path} ***')
+    os.remove(file_path)
 else:
     print("*** Can not delete the file as it doesn't exists ***")
 
@@ -127,18 +124,12 @@ def topology(args):
     CLI_THREAD = threading.Thread(target=lambda: CLI(net))
     CLI_THREAD.daemon = True
 
-
-    '''
-    '''
     """ runs the ping.sh script for each node ping all other nodes  """
     while True:
         for user in vr_users_set:
-            #time.sleep(0.01)
             #print(user.cmd( 'nohup ./scg/ping.sh {} &'.format(vr_users)))
             #print(user.cmd( './scg/ping.sh {} &'.format(vr_users)))
-            #time.sleep(1)
             p1 = user.popen( '/home/ubuntu/scg/network/ping.sh {} &'.format(vr_users))
-            #print(p1)
             p1.terminate()
 
     #CLI(net)

@@ -1,37 +1,49 @@
-import sys
-from vr.vr import VrService
-from mec.mec import MecAgent
-from migration.migration_ABC import Migration
-from base_station.bs_controller import BaseStationController
+"""graph module"""
+from graph.graph import Graph
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
 from vr.vr_controller import VrController
+
+"""mec modules"""
+from mec.mec import Mec 
+from mec.mec_agent import MecAgent
+
+"""migration module"""
+from migration.migration_ABC import Migration
+
+"""base station modules"""
+from base_station.base_station import BaseStation
+from base_station.bs_controller import BaseStationController
+
+"""other imports"""
+from typing import List
+import sys
+
 
 class NetLatencyMigration(Migration):
     def get_migrations(self):
         return super().get_migrations()
     
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+    def check_services(self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph):
         return super().check_services(
             base_station_set, mec_set, vr_users, graph
         )
 
     def service_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, service: VrService, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph, service: VrService
     ) -> bool:
-        service_owner = VrController.get_vr_service_owner(
-            vr_users=vr_users, service=service
-        )
-
         return self.perform_migration(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
-            user=service_owner,
-            service=service,
             graph=graph,
+            service=service,
         )
 
     def perform_migration(
-        self, base_station_set: list, mec_set: list, vr_users: list, user: dict, service: VrService, graph: dict
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph, service: VrService
     ) -> bool:
         """
         provides the service migration of service i, which is based on the
@@ -74,7 +86,7 @@ class NetLatencyMigration(Migration):
 
             
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict,
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], user: VrHMD, graph: Graph, service: VrService,
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -115,7 +127,7 @@ class NetLatencyMigration(Migration):
 class Dijkstra:
 
     @staticmethod
-    def dijkstra_algorithm(graph, start_node):
+    def dijkstra_algorithm(graph: Graph, start_node):
         unvisited_nodes = list(graph.get_nodes())
     
         """We'll use this dict to save the cost of visiting each node and update it as we move along the graph"""   
@@ -184,7 +196,7 @@ class DijkstraController:
     def get_shortest_path(
         start_node: str, 
         target_node: str,
-        graph: dict, 
+        graph: Graph, 
     ):
         
         previous_nodes, shortest_path = Dijkstra.dijkstra_algorithm(

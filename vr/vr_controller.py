@@ -1,10 +1,12 @@
 """ dataclasses modules """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 """ vr module """
-from vr.vr import Vr_HMD, VrService
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
 
 """ base station module """
+from base_station.base_station import BaseStation
 from base_station.bs_controller import BaseStationController
 
 """ onos modules """
@@ -14,10 +16,13 @@ from sdn.onos import OnosController
 from encoders.json_encoder import JsonEncoder
 
 """ other modules """
-from munch import DefaultMunch, Munch
 import json
 import os, random
+from typing import List
 from pprint import pprint as pprint
+from munch import DefaultMunch, Munch
+
+
 @dataclass 
 class VrController:
     """ represents a Vr controller """
@@ -35,7 +40,7 @@ class VrController:
         users = OnosController.get_hosts()
         for user in users['hosts']:
             new_user = DefaultMunch.fromDict(
-                Vr_HMD(
+                VrHMD(
                     ip=user.ipAddresses[0], 
                     mac_address=user.mac,
                     previous_location=user.locations[0].elementId,
@@ -50,13 +55,8 @@ class VrController:
             
             vr_users.append(new_user)
             
-        for user in vr_users:
-            new_vr_users.append(user.to_dict())
 
-        JsonEncoder.encoder(
-            new_vr_users, 
-            files_directory, 
-            file_name)
+        JsonEncoder.encoder(vr_users, files_directory, file_name)
 
     @staticmethod
     def load_vr_users() -> dict:
@@ -71,7 +71,7 @@ class VrController:
 
     @staticmethod 
     def get_vr_service(
-        vr_users: list, 
+        vr_users: List[VrHMD], 
         user_ip: str, 
         service_id: str) -> dict:
         
@@ -83,7 +83,7 @@ class VrController:
         return None
 
     @staticmethod 
-    def get_vr_service_owner(vr_users: list, service: VrService) -> dict:
+    def get_vr_service_owner(vr_users: List[VrHMD], service: VrService) -> VrHMD:
         for user in vr_users:
             for service_id in user.services_ids:
                 if service_id == service.id:
@@ -92,7 +92,7 @@ class VrController:
         return None
 
     @staticmethod
-    def get_vr_user(vr_users: list, user_ip: str) -> dict:
+    def get_vr_user(vr_users: List[VrHMD], user_ip: str) -> VrHMD:
         for user in vr_users:
             if user.ip == user_ip:
                 return user
@@ -101,9 +101,10 @@ class VrController:
     
     @staticmethod
     def remove_vr_service(
-        vr_users: list, 
+        vr_users: List[VrHMD], 
         user_ip: str,  
-        service_id: str) -> VrService:
+        service_id: str
+    ) -> VrService:
         """ removes a service from where it is deployed """
         extracted_service = None
         service_index = 0
@@ -119,9 +120,8 @@ class VrController:
 
     @staticmethod
     def deploy_vr_service(
-        vr_users:list, 
-        user_ip: str, 
-        service: VrService) -> None:
+        vr_users: List[VrHMD], user_ip: str, service: VrService
+    ) -> None:
         for user in vr_users:
             if user.ip == user_ip:
                 user.services_set.append(service)
@@ -129,9 +129,7 @@ class VrController:
 
     @staticmethod
     def get_hmd_latency(
-        base_station_set: list, 
-        vr_users:list, 
-        user_ip: str,
+        base_station_set: List[BaseStation], vr_users: List[VrHMD], user_ip: str,
     ) -> float:
         """ gets hmd latency, including the wireless latency where the user is connected to """
         user = VrController.get_vr_user(vr_users=vr_users, user_ip=user_ip)
@@ -197,7 +195,7 @@ class VrController:
             service.quota.resources = new_quota
 
     @staticmethod
-    def update_user_location(vr_users: list, user_ip: str, new_location: str) -> None:
+    def update_user_location(vr_users: List[VrHMD], user_ip: str, new_location: str) -> None:
         for user in vr_users:
             if user.ip == user_ip:
                 user.previous_location = user.current_location
@@ -205,7 +203,7 @@ class VrController:
                 
 
     @staticmethod
-    def update_users_location(vr_users: list) -> None:
+    def update_users_location(vr_users: List[VrHMD]) -> None:
         current_users = OnosController.get_hosts()
         for user in current_users['hosts']:
             VrController.update_user_location(

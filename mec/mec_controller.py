@@ -4,23 +4,25 @@ from munch import DefaultMunch
 """ np incoder module"""
 from encoders.json_encoder import JsonEncoder
 
-""" importing vr module """
-from vr.vr import VrService
-from vr.vr_controller import VrController
+""" importing vr modules """
+from vr.vr_service import VrService
+from vr.vr_hmd import VrHMD
 
 """ import base station module """
-from base_station.bs_controller import BaseStationController
+from base_station.bs_controller import BaseStation, BaseStationController
 
 """ import mec modules """
-from mec.mec import Mec, MecAgent, MecResourceController
+from mec.mec import Mec, MecResourceController
+from mec.mec_agent import MecAgent
 
 """ import graph modules """
-from graph.graph import DijkstraController
+from graph.graph import Graph
+from graph.dijkstra import DijkstraController
 
 """ other modules """
+import json, os
+from typing import List
 from pprint import pprint as pprint
-import json
-import os
 
 
 class MecController:
@@ -38,7 +40,7 @@ class MecController:
 
     @staticmethod
     def discover_mec(
-        base_station_set: list, mec_set: list, user: dict, service: VrService, 
+        base_station_set: List[BaseStation], mec_set: List[Mec], user: VrHMD, service: VrService, graph: Graph,
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -94,6 +96,8 @@ class MecController:
                             start_node_computing_delay=src_mec.computing_latency,
                             start_node_wireless_delay=src_bs.wireless_latency,
                             target_node=base_station.id,
+                            graph=graph
+                            
                         )
 
                         if new_latency <= shortest_latency:
@@ -112,7 +116,7 @@ class MecController:
                 return bs_destination.mec_id
 
     @staticmethod
-    def init_static_services(mec_set: list, mec: Mec) -> None:
+    def init_static_services(mec_set: List[Mec], mec: Mec) -> None:
         """ creates services that will be deployed on mec server i """
         while True:
             """ checks if mec i has gpu resources """
@@ -158,25 +162,18 @@ class MecController:
         for mec in mec_set:
             MecController.init_static_services(mec_set=mec_set, mec=mec)
 
-        """ transforming mecs to dict """
-        new_mec_set = []
-        for mec in mec_set:
-            new_mec_set.append(mec.to_dict())
-        mec_set = new_mec_set
-
-        # a = input("")
         """ encoding json to txt file """
         JsonEncoder.encoder(mec_set, files_directory, file_name_servers)
 
     @staticmethod
-    def get_mec(mec_set: list, mec_id: str) -> Mec:
+    def get_mec(mec_set: List[Mec], mec_id: str) -> Mec:
         """ returns a MEC server """
         for mec in mec_set:
             if mec.id == mec_id:
                 return mec
 
     @staticmethod
-    def print_mecs(base_station_set: list, mec_set: list):
+    def print_mecs(base_station_set: List[BaseStation], mec_set: List[Mec]):
         print("\n###############  LISTING MECS ###################\n")
         for base_station in base_station_set:
 

@@ -1,16 +1,37 @@
-from vr.vr import VrService
-from graph.graph import DijkstraController
-from mec.mec import MecAgent
+"""graph module"""
+from graph.graph import Graph
+from graph.dijkstra import DijkstraController
+
+"""vr modules"""
+from vr.vr_hmd import VrHMD
+from vr.vr_service import VrService
 from vr.vr_controller import VrController
+
+"""mec modules"""
+from mec.mec import Mec 
+from mec.mec_agent import MecAgent
 from mec.mec_controller import MecController
+
+"""migration module"""
 from migration.migration_ABC import Migration
-from scg_controller.scg_controller import ScgController
+
+"""base station modules"""
+from base_station.base_station import BaseStation
 from base_station.bs_controller import BaseStationController
+
+"""scg controller module"""
+from scg_controller.scg_controller import ScgController
+
+"""other imports"""
+from typing import List
+
+
+
 
 
 class SCG(Migration):    
 
-    def check_services(self, base_station_set: list, mec_set: list, vr_users: list, graph: dict):
+    def check_services(self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph):
         return super().check_services(base_station_set, mec_set, vr_users, graph)
 
     def get_migrations(self):
@@ -19,21 +40,21 @@ class SCG(Migration):
 
     def service_migration(
         self,
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list, 
+        base_station_set: List[BaseStation],
+        mec_set: List[Mec],
+        vr_users: List[VrHMD], 
+        graph: Graph,
         service: VrService,
-        graph: dict,
     ) -> bool:
         return self.trade_off(
             base_station_set=base_station_set,
             mec_set=mec_set,
             vr_users=vr_users,
-            service=service,
             graph=graph,
+            service=service,
         )
     
-    def offload_service(self, mec_set: list, mec_id_candidate: str, vr_users: list, service_owner_ip: str, service: VrService):
+    def offload_service(self, mec_set: List[Mec], mec_id_candidate: str, vr_users: List[VrHMD], service_owner_ip: str, service: VrService):
         """ offloads a vr service from HDM to MEC server """
         extracted_service = VrController.remove_vr_service(
             vr_users=vr_users,
@@ -47,11 +68,11 @@ class SCG(Migration):
 
     def trade_off(
         self, 
-        base_station_set: list, 
-        mec_set: list, 
-        vr_users: list,
+        base_station_set: List[BaseStation], 
+        mec_set: List[Mec], 
+        vr_users: List[VrHMD],
+        graph: Graph,
         service: VrService,
-        graph: dict,
     ) -> bool:
         """ provide the trade-off analysis between migration and offloading the service back to the HMD"""
 
@@ -79,7 +100,7 @@ class SCG(Migration):
                 mec_candidate_location = MecAgent.get_mec_bs_location(
                     base_station_set, mec_id_candidate
                 )
-                computing_latency, network_latency, new_service_latency = ScgController.get_ETE_latency(
+                computing_latency, network_latency, new_service_latency = ScgController.get_E2E_latency(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
                     src_location=service_owner.current_location,
@@ -88,10 +109,10 @@ class SCG(Migration):
                 )
 
                 if new_service_latency < hmd_latency:
+                    #print("*** Performing offloading ***")
                     self.offload_service(mec_set, mec_id_candidate, vr_users, service_owner.ip, service)
                     self.successful_migrations +=1
-                    #print("*** Performing offloading ***")
-                    return True
+                    
                 return True
 
             else:
@@ -114,7 +135,7 @@ class SCG(Migration):
             is connected and the mec where the service is deployed 
             """
            
-            computing_latency, network_latency, current_service_latency = ScgController.get_ETE_latency(
+            computing_latency, network_latency, current_service_latency = ScgController.get_E2E_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 src_location=service_owner.current_location,
@@ -133,10 +154,9 @@ class SCG(Migration):
                 return self.perform_migration(
                     base_station_set=base_station_set,
                     mec_set=mec_set,
-                    vr_users=vr_users,
                     user=service_owner,
-                    service=service,
-                    graph=graph
+                    graph=graph,
+                    service=service
                 )
             else:
                 #print("*** Performing reverse offloading ***")
@@ -152,9 +172,9 @@ class SCG(Migration):
     
     def reverse_offloading(
         self, 
-        mec_set: list, 
-        vr_users: list, 
-        user: dict, 
+        mec_set: List[Mec], 
+        vr_users: List[VrHMD], 
+        user: VrHMD, 
         service: VrService
     ) -> bool:
         """ offloads a service i back to vr hmd """
@@ -170,17 +190,14 @@ class SCG(Migration):
         
         self.successful_migrations +=1
         return True
-
-    """ ADJUST THIS METHOD TO USE ONLY CALCULATE NET LATENCY INSTEAD OF ETE LATENCY. THEN, THIS METHOD SHOULD BE USED WIHTIN CLASS 'NetLatencyMigration' """
     
     def perform_migration(
         self,
-        base_station_set: list,
-        mec_set: list,
-        vr_users: list,
-        user: dict,
+        base_station_set: List[BaseStation],
+        mec_set: List[Mec],
+        user: VrHMD,
+        graph: Graph,
         service: VrService, 
-        graph: dict,
     ) -> bool:
         """
         provides the service migration of service i, which is based on the
@@ -192,27 +209,27 @@ class SCG(Migration):
         service_location = MecAgent.get_service_bs_id(
             base_station_set, mec_set, service.id
         )
-        computing_latency, network_latency, previous_service_latency = ScgController.get_ETE_latency(
+        computing_latency, network_latency, previous_service_latency = ScgController.get_E2E_latency(
             base_station_set=base_station_set,
             mec_set=mec_set,
+            graph=graph,
             src_location=user.current_location,
             dst_location=service_location,
-            graph=graph
         )
 
         mec_id_candidate = self.discover_mec(
             base_station_set=base_station_set,
             mec_set=mec_set,
+            graph=graph,
             user=user,
             service=service,
-            graph=graph,
         )
 
         if mec_id_candidate is not None:
             mec_candidate_location = MecAgent.get_mec_bs_location(
                 base_station_set, mec_id_candidate
             )
-            computing_latency, network_latency, new_service_latency = ScgController.get_ETE_latency(
+            computing_latency, network_latency, new_service_latency = ScgController.get_E2E_latency(
                 base_station_set=base_station_set,
                 mec_set=mec_set,
                 src_location=user.current_location,
@@ -240,7 +257,7 @@ class SCG(Migration):
     
 
     def discover_mec(
-        self, base_station_set: list, mec_set: list, user: dict, service: VrService, graph: dict,
+        self, base_station_set: List[BaseStation], mec_set: List[Mec], graph: Graph, user: VrHMD, service: VrService
     ) -> str:
         """ discovers a nearby MEC server to either offload or migrate the service"""
 
@@ -258,8 +275,6 @@ class SCG(Migration):
                 )
                 src_mec = MecController.get_mec(mec_set, src_bs.mec_id)
                 aux_path, new_latency = DijkstraController.get_shortest_path(
-                    base_station_set=base_station_set,
-                    mec_set=mec_set,
                     start_node=user.current_location,
                     start_node_computing_delay=src_mec.computing_latency,
                     start_node_wireless_delay=src_bs.wireless_latency,
