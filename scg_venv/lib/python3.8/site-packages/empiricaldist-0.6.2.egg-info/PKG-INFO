@@ -1,0 +1,19 @@
+Metadata-Version: 1.0
+Name: empiricaldist
+Version: 0.6.2
+Summary: Python library that represents empirical distributions.
+Home-page: http://github.com/AllenDowney/empiricaldist
+Author: Allen B. Downey
+Author-email: downey@allendowney.com
+License: LICENSE
+Description: empyricaldist
+        =============
+        
+        Python library that represents empirical distribution functions.
+        
+        To see an example, you can `read this
+        notebook <https://nbviewer.jupyter.org/github/AllenDowney/empiricaldist/blob/master/empiricaldist/dist_demo.ipynb>`__
+        or `run it on
+        Binder <https://mybinder.org/v2/gh/AllenDowney/empiricaldist/master?filepath=empiricaldist%2Fdist_demo.ipynb>`__.
+        
+Platform: UNKNOWN

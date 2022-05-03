@@ -18,7 +18,7 @@ class NpEncoder(json.JSONEncoder):
 class JsonEncoder():
     """ provides methods to encode json to file """
     
-    @classmethod
+    @staticmethod
     def convert_to_json(data: list) -> list:
         new_data = []
         for item in data:

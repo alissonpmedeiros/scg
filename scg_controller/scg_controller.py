@@ -32,7 +32,7 @@ import time, json, os, random
 class ScgController:
     """ SCG controller representation """
 
-    services_per_user = 1
+    services_per_user = 3
     overall_mecs: int = field(default=28)
     graph: Graph = field(init=False)
     onos: OnosController = field(init=False)
@@ -140,6 +140,7 @@ class ScgController:
         return network_latency, computing_latency, ete_latency
 
     def offload_services(self) -> None:
+        count = 0
         for user in self.vr_users:
             for service_id in user.services_ids:
                 extracted_service = VrController.remove_vr_service(
@@ -157,11 +158,11 @@ class ScgController:
                 if mec_id_dst is not None:
                     MecAgent.deploy_service(self.mec_set, mec_id_dst, extracted_service)
                 else:
-                    print(
-                        "could not OFFLOAD the following service: {}".format(
-                            extracted_service
-                        )
-                    )
+                    count+=1
+                    #print("\ncould not OFFLOAD the following service: {}".format(extracted_service))
+        if count > 1:
+            print('could not offloading {} services'.format(count))
+            a = input("press any key to continue")
 
     def calculate_gpu_usage(self) -> float:
         total_services = len(self.vr_users)
@@ -180,7 +181,32 @@ class ScgController:
         #print('total services: {} | total gpus: {}'.format(total_services, total_gpus))
         #time.sleep(1)
         return result
-
+    
+    def calculate_energy_usage(self) -> float:
+        total_services = len(self.vr_users)
+        total_energy = 0
+        for user in self.vr_users:
+            for service in user.services_set:
+                total_energy += service.decoder.energy.energy_consumption
+        for mec in self.mec_set:
+            for service in mec.services_set:
+                if service.is_mobile:
+                    total_energy += service.decoder.energy.energy_consumption
+        result = total_energy / total_services
+        #print('total services: {} | total energy: {}'.format(total_services, total_energy))
+        #time.sleep(1)
+        return result
+    
+    def calculate_HMD_energy_usage(self) -> float:
+        total_services = len(self.vr_users)
+        total_energy = 0
+        for user in self.vr_users:
+            for service in user.services_set:
+                total_energy += service.decoder.energy.energy_consumption
+        result = total_energy / total_services
+        #print('total services: {} | total energy: {}'.format(total_services, total_energy))
+        #time.sleep(1)
+        return result
     
     def get_vr_services_on_HMD(self)-> int:
         count  = 0
@@ -188,3 +214,5 @@ class ScgController:
             for service in user.services_set:
                 count +=1
         return count
+    """
+    """

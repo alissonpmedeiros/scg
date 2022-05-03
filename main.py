@@ -56,7 +56,10 @@ def start_system(scg_controller: ScgController, migration_algorithm: Migration) 
         net_latency, computing_latency, ete_latency = scg_controller.get_average_E2E_latency()
         gpu_usage = scg_controller.calculate_gpu_usage()
         successful_migration, unsuccessful_migration = migration_algorithm.get_migrations()
-        data = [gpu_usage, net_latency, computing_latency, ete_latency, successful_migration, unsuccessful_migration]
+        energy_consumption = scg_controller.calculate_energy_usage()
+        HMD_energy_consumption = scg_controller.calculate_HMD_energy_usage()
+        services_on_hmds = scg_controller.get_vr_services_on_HMD()
+        data = [gpu_usage, net_latency, computing_latency, ete_latency, successful_migration, unsuccessful_migration, energy_consumption, HMD_energy_consumption, services_on_hmds]
         
         #print(f'\n SERVICES ON HMDS: {scg_controller.get_vr_services_on_HMD()} \n')
         CSV.save_data(FILE_DIR, FILE_NAME, data)

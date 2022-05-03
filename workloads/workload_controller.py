@@ -22,6 +22,7 @@ import requests, socket
 from typing import List
 from munch import DefaultMunch
 from requests.exceptions import HTTPError
+from pprint import pprint as pprint
 
 class WorkloadController:
     
@@ -76,16 +77,28 @@ class WorkloadController:
         
         for response_user in response_vr_users:
             for response_service in response_user.services_set:
+                #pprint(response_service)
+                #a = input("Press enter to continue...")
                 service_server_id = MecAgent.get_service_server_id(mec_set, response_service.id)
                 service = None
                 if not service_server_id:
                     service_owner = VrController.get_vr_service_owner(
                         vr_users=vr_users, service=response_service
                     )
+                    #print('service owner: ', service_owner)
+                    #a = input("Press enter to continue...")
                     service = VrController.get_vr_service(
                         vr_users, service_owner.ip, response_service.id
                     )
+                    #print('service:')
+                    #pprint(service)
+                    #a = input('Press enter to continue...')
+                    #print('response user: ', response_user)
+                    #print('\nservice: ', service)
+                    #print('service quota: ', service.quota)
+                    #print('\n')
                     service.quota = response_service.quota
+                    VrController.change_resolution(service)
                 else:
                     service = MecAgent.get_mec_service(mec_set, response_service.id)
                     
@@ -94,6 +107,7 @@ class WorkloadController:
                     )
                     quota_copy = extracted_service.quota
                     extracted_service.quota  = response_service.quota
+                    VrController.change_resolution(extracted_service)
                     WorkloadController.check_migration_demand(
                         base_station_set, 
                         mec_set, 

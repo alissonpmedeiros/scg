@@ -22,8 +22,8 @@ class MecResourceController:
     """ generates MEC GPU and CPU workloads """
 
     """ lam: rate or known number of occurences """
-    gpu_lam: int    = 110
-    cpu_lam: int    = 200
+    gpu_lam: int    = 270
+    cpu_lam: int    = 430
 
 
     def generate_cpu_resources(self, number_mecs: int):
@@ -78,8 +78,8 @@ class Mec:
         """ set up the id """
         self.id = str(uuid.uuid4())
 
-        self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.8)
-        self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.8)
+        self.cpu_threshold = self.overall_cpu - int(self.overall_cpu * 0.9)
+        self.gpu_threshold = self.overall_gpu - int(self.overall_gpu * 0.9)
 
         self.computing_latency = round(random.uniform(1, 5), 2)
 

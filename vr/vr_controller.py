@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 """ vr module """
 from vr.vr_hmd import VrHMD
-from vr.vr_service import VrService
+from vr.vr_service import DecoderResolution, VrService, ServiceQuota, Decoder
 
 """ base station module """
 from base_station.base_station import BaseStation
@@ -145,7 +145,7 @@ class VrController:
     @staticmethod
     def change_quota(service: VrService):
         """ changes a vr service quota """
-        quotas_set = ['small', 'tiny', 'medium', 'large', 'xlarge']
+        quotas_set = ServiceQuota.get_quotas_set()
         
         """
         choice options to decide whether to change the quota workload or not:
@@ -178,7 +178,7 @@ class VrController:
                 can't get the next quota, because we hitted the last one, then 
                 we go back and get the previous quota instead of the next one 
                 """
-                if position == 4:
+                if position == len(quotas_set) - 1:
                     position -=1
                 else:
                     """ otherwise we just get the next quota position """
@@ -193,6 +193,21 @@ class VrController:
             new_quota = DefaultMunch.fromDict(new_service.quota.get_quota(new_quota_name))
             service.quota.name = new_quota_name
             service.quota.resources = new_quota
+            
+
+    @staticmethod
+    def change_resolution(service: VrService): 
+        #print('changing decoder')
+        #print('current decoder: {}'.format(service.decoder))
+        resolution_type = random.choice(Decoder.get_resolution_set())
+        resolution = DecoderResolution(resolution_type)
+        decoder = Decoder(resolution)
+        service.decoder.resolution.name = decoder.resolution.name
+        service.decoder.resolution.resolution = decoder.resolution.resolution
+        service.decoder.energy.resolution = decoder.energy.resolution
+        service.decoder.energy.energy_consumption = decoder.energy.energy_consumption
+        #print('new decoder: {}'.format(service.decoder))
+        #a = input('press enter to continue')
 
     @staticmethod
     def update_user_location(vr_users: List[VrHMD], user_ip: str, new_location: str) -> None:
