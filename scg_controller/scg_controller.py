@@ -208,9 +208,10 @@ class ScgController:
         #time.sleep(1)
         return result
     
-    def get_vr_services_on_HMD(self)-> int:
+    @staticmethod
+    def get_vr_services_on_HMD(vr_users: List[VrHMD] )-> int:
         count  = 0
-        for user in self.vr_users:
+        for user in vr_users:
             for service in user.services_set:
                 count +=1
         return count

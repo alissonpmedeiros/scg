@@ -188,7 +188,7 @@ class CDF:
             number_of_users = experiment
             
             for file in files:
-                gpu, net, computing, ete, sucessful, unsuccessful = DataFrame.get_df_data(file, number_of_users)
+                gpu, net, computing, ete, sucessful, unsuccessful, energy, hmd_energy, services_on_hmds = DataFrame.get_df_data(file, number_of_users)
     
                 
                 fig, axs = plt.subplots(3, 2, tight_layout=True, figsize=(16, 8))
@@ -221,6 +221,7 @@ class CDF:
                 axs[1, 1].set_xlabel('latency (ms)')
                 axs[1, 1].set_ylabel('frequency')
                 
+                """
                 #successful migrations
                 cdf_data = Cdf.from_seq(sucessful)
                 axs[2, 0].plot(cdf_data)
@@ -228,29 +229,44 @@ class CDF:
                 axs[2, 0].set_xlabel('number of migration')
                 axs[2, 0].set_ylabel('frequency')
                 
-                if file != 'no':
-                    print(f'\n\nCDF of algorithm {file} | successful')
-                    CDF.print_PDF(cdf_data)
-                
+                #if file != 'no':
+                #    print(f'\n\nCDF of algorithm {file} | successful')
+                #    CDF.print_PDF(cdf_data)
                 #unsuccessful migrations
                 cdf_data = Cdf.from_seq(unsuccessful)
                 axs[2, 1].plot(cdf_data)
                 axs[2, 1].set_title('unsuccessful migrations')
                 axs[2, 1].set_xlabel('number of migrations')
                 axs[2, 1].set_ylabel('frequency')
+                """
+                #HMD energy consumption
+                cdf_data = Cdf.from_seq(hmd_energy)
+                axs[2, 1].plot(cdf_data)
+                axs[2, 1].set_title('HMD energy consumption')
+                axs[2, 1].set_xlabel('Energy (J)')
+                axs[2, 1].set_ylabel('frequency')
                 
+                #HMD energy consumption
+                cdf_data = Cdf.from_seq(energy)
+                axs[2, 1].plot(cdf_data)
+                axs[2, 1].set_title('Energy consumption')
+                axs[2, 1].set_xlabel('Energy (J)')
+                axs[2, 1].set_ylabel('frequency')
                 
+                print(f'\n\nCDF of algorithm {file} | HMD energy')
+                CDF.print_PDF(cdf_data)
                 plt.show(block=False)
                 
         
-        #plt.show()
+        plt.show()
                 
                 
 
 
 if __name__ == "__main__":
-    files = ['scg', 'network-resource', 'network', 'always', 'no']
-    experiments = [100, 500, 1000]
-    
-    #CDF.generate_cdf(experiments, files)
-    Results.read_files(files)
+    #files = ['scg', 'network-resource', 'network', 'always', 'no']
+    #experiments = [100, 500, 1000]
+    files = ['scg']
+    experiments = [1000]
+    CDF.generate_cdf(experiments, files)
+    #Results.read_files(files)

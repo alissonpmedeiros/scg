@@ -1,4 +1,5 @@
 """graph module"""
+from dataclasses import field
 from graph.graph import Graph
 from graph.dijkstra import DijkstraController
 
@@ -24,12 +25,18 @@ from scg_controller.scg_controller import ScgController
 
 """other imports"""
 from typing import List
+from dataclasses import dataclass, field
 
 
 
-
-
+@dataclass
 class SCG(Migration):    
+    alpha: int = 0.9
+    alpha_max_threshold = 1944
+    total_services_migrated: int = field(init=False)
+    
+    def __post_init__(self):
+        self.total_services_migrated = self.alpha * self.alpha_max_threshold
 
     def check_services(self, base_station_set: List[BaseStation], mec_set: List[Mec], vr_users: List[VrHMD], graph: Graph):
         return super().check_services(base_station_set, mec_set, vr_users, graph)
@@ -53,6 +60,7 @@ class SCG(Migration):
             graph=graph,
             service=service,
         )
+        # TODO: sucessful migrations and unsuccessful migrations can be counted here based on the return value of the function. Consider refactoring it
     
     def offload_service(self, mec_set: List[Mec], mec_id_candidate: str, vr_users: List[VrHMD], service_owner_ip: str, service: VrService):
         """ offloads a vr service from HDM to MEC server """
@@ -121,7 +129,7 @@ class SCG(Migration):
                 The service stays on the HMD. 
                 We should consider a service migration violation... 
                 """
-                self.unsuccessful_migrations += 1
+                self.unsuccessful_migrations +=1
                 return False
 
         else:
@@ -160,15 +168,25 @@ class SCG(Migration):
                 )
             else:
                 #print("*** Performing reverse offloading ***")
-                return self.reverse_offloading(
-                    mec_set=mec_set,
-                    vr_users=vr_users,
-                    user=service_owner,
-                    service=service,
-                )
-                
-
-
+                # Returning perform_migration due to energy consumption measurements
+                services_on_hmds = ScgController.get_vr_services_on_HMD(vr_users)
+                # TODO: ALPHA is being implemented here. Implement the case where ALPHA is 0 and 1. If 0, then just use the migrate. Otherwise, use the trade-off analysis witht the HMD
+                if services_on_hmds < self.total_services_migrated:
+                    return self.reverse_offloading(
+                        mec_set=mec_set,
+                        vr_users=vr_users,
+                        user=service_owner,
+                        service=service,
+                    )
+                else:
+                    return self.perform_migration(
+                        base_station_set=base_station_set,
+                        mec_set=mec_set,
+                        user=service_owner,
+                        graph=graph,
+                        service=service
+                    )
+        
     
     def reverse_offloading(
         self, 
@@ -245,12 +263,12 @@ class SCG(Migration):
                 #print("*** Performing migration ***")
                 # print("service {} move from MEC {} to {}".format(service_id, service_server_id, mec_id_candidate))
                 # print("new latency: {}\n".format(new_service_latency))
-                self.successful_migrations += 1
+                self.successful_migrations +=1
             return True
 
         else:
             #print("*** Migration failed. Error: no candidates ***")
-            self.unsuccessful_migrations += 1
+            self.unsuccessful_migrations +=1
             return False
 
     
