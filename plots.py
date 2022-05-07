@@ -58,7 +58,8 @@ class DataFrame:
     
     @staticmethod
     def get_df_data(file_name: str, number_of_users: int):
-        FILE = '/home/ubuntu/results/results-{}/{}.csv'.format(number_of_users, file_name)
+        #FILE = '/home/ubuntu/results/results-{}/{}.csv'.format(number_of_users, file_name)
+        FILE = '/home/ubuntu/scg/results/{}.csv'.format(file_name)
         data_frame = pd.read_csv(FILE)
         data1 = data_frame.gpu_usage
         data2 = data_frame.net_latency
@@ -78,36 +79,44 @@ class Histogram:
     def generate_histograms(experiments, files):
         for experiment in experiments:
             number_of_users = experiment
-            
+            print('\n###########################\n')
+            print('EXPERIMENT: {}'.format(experiment))
             for file in files:
-                gpu, net, computing, ete, sucessful, unsuccessful = DataFrame.get_df_data(file, number_of_users)
+                gpu, net, computing, ete, sucessful, unsuccessful, energy, hmd_energy, services_on_hmds = DataFrame.get_df_data(file, number_of_users)
                 
                 #bp = plt.boxplot([data1, data2, data3, data4, data5, data6], labels=labels)
                 #bp = plt.boxplot([gpu, net, computing, ete, sucessful, unsuccessful], labels=files)
                 #BoxPlot.get_box_plot_data(labels, bp)
                 
-                print('\n\n')
-                print(f'STD of algorithm {file}')
-                print(f'STD GPU: {np.std(gpu, ddof=1)}')
-                print(f'STD NET: {np.std(net, ddof=1)}')
-                print(f'STD COMPUTING: {np.std(computing, ddof=1)}')
-                print(f'STD ETE: {np.std(ete, ddof=1)}')
-                print(f'STD SUCESSFUL: {np.std(sucessful, ddof=1)}')
-                print(f'STD UNSUCESSFUL: {np.std(unsuccessful, ddof=1)}')
+                #print('\n\n')
+                #print(f'STD of algorithm {file}')
+                #print(f'STD GPU: {np.std(gpu, ddof=1)}')
+                #print(f'STD NET: {np.std(net, ddof=1)}')
+                #print(f'STD COMPUTING: {np.std(computing, ddof=1)}')
+                #print(f'STD ETE: {np.std(ete, ddof=1)}')
+                #print(f'STD SUCESSFUL: {np.std(sucessful, ddof=1)}')
+                #print(f'STD UNSUCESSFUL: {np.std(unsuccessful, ddof=1)}')
+                #print(f'STD ENERGY: {np.std(energy, ddof=1)}')
+                #print(f'STD HMD_ENERGY: {np.std(hmd_energy, ddof=1)}')
+                #print(f'STD SERVICES_ON_HMD: {np.std(services_on_hmds, ddof=1)}')
                 
-                print('\n\n')
+                print('\n')
                 print(f'Means of algorithm {file}')
-                print(f'GPU: {statistics.mean(gpu)}')
-                print(f'NET: {statistics.mean(net)}')
-                print(f'COMPUTING: {statistics.mean(computing)}')
+                #print(f'GPU: {statistics.mean(gpu)}')
+                #print(f'NET: {statistics.mean(net)}')
+                #print(f'COMPUTING: {statistics.mean(computing)}')
                 print(f'ETE: {statistics.mean(ete)}')
-                print(f'SUCESSFUL: {statistics.mean(sucessful)}')
-                print(f'UNSUCESSFUL: {statistics.mean(unsuccessful)}')
+                #print(f'SUCESSFUL: {statistics.mean(sucessful)}')
+                #print(f'UNSUCESSFUL: {statistics.mean(unsuccessful)}')
+                print(f'ENERGY: {statistics.mean(energy)}')
+                print(f'HMD_ENERGY: {statistics.mean(hmd_energy)}')
+                print(f'SERVICES_ON_HMD: {statistics.mean(services_on_hmds)}')
                 
-                n_bins = 200
-                fig, axs = plt.subplots(3, 2, tight_layout=True)
-                fig.suptitle('Algorithm {} | Vr users {}'.format(file, number_of_users))
+                #n_bins = 200
+                #fig, axs = plt.subplots(3, 2, tight_layout=True)
+                #fig.suptitle('Algorithm {} | Vr users {}'.format(file, number_of_users))
                 
+                """
                 #GPU usage
                 axs[0, 0].hist(gpu, bins=n_bins)
                 axs[0, 0].set_title('gpu usage')
@@ -143,7 +152,7 @@ class Histogram:
                 axs[2, 1].set_title('unsuccessful migrations')
                 axs[2, 1].set_xlabel('number of migrations')
                 axs[2, 1].set_ylabel('frequency')
-                
+                """
                 
                 plt.show(block=False)
                 
@@ -264,9 +273,11 @@ class CDF:
 
 
 if __name__ == "__main__":
-    #files = ['scg', 'network-resource', 'network', 'always', 'no']
-    #experiments = [100, 500, 1000]
-    files = ['scg']
-    experiments = [1000]
-    CDF.generate_cdf(experiments, files)
+    files = ['scg', 'network-resource', 'network', 'always', 'no']
+    experiments = [100]
+    Histogram.generate_histograms(experiments, files)
+    
+    #files = ['scg']
+    #experiments = [1000]
+    #CDF.generate_cdf(experiments, files)
     #Results.read_files(files)

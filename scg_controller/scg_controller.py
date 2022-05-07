@@ -114,7 +114,8 @@ class ScgController:
         average_net_latency = round((total_net_latency / services_cont), 3)
         average_computing_latency = round((total_computing_latency / services_cont), 3)
         average_latency = round((total_latency / services_cont), 3)
-        return average_net_latency, average_computing_latency, average_latency
+        #average_energy = self.calculate_resolution_usage(average_latency)
+        return average_net_latency, average_computing_latency, average_latency#, average_energy
 
     @staticmethod
     def get_E2E_latency(
@@ -226,6 +227,49 @@ class ScgController:
                 count +=1
         return count
     
+    def calculate_resolution_usage(self) -> None:
+        k1 = 0
+        k2 = 0
+        k4 = 0
+        k8 = 0
+        
+        for user in self.vr_users:
+            for service in user.services_set:
+                if service.decoder.resolution.resolution == '1080p':
+                    k1+=1
+                elif service.decoder.resolution.resolution == '1440p':
+                    k2+=1
+                elif service.decoder.resolution.resolution == '4k':
+                    k4+=1
+                elif service.decoder.resolution.resolution == '8k':
+                    k8+=1
+                
+        for mec in self.mec_set:
+            for service in mec.services_set:
+                if service.is_mobile:
+                    if service.decoder.resolution.resolution == '1080p':
+                        k1+=1
+                    elif service.decoder.resolution.resolution == '1440p':
+                        k2+=1
+                    elif service.decoder.resolution.resolution == '4k':
+                        k4+=1
+                    elif service.decoder.resolution.resolution == '8k':
+                        k8+=1
+        
+        
+        print('\n#############################################################')
+        print('1k: {} | 2k: {} | 4k: {} | 8k: {}'.format(k1, k2, k4, k8))
+        print('#############################################################')        
+        """
+        if service_e2e_latency <= 3:
+            return 4.28
+        elif service_e2e_latency > 3 and service_e2e_latency <= 4.5:
+            return 2.12
+        elif service_e2e_latency > 4.5 and service_e2e_latency <= 5.5:
+            return 1.69
+        else:
+            return 1.63
+        """
     
     def change_service_video_resolution(self, service_owner, service_id, service_e2e_latency) -> None: 
         #TODO: this method should be moved to VrController class
@@ -236,13 +280,13 @@ class ScgController:
         resolution_type = None
         #print('#################################')
         #print('service: {}'.format(service))
-        #print('current resolution: {}'.format(service.decoder.resolution))
+        #print('current resolution: {}'.format(service.decoder.resolution.resolution))
         
         if service_e2e_latency <= 3:
             resolution_type = '8k'
-        elif service_e2e_latency > 3 and service_e2e_latency <= 3.5:
+        elif service_e2e_latency > 3 and service_e2e_latency <= 7:
             resolution_type = '4k'
-        elif service_e2e_latency > 3.5 and service_e2e_latency <= 4:
+        elif service_e2e_latency > 7 and service_e2e_latency <= 8:
             resolution_type = '1440p'
         else:
             resolution_type = '1080p'
@@ -254,6 +298,6 @@ class ScgController:
         service.decoder.energy.resolution = decoder.energy.resolution
         service.decoder.energy.energy_consumption = decoder.energy.energy_consumption
         
-        #print('new resolution: {}'.format(service.decoder.resolution))
+        #print('new resolution: {}'.format(service.decoder.resolution.resolution))
         #print('e2e latency: {}'.format(service_e2e_latency))
         #a = input("press any key to continue")

@@ -31,8 +31,8 @@ from dataclasses import dataclass, field
 
 @dataclass
 class SCG(Migration):
-    alpha: int = 0.5
-    alpha_max_threshold = 1875
+    alpha: int = 0.1
+    alpha_max_threshold = 1857
     alpha_with_experiment: bool = False   
     total_services_migrated: int = field(init=False)
     
