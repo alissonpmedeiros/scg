@@ -30,9 +30,10 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class SCG(Migration):    
-    alpha: int = 0.9
-    alpha_max_threshold = 1944
+class SCG(Migration):
+    alpha: int = 0.5
+    alpha_max_threshold = 1875
+    alpha_with_experiment: bool = False   
     total_services_migrated: int = field(init=False)
     
     def __post_init__(self):
@@ -168,24 +169,44 @@ class SCG(Migration):
                 )
             else:
                 #print("*** Performing reverse offloading ***")
-                # Returning perform_migration due to energy consumption measurements
                 services_on_hmds = ScgController.get_vr_services_on_HMD(vr_users)
                 # TODO: ALPHA is being implemented here. Implement the case where ALPHA is 0 and 1. If 0, then just use the migrate. Otherwise, use the trade-off analysis witht the HMD
-                if services_on_hmds < self.total_services_migrated:
+                if not self.alpha_with_experiment:
+                    # Returning perform_migration due to energy consumption measurements
                     return self.reverse_offloading(
-                        mec_set=mec_set,
-                        vr_users=vr_users,
-                        user=service_owner,
-                        service=service,
-                    )
-                else:
+                            mec_set=mec_set,
+                            vr_users=vr_users,
+                            user=service_owner,
+                            service=service,
+                        )
+                elif self.alpha == 0:
+                    # No HMDs are considered
                     return self.perform_migration(
-                        base_station_set=base_station_set,
-                        mec_set=mec_set,
-                        user=service_owner,
-                        graph=graph,
-                        service=service
-                    )
+                            base_station_set=base_station_set,
+                            mec_set=mec_set,
+                            user=service_owner,
+                            graph=graph,
+                            service=service
+                        )
+                else:
+                    # If ALPHA experiments is enabled, then we check the maximum services deployed on the HMD.
+                    if services_on_hmds < self.total_services_migrated:
+                        return self.reverse_offloading(
+                            mec_set=mec_set,
+                            vr_users=vr_users,
+                            user=service_owner,
+                            service=service,
+                        )
+                    else:
+                        return self.perform_migration(
+                            base_station_set=base_station_set,
+                            mec_set=mec_set,
+                            user=service_owner,
+                            graph=graph,
+                            service=service
+                        )
+                
+                    
         
     
     def reverse_offloading(

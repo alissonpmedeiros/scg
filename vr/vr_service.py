@@ -72,16 +72,16 @@ class DecoderEnergy:
         return getattr(self, 'energy_' + str(resolution), lambda: default)()
 
     def energy_1080p(self):
-        return  96
+        return  1.63
     
     def energy_1440p(self):
-        return 142
+        return 1.69
     
     def energy_4k(self):
-        return 417
+        return 2.12
     
     def energy_8k(self):
-        return 1761    
+        return 4.28    
     
     
 

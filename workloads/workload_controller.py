@@ -98,7 +98,7 @@ class WorkloadController:
                     #print('service quota: ', service.quota)
                     #print('\n')
                     service.quota = response_service.quota
-                    VrController.change_resolution(service)
+                    #VrController.change_resolution(service)
                 else:
                     service = MecAgent.get_mec_service(mec_set, response_service.id)
                     
@@ -107,7 +107,7 @@ class WorkloadController:
                     )
                     quota_copy = extracted_service.quota
                     extracted_service.quota  = response_service.quota
-                    VrController.change_resolution(extracted_service)
+                    #VrController.change_resolution(extracted_service)
                     WorkloadController.check_migration_demand(
                         base_station_set, 
                         mec_set, 

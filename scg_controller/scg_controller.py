@@ -3,6 +3,8 @@
 """ dataclasses modules """
 from dataclasses import dataclass, field
 
+from vr.vr_service import Decoder, DecoderResolution, VrService
+
 """ onos controller modules """
 from sdn.onos import OnosController
 
@@ -68,6 +70,7 @@ class ScgController:
         services_cont = 0
         for user in self.vr_users:
             for service_id in user.services_ids:
+                service_e2e_latency = 0
                 if any(service_id == service.id for service in user.services_set):
                     """ checks whether a service IS deployed on the HMD """
 
@@ -76,6 +79,7 @@ class ScgController:
                         vr_users=self.vr_users,
                         user_ip=user.ip,
                     )
+                    service_e2e_latency = hmd_latency
                     total_computing_latency+=hmd_latency
                     total_latency += hmd_latency
                 
@@ -97,11 +101,14 @@ class ScgController:
                         dst_location=service_location,
                         graph=self.graph,
                     )
+                    service_e2e_latency = ete_latency
+                    
+                    
                     total_net_latency += network_latency
                     total_computing_latency+=computing_latency
                     total_latency += ete_latency
 
-                
+                self.change_service_video_resolution(user, service_id, service_e2e_latency)
                 services_cont += 1
         
         average_net_latency = round((total_net_latency / services_cont), 3)
@@ -183,30 +190,33 @@ class ScgController:
         return result
     
     def calculate_energy_usage(self) -> float:
-        total_services = len(self.vr_users)
+        #total_services = ScgController.get_vr_services_on_HMD(self.vr_users)
+        total_services = 0
         total_energy = 0
         for user in self.vr_users:
             for service in user.services_set:
                 total_energy += service.decoder.energy.energy_consumption
+                total_services += 1
         for mec in self.mec_set:
             for service in mec.services_set:
                 if service.is_mobile:
                     total_energy += service.decoder.energy.energy_consumption
+                    total_services += 1
         result = total_energy / total_services
         #print('total services: {} | total energy: {}'.format(total_services, total_energy))
-        #time.sleep(1)
-        return result
+        #a = input("press any key to continue")
+        return round(result, 2)
     
     def calculate_HMD_energy_usage(self) -> float:
-        total_services = len(self.vr_users)
+        total_services = ScgController.get_vr_services_on_HMD(self.vr_users)
         total_energy = 0
         for user in self.vr_users:
             for service in user.services_set:
                 total_energy += service.decoder.energy.energy_consumption
+        if total_services == 0:
+            return 0
         result = total_energy / total_services
-        #print('total services: {} | total energy: {}'.format(total_services, total_energy))
-        #time.sleep(1)
-        return result
+        return round(result, 2)
     
     @staticmethod
     def get_vr_services_on_HMD(vr_users: List[VrHMD] )-> int:
@@ -215,5 +225,35 @@ class ScgController:
             for service in user.services_set:
                 count +=1
         return count
-    """
-    """
+    
+    
+    def change_service_video_resolution(self, service_owner, service_id, service_e2e_latency) -> None: 
+        #TODO: this method should be moved to VrController class
+        #TODO: getting the service can be optimized
+        service: VrService = VrController.get_vr_service(self.vr_users, service_owner.ip, service_id)
+        if not service:
+            service = MecAgent.get_mec_service(self.mec_set, service_id)
+        resolution_type = None
+        #print('#################################')
+        #print('service: {}'.format(service))
+        #print('current resolution: {}'.format(service.decoder.resolution))
+        
+        if service_e2e_latency <= 3:
+            resolution_type = '8k'
+        elif service_e2e_latency > 3 and service_e2e_latency <= 3.5:
+            resolution_type = '4k'
+        elif service_e2e_latency > 3.5 and service_e2e_latency <= 4:
+            resolution_type = '1440p'
+        else:
+            resolution_type = '1080p'
+        
+        resolution = DecoderResolution(resolution_type)
+        decoder = Decoder(resolution)
+        service.decoder.resolution.name = decoder.resolution.name
+        service.decoder.resolution.resolution = decoder.resolution.resolution
+        service.decoder.energy.resolution = decoder.energy.resolution
+        service.decoder.energy.energy_consumption = decoder.energy.energy_consumption
+        
+        #print('new resolution: {}'.format(service.decoder.resolution))
+        #print('e2e latency: {}'.format(service_e2e_latency))
+        #a = input("press any key to continue")

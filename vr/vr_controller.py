@@ -195,19 +195,68 @@ class VrController:
             service.quota.resources = new_quota
             
 
+    """
     @staticmethod
     def change_resolution(service: VrService): 
-        #print('changing decoder')
-        #print('current decoder: {}'.format(service.decoder))
-        resolution_type = random.choice(Decoder.get_resolution_set())
+        
+        service_e2e_latency = 10
+        resolution_type = None
+        
+        if service_e2e_latency <= 3:
+            resolution_type = '8k'
+        elif service_e2e_latency > 3 and service_e2e_latency <= 3.5:
+            resolution_type = '4k'
+        elif service_e2e_latency > 3.5 and service_e2e_latency <= 4:
+            resolution_type = '1440p'
+        else:
+            resolution_type = '1080p'
+        
         resolution = DecoderResolution(resolution_type)
         decoder = Decoder(resolution)
         service.decoder.resolution.name = decoder.resolution.name
         service.decoder.resolution.resolution = decoder.resolution.resolution
         service.decoder.energy.resolution = decoder.energy.resolution
         service.decoder.energy.energy_consumption = decoder.energy.energy_consumption
-        #print('new decoder: {}'.format(service.decoder))
-        #a = input('press enter to continue')
+        
+    """
+    ################################################################################################
+        
+    """
+        #print(f'\n\nInitial resolution: {service.decoder.resolution.resolution}')
+        #print(f'\nInitial energy: {service.decoder.energy.energy_consumption}')
+        resolution_set = Decoder.get_resolution_set()
+        choice = random.randint(-1, 1)
+        if choice!= 0:
+            resolution_name = service.decoder.resolution.resolution
+            position = 0
+            for resolution in resolution_set:
+                if resolution == resolution_name:
+                    break
+                position +=1
+
+            if choice == -1:
+                if position == 0: 
+                    position = 1
+                else:
+                    position -=1
+            else:
+                if position == len(resolution_set) - 1:
+                    position -=1
+                else:
+                    position +=1
+
+            resolution_type= resolution_set[position]
+            resolution = DecoderResolution(resolution_type)
+            decoder = Decoder(resolution)
+            service.decoder.resolution.name = decoder.resolution.name
+            service.decoder.resolution.resolution = decoder.resolution.resolution
+            service.decoder.energy.resolution = decoder.energy.resolution
+            service.decoder.energy.energy_consumption = decoder.energy.energy_consumption
+            #print(f'\n\nNew resolution: {service.decoder.resolution.resolution}')
+            #rint(f'\nNew energy: {service.decoder.energy.energy_consumption}')
+            #a = input('type to continue...')
+    """
+        
 
     @staticmethod
     def update_user_location(vr_users: List[VrHMD], user_ip: str, new_location: str) -> None:

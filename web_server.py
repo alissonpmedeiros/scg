@@ -7,7 +7,7 @@ from vr.vr_controller import VrController
 app = Flask(__name__)
 COUNT = 0
 
-MIGRATION_ALGORITHMS = 1
+MIGRATION_ALGORITHMS = 5
 VR_USERS = VrController.load_vr_users()
 
 
