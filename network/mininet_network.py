@@ -1,71 +1,126 @@
-#!/usr/bin/python
-import sys, os, time
+#!/usr/bin/python3
 
+""" mininet modules """
 from mininet.log import setLogLevel, info
 from mn_wifi.cli import CLI
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.link import wmediumd, ITSLink
 from mn_wifi.wmediumdConnector import interference
 from mininet.node import Controller, RemoteController, OVSSwitch
+
+""" other modules """
+import sys, os, time
 import threading, signal, sys, json, random, os
-from pprint import pprint as pprint
 
-
+""" controller modules """
+from .. controllers import config_controller as config
+#from .. controllers.json_controller import DecoderController
 
 """ VARIABLES """
-net = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
+# network variables
+NET = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
+
+# configuration variables
+CONFIG = config.ConfigController.get_config()
+
+# HMDs and Base station simulation parameters
+BS_SET = []
+VR_USERS_SET = []
+VR_USERS = CONFIG['NETWORK']['VR_USERS']
+NET_GRAPH_DIMENSION = CONFIG['NETWORK']['NET_GRAPH_DIMENSION']
+
+
+#generates a random mac whenever this lambda function is called
 random_mac = lambda : ":".join([f"{random.randint(0, 255):02x}" for _ in range(6)])
 
-vr_users = 500
-aps_set = []
-vr_users_set = []
-plot_dimensions = 240
-
-file_path = '/home/ubuntu/scg/user/users.txt'
-
-if os.path.exists(file_path):
-    print(f'*** Removing file at {file_path} ***')
-    os.remove(file_path)
-else:
-    print("*** Can not delete the file as it doesn't exists ***")
+def remove_config_files():
+    """ removes configuration files """
+    
+    data_dir = CONFIG['SYSTEM']['DATA_DIR']
+    mec_file = CONFIG['SYSTEM']['MEC_FILE']
+    bs_file = CONFIG['SYSTEM']['BS_FILE']
+    user_file = CONFIG['SYSTEM']['USERS_FILE']
+    
+    if os.path.exists('{}{}'.format(data_dir, mec_file)):
+        print(f'*** Removing file at {mec_file} ***')
+        os.remove('{}{}'.format(data_dir, mec_file))
+    
+    if os.path.exists('{}{}'.format(data_dir, bs_file)):
+        print(f'*** Removing file at {bs_file} ***')
+        os.remove('{}{}'.format(data_dir, bs_file))
+    
+    if os.path.exists('{}{}'.format(data_dir, user_file)):
+        print(f'*** Removing file at {user_file} ***')
+        os.remove('{}{}'.format(data_dir, user_file))    
+    
 
 
 def signal_handler(sig, frame):
+    """ detects Ctrl+C action"""
+
     print('\n\nYou pressed Ctrl+C!\n\n')
     info("*** Stopping network\n")
-    net.stop()
+    NET.stop()
     info("*** Cleaning mininet-wifi env.\n")
     time.sleep(2)
     cmd = 'sudo mn -c'
     os.system(cmd)
     sys.exit(0)
 
-signal.signal(signal.SIGINT, signal_handler)
-
+def remove_link(data, id, edge_value):
+    """ removes a link from an edge link """
+    
+    for node in data:
+        if node['id'] == edge_value:
+            index = node['edges'].index(id)
+            del node['edges'][index]
+            break
+      
 def load_topology():
-    files_directory =  '/home/ubuntu/scg/network/'
-    file_name = 'network_graph.json'
-    with open('{}{}'.format(files_directory, file_name)) as json_file:
+    """ loads network topology from network configuration file """
+    '''
+    network_config = DecoderController.decode_net_config_file()
+    return network_config
+    '''
+    network_file_name = CONFIG['NETWORK']['NETWORK_FILE']
+    network_file_dir =  CONFIG['NETWORK']['NETWORK_FILE_DIR']
+    
+    with open('{}{}'.format(network_file_dir, network_file_name)) as json_file:
         data = json.load(json_file)
-        #pprint(data)
+        #remove_duplicated_links(data)
         return data 
 
-def topology(args):
+def set_hmd_range_color(hmd_set: list):
+    for hmd in hmd_set:
+         hmd.set_circle_color('r')  # for red color
+
+
+def add_hmds():
+    info("*** Adding HMDs nodes\n")
     network_adress = 0
-    host_adress = 1 
-    bs_cont = 0
-
-    info("*** Creating network\n")
-
-    info("*** Creating nodes\n")
-    for i in range(0, vr_users):
-
-        sta_args = dict()
-        if '-s' in args:
-            sta_args['position'] = '{},{},0'.format(plot_dimensions/2, plot_dimensions/2)
-        mac_address=random_mac()
-        sta = net.addStation('HMD{}'.format(i), mac=mac_address, ip='10.0.{}.{}/16'.format(network_adress, host_adress), active_scan=1, **sta_args)
-        vr_users_set.append(sta)    
+    host_adress = 1
+    
+    for i in range(1, VR_USERS+1):    
+        hmd_id = 'HMD{}'.format(i)
+        hmd_ip = '10.0.{}.{}/16'.format(network_adress, host_adress)
+        hmd_mac = random_mac()
+        hmd_range = 100 # antenna gain in meters
+        hmd_min_velicity = CONFIG['NETWORK']['HMD_MIN_VELOCITY']
+        hmd_max_velocity = CONFIG['NETWORK']['HMD_MAX_VELOCITY']
+        
+        bs = NET.addStation(
+            hmd_id, 
+            mac=hmd_mac, 
+            ip=hmd_ip, 
+            active_scan=1, 
+            range=hmd_range, 
+            max_y=NET_GRAPH_DIMENSION, 
+            max_x=NET_GRAPH_DIMENSION, 
+            min_v=hmd_min_velicity,
+            max_v=hmd_max_velocity
+        )
+        
+        VR_USERS_SET.append(bs)    
 
         host_adress += 1
 
@@ -73,72 +128,117 @@ def topology(args):
             network_adress += 1
             host_adress = 0
 
-        print('user: {}'.format(i+1))
-        
+        print('HMD: {}'.format(i))
+    
+def add_base_stations(topology_data):
     info("*** Adding base stations nodes\n")
-    for i in range(30, plot_dimensions, 60):
-        for j in range(20, plot_dimensions + 40, 40):
-            bs_cont+= 1
-            ap = net.addAccessPoint('BS{}'.format(bs_cont), ssid='ssid-ap{}'.format(bs_cont), channel='1', position='{},{},0'.format(j, i))
-            aps_set.append(ap)
-            print('bs: {}'.format(bs_cont))
-
+    for node in topology_data:
+        bs_id = 'BS' + str(node['id'])
+        bs_ssid = 'ssid-bs' + str(node['id'])
+        bs_x_position = str(node['position'][0] * NET_GRAPH_DIMENSION) 
+        bs_y_position = str(node['position'][1] * NET_GRAPH_DIMENSION)
+        bs_position = '{},{},0'.format(bs_x_position, bs_y_position)
+        bs_channel = CONFIG['NETWORK']['BS_CHANNEL']
+        bs_mode = CONFIG['NETWORK']['BS_MODE']
+        bs_range = CONFIG['NETWORK']['BS_RANGE']
+        bs_tx_power = CONFIG['NETWORK']['BS_TX_POWER']
+        
+        bs = NET.addAccessPoint(
+            bs_id, ssid=bs_ssid, 
+            channel=bs_channel, 
+            mode=bs_mode, 
+            txpower=bs_tx_power, 
+            range=bs_range, 
+            position=bs_position
+        )
+        
+        BS_SET.append(bs)
     
-
-    info("*** Starting ONOS controller\n")
-    c1 = net.addController('c1', controller=RemoteController,ip='130.92.70.173',port=6653,protocols="OpenFlow13")
-
-    info("*** Configuring propagation model\n")
-    net.setPropagationModel(model="logDistance", exp=5)
-
-    info("*** Configuring wifi nodes\n")
-    net.configureWifiNodes()
-
+def create_bs_links(topology_data):    
     info("*** Creating links\n")
-    data = load_topology()    
-    for i in range(1, len(aps_set)):
-        id = data[i-1].get('id')
-        edges = data[i-1].get('edges')
-        for edge in edges:
-            net.addLink(aps_set[i-1], aps_set[edge])
-
-    info("*** Configuring mobility model\n")
-    net.setMobilityModel(time=0, model='RandomDirection',
-                         max_x=plot_dimensions, max_y=plot_dimensions, seed=20, AC='ssf', min_v=1, max_v=1)
-
+    for node in topology_data:
+        #print(node)
+        #print('\n')
+        node_id = node['id']
+        for edge in node['edges']:
+            NET.addLink(BS_SET[node_id], BS_SET[edge])
+            #print(f'LINK: {BS_SET[node_id]} -> {BS_SET[edge]}')
+        #a = input('')
+        
+def get_sdn_controller():
+    info("*** Starting ONOS controller\n")
+    controller_ip = str(CONFIG['SDN']['IP'])
+    controller_port = CONFIG['SDN']['PORT']
+    controller_protocols = CONFIG['SDN']['PROTOCOLS']
+    controller = NET.addController(
+        'c1', 
+        controller=RemoteController,
+        ip=controller_ip, 
+        port=controller_port,
+        protocols = controller_protocols
+    )
+    return controller
     
-    
-    info("*** Starting network\n")
-    net.build()
-    c1.start()
-    i = 1
-    for ap in aps_set:
-        ap.start([c1])
+def config_ovs_switches(controller):
+    i = 0
+    for bs in BS_SET:
+        bs.start([controller])
         """ forcing ovs switches to use OpenFlow 13 """
         os.system('ovs-vsctl set bridge BS{} protocols=OpenFlow13'.format(i))
         i+=1
 
-    
-
-    info("*** Running CLI\n")
-    CLI_THREAD = threading.Thread(target=lambda: CLI(net))
-    CLI_THREAD.daemon = True
-
+def ping_nodes():
     """ runs the ping.sh script for each node ping all other nodes  """
     while True:
-        for user in vr_users_set:
+        for user in VR_USERS_SET:
             #print(user.cmd( 'nohup ./scg/ping.sh {} &'.format(vr_users)))
             #print(user.cmd( './scg/ping.sh {} &'.format(vr_users)))
-            p1 = user.popen( '/home/ubuntu/scg/network/ping.sh {} &'.format(vr_users))
+            p1 = user.popen( '/home/ubuntu/scg/network/ping.sh {} &'.format(VR_USERS))
             p1.terminate()
+
+def topology(args):
+    """ builds the network topology """
+    info("*** Creating network\n")
+    topology_data = load_topology() 
+    
+    add_hmds()
+    add_base_stations(topology_data)
+    sdn_controller = get_sdn_controller()
+
+    info("*** Configuring propagation model\n")
+    NET.setPropagationModel(model="logDistance", exp=5)
+
+    info("*** Configuring wifi nodes\n")
+    NET.configureWifiNodes()
+
+    create_bs_links(topology_data)
+            
+    info("*** Configuring mobility model\n")
+    NET.setMobilityModel(time=0, model='RandomDirection', seed=20, AC='ssf')
+
+    info("""*** Starting the graph interface\n""")
+    NET.plotGraph(max_x=NET_GRAPH_DIMENSION, max_y=NET_GRAPH_DIMENSION) 
+    
+    info("*** Starting network\n")
+    NET.build()
+    sdn_controller.start()
+    
+    config_ovs_switches(sdn_controller)
+
+    info("*** Running CLI\n")
+    CLI_THREAD = threading.Thread(target=lambda: CLI(NET))
+    CLI_THREAD.daemon = True
+    
+    set_hmd_range_color(VR_USERS_SET)
+    ping_nodes()
 
     #CLI(net)
     
-    
-
-
+#initializing signal handler function
+signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == '__main__':
+    remove_config_files()
     setLogLevel('info')
     topology(sys.argv)
     

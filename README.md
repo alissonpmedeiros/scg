@@ -52,6 +52,10 @@ ONOS sdn controller is used to provide the mobility connectivity automation for 
     - Mobility
     - Onos legacy GUI if the GUI2 is crashing 
 
+5. Describe the configuration file!
+
+6. ONOS service should be cleaned whenever a new topology is loaded on Mininet-wifi:  
+    - ```sudo /opt/onos27/bin/onos-service clean```
 
 ---
 
@@ -61,7 +65,7 @@ Mininet Wifi is used to provide a mobility scenario for VR applications
 
 The script **mininet_network.py** constains the mininet code to provide the network, including base stations, VR HMD users in mobility, latency between nodes, and bandwidth restrictions. The script also connects to ONOS. 
 
-To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
+At root directory that contains scg directory, run the mininet script: ```sudo python3 -m scg.network.mininet_network```
 
 1. Mininet wifi instalation:
 
@@ -73,9 +77,28 @@ To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
         * ```linux-image-5.4.0-1030-kvm_5.4.0-1030.31_amd64.deb``` 
 
     - reboot the OS after installing the packages for wmedium.
-    - ```git clone https://github.com/intrig-unicamp/mininet-wifi.git```
-    - ```cd mininet-wifi```
-    - ```sudo util/install.sh -Wlnfv```
+        * ```git clone https://github.com/intrig-unicamp/mininet-wifi.git```
+        * ```cd mininet-wifi```
+        * ```sudo util/install.sh -Wlnfv```
+    
+    - Setup Xauthority
+        * Make sure ~/.Xauthority owned by you: ```ls -l ~/.Xauthority```
+        * ```chown user:group ~/.Xauthority```
+        * ```chmod 0600 ~/.Xauthority```
+        * ```export XAUTHORITY=$HOME/.Xauthority```
+    
+    - Setup display
+        * ```export DISPLAY="127.0.0.1:10.0"``` or ```export DISPLAY=:0.0```
+        * For mac osx install XQuartz and use -Y to ssh, export the display, and export XAUTHORITY 
+
+    - X11 SSHD (server) Forwarding
+        * set X11Forwarding yes at ```/etc/ssh/sshd_config```
+
+    - X11 client Forwarding
+        * set X11Forwarding yes at ```/etc/ssh/ssh_config ```
+
+    - Stop network manager service
+        * ```sudo service network-manager stop```
 
 ---
 
@@ -89,18 +112,18 @@ To run the script use *python3*: ```sudo python3 ~/mininet_network.py```
     - This action ensures that all algorithms will have the same workload in each iteration.
 ---
 
-## SCG setup
+## TENET setup
 
-1. Computing resources (GPUs and CPUs) for MEC servers and VR services are automatically generated based on the number of base stations and users configured at *mininet_network.py*. The data will be stored at **~/mec/mecs.txt** and **~/user/users.txt**. 
+1. Computing resources (GPUs and CPUs) for MEC servers and VR services are automatically generated based on the number of base stations and users configured at **mininet_network.py**. The data will be stored at **~/config/mecs.json**, **~/config/base_stations.json** and **~/config/users.json**. 
     - Wait until all services are recognized by the SDN controller
     - To do so, check **http://ONOS-VM-IP:8181/onos/ui/#/host**
 
-2. Every time the script **mininet_network.py** runs, we have to delete the *users.txt* file because VR users will have different MAC addresses. 
+2. Every time the script **mininet_network.py** runs, we have to delete the *users.json* file because VR users will have different MAC addresses. 
 
 3. To start the system, runs the following scripts:
-    - ``` python3 ~/scg/network/mininet_network.py ```
-    - ``` python3 ~/scg/web_server.py ```
-    - ``` python3 ~/scg/main.py {migration_algorithm}``` 
+    - ```python3 ~/scg/network/mininet_network.py```
+    - ```python3 ~/scg/web_server.py```
+    - ```python3 ~/scg/main.py {migration_algorithm}``` 
 
 
 ---

@@ -4,3 +4,8 @@ dataclasses
 dataclasses_json
 orjson
 numpy
+pyyaml
+matplotlib
+networkx
+plotly
+kaleido # for plotly
