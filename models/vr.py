@@ -6,11 +6,13 @@ from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 
 
+@dataclass_json
 @dataclass
 class ServiceQuota:
     """ describes the service quotas available in the system"""
-    name: str
-    resources: dict = field(init=False)
+    
+    name: str = field(default_factory=str, init=True)
+    resources: dict = field(default_factory=dict, init=True)
 
     def __post_init__(self):
         self.resources = self.get_quota(self.name)
@@ -47,24 +49,21 @@ class ServiceQuota:
     def get_quotas_set():
         quotas_set = ['small', 'tiny', 'medium', 'large', 'xlarge']
         return quotas_set
-
-
+    
+    
+@dataclass_json
 @dataclass
 class VideoDecoderEnergy:
     """ describes the energy consumption of the decoder """
-    resolution: str
-    energy_consumption: str = field(init=False)
     
-    def __post_init__(self):
-        self.energy_consumption = self.get_energy(self.resolution)
+    energy_consumption: str = field(default_factory=str, init=True)
     
-    def set_energy(self, resolution: str):
-        self.resolution = resolution
-        self.energy_consumption = self.get_energy(resolution)
+    def set_energy(self, resolution_name: str):
+        self.energy_consumption = self.get_energy(resolution_name)
     
-    def get_energy(self, resolution: str):
+    def get_energy(self, resolution_name: str):
         default = "incorrect energy"
-        return getattr(self, 'energy_' + str(resolution), lambda: default)()
+        return getattr(self, 'energy_' + str(resolution_name), lambda: default)()
 
     def energy_1080p(self):
         return  1.63
@@ -79,23 +78,19 @@ class VideoDecoderEnergy:
         return 4.28    
     
     
-
+@dataclass_json
 @dataclass
 class VideoDecoderResolution:
     """describes the resolution of the decoder"""
-    name: str
-    resolution: str = field(init=False)
     
-    def __post_init__(self):
-        self.resolution = self.get_resolution(self.name) 
+    resolution: str = field(default_factory=str, init=True)
     
-    def set_resolution(self, name: str):
-        self.name = name
-        self.resolution = self.get_resolution(name)
+    def set_resolution(self, resolution_name: str):
+        self.resolution = self.get_resolution(resolution_name)
     
-    def get_resolution(self, name: str):
+    def get_resolution(self, resolution_name: str):
         default = "incorrect resolution"
-        return getattr(self, 'resolution_' + str(name), lambda: default)()
+        return getattr(self, 'resolution_' + str(resolution_name), lambda: default)()
     
     def resolution_8k(self):
         return "8k"
@@ -109,73 +104,69 @@ class VideoDecoderResolution:
     def resolution_1080p(self):
         return "1080p"
     
-
+@dataclass_json
 @dataclass
 class VideoDecoder:
     """describes the resolution and energy of the decoder"""
-    resolution: VideoDecoderResolution  
-    energy: VideoDecoderEnergy = field(init=False) 
+    resolution: VideoDecoderResolution = field(default_factory=VideoDecoderResolution, init=True)
+    energy: VideoDecoderEnergy = field(default_factory=VideoDecoderEnergy, init=True) 
     
     def __post_init__(self):
-        self.energy = VideoDecoderEnergy(self.resolution.resolution)
-        
-    def get_energy(self):
-        return self.energy
+        if not self.resolution:
+            self.resolution = VideoDecoderResolution()
+            self.energy = VideoDecoderEnergy()
     
-    def get_resolution(self):
-        return self.resolution
-        
+    @staticmethod    
     def get_resolution_set():
         resolution_set = ['1080p', '1440p', '4k', '8k']
         return resolution_set
+    
+    def set_resolution(self, resolution_name: str):
+        self.resolution.set_resolution(resolution_name)
+        self.energy.set_energy(resolution_name)
 
+@dataclass_json
 @dataclass
 class VrService:
     """ represents a VR service""" 
-    id: str = field(init=False)
-    quota: ServiceQuota = field(init=False)
-    decoder: VideoDecoder = field(init=False)
+    id: str = field(default_factory=str, init=True)
+    quota: ServiceQuota = field(default_factory=ServiceQuota, init=True)
+    video_decoder: VideoDecoder = field(default_factory=VideoDecoder, init=True)
     cpu_only: bool = field(default=False, init=True) 
     is_mobile: bool = field(default=False, init=True) 
     
+    
     def __post_init__(self):
-        self.id = str(uuid.uuid4())
-        quotas_set = ServiceQuota.get_quotas_set()
-        
-        """ if cpu_only is True, then the quotas 'large' and 'xlarge' are excluded """
-        if self.cpu_only:
-            """ selects a random quote for each service """
-            quota_choice = random.choice([
-                quota for quota in quotas_set if quota not in ['medium', 'large', 'xlarge']])
-            self.quota = ServiceQuota(quota_choice)
-        else:
-            quota_choice = random.choice(quotas_set)
-            self.quota = ServiceQuota(quota_choice)
-        
-        resolution_type = random.choice(VideoDecoder.get_resolution_set())
-        resolution = VideoDecoderResolution(resolution_type)
-        self.decoder = VideoDecoder(resolution)
+        if not self.id:
+            self.id = str(uuid.uuid4())
 
+            quotas_set = ServiceQuota.get_quotas_set()
+            
+            """ if cpu_only is True, then the quotas 'large' and 'xlarge' are excluded """
+            if self.cpu_only:
+                """ selects a random quote for each service """
+                quota_choice = random.choice([
+                    quota for quota in quotas_set if quota not in ['medium', 'large', 'xlarge']])
+                self.quota = ServiceQuota(quota_choice)
+            else:
+                quota_choice = random.choice(quotas_set)
+                self.quota = ServiceQuota(quota_choice)
+            
+            self.video_decoder = VideoDecoder()
+            resolution_name = random.choice(VideoDecoder.get_resolution_set())        
+            self.video_decoder.set_resolution(resolution_name)
 
-
+      
 @dataclass_json
 @dataclass
 class VrHMD:
     """ represents a VR HMD instance """
     
-    ip: str
     mac_address: str
     previous_location: str 
     current_location:  str 
     computing_latency: float 
     cpu: int = 0
     gpu: int = 0
-    id: str = field(init=False)
-    services_set: List[VrService] = field(default_factory=list, init=False)
-    services_ids: List[str] = field(default_factory=list, init=False)
-
-    def __post_init__(self):
-        self.id = str(uuid.uuid4())
-
-        
-    
+    services_set: List[VrService] = field(default_factory=list, init=True)
+    services_ids: List[str] = field(default_factory=list, init=True)

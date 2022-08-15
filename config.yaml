@@ -3,13 +3,13 @@ SYSTEM:
   DATA_DIR: '/home/ubuntu/scg/config/'
   BS_FILE: 'base_stations.json'
   MEC_FILE: 'mecs.json'
-  USERS_FILE: 'users.json'
+  HMDS_FILE: 'hmds.json'
   RESULTS_DIR: '/home/ubuntu/scg/results/'
-  SERVICE_PER_USER: 5
+  SERVICE_PER_USER: 130
 
 # variables for mininet-wifi 
 NETWORK:
-  VR_USERS: 10
+  HMDS: 10
   BASE_STATIONS: 32
   NETWORK_FILE: 'network_graph.json'
   NETWORK_FILE_DIR: '/home/ubuntu/scg/network/'
@@ -31,8 +31,7 @@ SDN:
 
 
 MIGRATION:  
-  ALGORITHMS: 1
-  NUMBER_USERS: 500
+  ALGORITHMS: 2
 
 MEC_SERVERS:
   GPU_LAM: 110
@@ -46,5 +45,12 @@ MEC_SERVERS:
   INIT_RESOURCE_LOAD: 0.9 
 
 HMDS:
-  LOWER_LATENCY_THRESHOLD: 5
-  UPPER_LATENCY_THRESHOLD: 10
+  LOWER_LATENCY_THRESHOLD: 4
+  UPPER_LATENCY_THRESHOLD: 7
+
+SERVICES:
+  VIDEO_RESOLUTION:
+    LATENCY_THRESOLDS:
+      8k: 3.5
+      4k: 4
+      2k: 4.5

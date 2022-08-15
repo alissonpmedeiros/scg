@@ -1,102 +1,135 @@
+"""models modules """
+from models.mec import Mec
+from models.vr import VrHMD
+from models.base_station import BaseStation
+
 """ controller modules """
-from controllers import config_controller as config
+from controllers import config_controller
 
 """ other modules """
 import json, os
-import numpy as np
+from typing import Dict, Any
 from munch import DefaultMunch
 
-class NpEncoder(json.JSONEncoder):
-    """ converting NumPy numbers to a Python int before serializing the objec """
-
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            return float(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super(NpEncoder, self).default(obj)
+CONFIG = config_controller.ConfigController.get_config()
 
 
 class TranscoderController:
     """ provides methods to transcode data """
     
     @staticmethod
-    def convert_to_dict(data: list) -> list:
-        """ converts a list to dict """
-        new_data = []
-        for item in data:
-            new_data.append(item.to_dict())
-        return new_data
+    def convert_objects_to_dict(data_set: dict) -> list:
+        """ serializes objects to dict from classes that use @dataclass_json """
+        
+        print(f'\n*** serializing objects to dict***\n')
+        for key, value in data_set.items(): 
+            data_set[key] = value.to_dict()
     
 
 class EncoderController():
     """ provides methods to encode json data """
     
     @staticmethod
-    def encoder(data: list, data_directory: str, file_name: str) -> None:  
-        data_json = TranscoderController.convert_to_dict(data)    
-        data = json.dumps(data_json, cls=NpEncoder)
-        f = open("{}{}".format(data_directory, file_name), "w+")
-        f.write(data)
-        f.close()
+    def encoding_to_json(data_set: Dict[str, Any]) -> None:
+        """ encodes a python dict of objects to json objects into a file """
         
-            
-    @staticmethod
-    def encoding_to_json(data_set: list) -> None:
-        """ encodes a list to json file """
-        
-        '''#TODO: test the commented method in order to replace the encoder method
-        CONFIG = ConfigController.get_config()
         data_directory = CONFIG['SYSTEM']['DATA_DIR']
         
         files_dict = {
-            'BaseStation': 'BS_FILE',
-            'Mec': 'MEC_FILE',
-            'VrHMD': 'USERS_FILE'
+            'base_station_set': 'BS_FILE',
+            'mec_set': 'MEC_FILE',
+            'hmds_set': 'HMDS_FILE'
         }
         
-        data_type = type(data_set[0]).__name__
-        file_name = files_dict.get(data_type)'''
+        data_type = next(iter(data_set))
+        file_name_option = files_dict.get(data_type)
+        file_name = CONFIG['SYSTEM'][file_name_option]
         
         
-        CONFIG = config.ConfigController.get_config()
-        data_directory = CONFIG['SYSTEM']['DATA_DIR']
-        file_name = ''
-        
-        if type(data_set[0]).__name__ == 'BaseStation':
-            file_name = CONFIG['SYSTEM']['BS_FILE']
-        elif type(data_set[0]).__name__ == "Mec":
-            file_name = CONFIG['SYSTEM']['MEC_FILE']
-        else:
-            file_name = CONFIG['SYSTEM']['USERS_FILE']
-    
         if os.path.isfile("{}{}".format(data_directory, file_name)):
-            #print(f'*** file {file_name} at {data_directory} already exists! ***')
             return
+            
+        TranscoderController.convert_objects_to_dict(data_set[data_type])  
         
-        """ encoding to json file """
-        EncoderController.encoder(data=data_set, data_directory=data_directory, file_name=file_name)
-
+        print(f'\n*** encoding***\n')
+        with open("{}{}".format(data_directory, file_name), "w+") as file_write:
+            json.dump(data_set, file_write, indent=2, ensure_ascii=False)
+        
+        return 
+    
 
 class DecoderController:
     """ provides methods to decoding json data """
     
-    def decoding_to_dict(data_dir: str, file_name: str) -> dict:
-        """ decodes a json file to dict """
+    @staticmethod
+    def decoder_to_dict_objects(data_set: dict, data_type: str) -> None:
+        """decodes a dict of json objects into BaseStations, Mecs, or VrHMD objects"""
         
-        print(f'*** loading file {file_name} at {data_dir} ***')
+        data_type_dict = {
+            'base_station_set': BaseStation,
+            'mec_set': Mec,
+            'hmds_set': VrHMD
+        }
         
-        with open("{}{}".format(data_dir, file_name)) as json_file:
-            data = json.loads(json_file.read())
-            result = DefaultMunch.fromDict(data)
-            return result
+        print(f'\n*** decoding {str(data_type_dict[data_type])} objects***')
+        
+        for key, value in data_set[data_type].items():
+            data_type_object = data_type_dict[data_type].from_dict(value)
+            data_set[data_type][key] = data_type_object
+        
+        return 
+        
+    @staticmethod
+    def decoding_to_dict(data_directory: str, file_name: str) -> dict:
+        """ decodes a file of json objects into dict of BaseStations, Mecs, or VrHMD objects """
+        
+        print(f'\n*** decoding -> loading file {data_directory} at {file_name} ***')
+        with open("{}{}".format(data_directory, file_name),"r", encoding='utf-8') as json_file:
+            data_set = json.load(json_file)
+            data_type = next(iter(data_set))
+            DecoderController.decoder_to_dict_objects(data_set, data_type)
+            return data_set[data_type]
     
+    @staticmethod
+    def load_to_json_objects(data_set: dict, data_type: str) -> None:
+        """loads a dict of json objects into BaseStations, Mecs, or VrHMD objects"""
+        
+        data_type_dict = {
+            'base_station_set': BaseStation,
+            'mec_set': Mec,
+            'hmds_set': VrHMD
+        }
+        
+        #print(f'\n*** loading {str(data_type_dict[data_type])} objects***')
+        
+        for key, value in data_set[data_type].items():
+            data_type_object = data_type_dict[data_type].from_json(value)
+            data_set[data_type][key] = data_type_object
+        
+        return 
+    
+    @staticmethod
+    def loading_to_dict(data_set: Dict[str,str]) -> dict:
+        """ loads a dict of str into dict of BaseStations, Mecs, or VrHMD objects based on data_type """
+    
+        data_type = next(iter(data_set))
+        DecoderController.load_to_json_objects(data_set, data_type)
+        return data_set[data_type]
+    
+    
+    @staticmethod
     def decode_net_config_file() -> dict:
         """ decodes network configuration file """
         
-        CONFIG = config.ConfigController.get_config()
         data_directory = CONFIG['NETWORK']['NETWORK_FILE_DIR']
         file_name = CONFIG['NETWORK']['NETWORK_FILE']
-        return DecoderController.decoding_to_dict(data_dir=data_directory, file_name=file_name)
+        
+        print(f'\n*** loading file {file_name} at {data_directory} ***')
+        
+        with open("{}{}".format(data_directory, file_name)) as json_file:
+            data = json.loads(json_file.read())
+            result = DefaultMunch.fromDict(data)
+            return result
+        
+        
+       

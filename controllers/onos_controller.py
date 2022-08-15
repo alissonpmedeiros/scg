@@ -3,13 +3,14 @@
 from typing import List
 import requests, time, os
 from munch import Munch, DefaultMunch
-from requests.exceptions import HTTPError
 from dataclasses import dataclass, field
+from requests.exceptions import HTTPError
 
 
 @dataclass()
 class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVAILABLE!
     """ SDN controller representation for ONOS """
+    
     hosts: List[dict] = field(default_factory=list, init=False)
     server_IP: str = '130.92.70.173'
     OF_port: str = '8181'
@@ -47,6 +48,7 @@ class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVA
     @staticmethod
     def get_host(hosts: dict, host_IP: str) -> list:
         """ get a specific host info based on its IP""" 
+        
         """
         usage -> host['key']
         during this loop, the following keys are available for each host:
@@ -91,7 +93,8 @@ class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVA
     
     @staticmethod
     def get_device_from_file(devices: List[dict], device_id: int) -> dict:
-        #return [device for device in devices if device.id == device_id]
+        """gets a device from hmds.json file"""
+        
         for device in devices:
             if device.id == device_id:
                 return device
@@ -165,6 +168,7 @@ class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVA
     @classmethod            
     def delete_hosts(self) -> None:
         """ deletes all hosts """
+        
         hosts = OnosController.get_hosts()  
         for host in hosts['hosts']:
             #print(host)
@@ -183,6 +187,7 @@ class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVA
     @classmethod            
     def delete_devices(self) -> None:
         """ deletes all devices """
+        
         devices = OnosController.get_devices()  
         for device in devices:
             URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/devices/{}'.format(device.id)

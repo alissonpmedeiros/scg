@@ -13,20 +13,20 @@ import sys, os, time
 import threading, signal, sys, json, random, os
 
 """ controller modules """
-from .. controllers import config_controller as config
-#from .. controllers.json_controller import DecoderController
+from .. controllers import config_controller
+
 
 """ VARIABLES """
 # network variables
 NET = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
 
 # configuration variables
-CONFIG = config.ConfigController.get_config()
+CONFIG = config_controller.ConfigController.get_config()
 
 # HMDs and Base station simulation parameters
 BS_SET = []
-VR_USERS_SET = []
-VR_USERS = CONFIG['NETWORK']['VR_USERS']
+HMDS_SET = []
+HMDS = CONFIG['NETWORK']['HMDS']
 NET_GRAPH_DIMENSION = CONFIG['NETWORK']['NET_GRAPH_DIMENSION']
 
 
@@ -39,7 +39,7 @@ def remove_config_files():
     data_dir = CONFIG['SYSTEM']['DATA_DIR']
     mec_file = CONFIG['SYSTEM']['MEC_FILE']
     bs_file = CONFIG['SYSTEM']['BS_FILE']
-    user_file = CONFIG['SYSTEM']['USERS_FILE']
+    user_file = CONFIG['SYSTEM']['HMDS_FILE']
     
     if os.path.exists('{}{}'.format(data_dir, mec_file)):
         print(f'*** Removing file at {mec_file} ***')
@@ -90,7 +90,7 @@ def load_topology():
         #remove_duplicated_links(data)
         return data 
 
-def set_hmd_range_color(hmd_set: list):
+def set_hmd_range_color(hmd_set: dict):
     for hmd in hmd_set:
          hmd.set_circle_color('r')  # for red color
 
@@ -100,7 +100,7 @@ def add_hmds():
     network_adress = 0
     host_adress = 1
     
-    for i in range(1, VR_USERS+1):    
+    for i in range(1, HMDS+1):    
         hmd_id = 'HMD{}'.format(i)
         hmd_ip = '10.0.{}.{}/16'.format(network_adress, host_adress)
         hmd_mac = random_mac()
@@ -120,7 +120,7 @@ def add_hmds():
             max_v=hmd_max_velocity
         )
         
-        VR_USERS_SET.append(bs)    
+        HMDS_SET.append(bs)    
 
         host_adress += 1
 
@@ -190,10 +190,10 @@ def config_ovs_switches(controller):
 def ping_nodes():
     """ runs the ping.sh script for each node ping all other nodes  """
     while True:
-        for user in VR_USERS_SET:
+        for user in HMDS_SET:
             #print(user.cmd( 'nohup ./scg/ping.sh {} &'.format(vr_users)))
             #print(user.cmd( './scg/ping.sh {} &'.format(vr_users)))
-            p1 = user.popen( '/home/ubuntu/scg/network/ping.sh {} &'.format(VR_USERS))
+            p1 = user.popen( '/home/ubuntu/scg/network/ping.sh {} &'.format(HMDS))
             p1.terminate()
 
 def topology(args):
@@ -229,7 +229,7 @@ def topology(args):
     CLI_THREAD = threading.Thread(target=lambda: CLI(NET))
     CLI_THREAD.daemon = True
     
-    set_hmd_range_color(VR_USERS_SET)
+    set_hmd_range_color(HMDS_SET)
     ping_nodes()
 
     #CLI(net)

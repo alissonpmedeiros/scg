@@ -63,7 +63,7 @@ ONOS sdn controller is used to provide the mobility connectivity automation for 
 
 Mininet Wifi is used to provide a mobility scenario for VR applications
 
-The script **mininet_network.py** constains the mininet code to provide the network, including base stations, VR HMD users in mobility, latency between nodes, and bandwidth restrictions. The script also connects to ONOS. 
+The script **mininet_network.py** constains the mininet code to provide the network, including base stations, VR HMDs in mobility, latency between nodes, and bandwidth restrictions. The script also connects to ONOS. 
 
 At root directory that contains scg directory, run the mininet script: ```sudo python3 -m scg.network.mininet_network```
 
@@ -114,11 +114,11 @@ At root directory that contains scg directory, run the mininet script: ```sudo p
 
 ## TENET setup
 
-1. Computing resources (GPUs and CPUs) for MEC servers and VR services are automatically generated based on the number of base stations and users configured at **mininet_network.py**. The data will be stored at **~/config/mecs.json**, **~/config/base_stations.json** and **~/config/users.json**. 
+1. Computing resources (GPUs and CPUs) for MEC servers and VR services are automatically generated based on the number of base stations and hmds configured at **mininet_network.py**. The data will be stored at **~/config/mecs.json**, **~/config/base_stations.json** and **~/config/hmds.json**. 
     - Wait until all services are recognized by the SDN controller
     - To do so, check **http://ONOS-VM-IP:8181/onos/ui/#/host**
 
-2. Every time the script **mininet_network.py** runs, we have to delete the *users.json* file because VR users will have different MAC addresses. 
+2. Every time the script **mininet_network.py** runs, we have to delete the *hmds.json* file because VR HMDs will have different MAC addresses. 
 
 3. To start the system, runs the following scripts:
     - ```python3 ~/scg/network/mininet_network.py```

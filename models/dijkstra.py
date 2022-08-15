@@ -8,6 +8,7 @@ if typing.TYPE_CHECKING:
 """ other modules """
 import sys
 
+
 class Dijkstra:
     @staticmethod
     def build_shortest_path(graph: 'Graph', start_node: 'BaseStation', start_node_mec: 'Mec'):

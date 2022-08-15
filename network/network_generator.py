@@ -9,10 +9,10 @@ import plotly.graph_objects as go
 pio.kaleido.scope.mathjax = None
 
 """ controller modules """
-from .. controllers import config_controller as config
+from .. controllers import config_controller
 
 # configuration variables
-CONFIG = config.ConfigController.get_config()
+CONFIG = config_controller.ConfigController.get_config()
 
 def generate_positions(number_nodes):
     positions =  np.random.rand(number_nodes, 2)

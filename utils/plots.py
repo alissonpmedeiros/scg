@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 from pprint import pprint as pprint
 
 """ controller modules """
-from controllers import config_controller as config
+from controllers import config_controller as config_controller
 
-CONFIG = config.ConfigController.get_config()
+CONFIG = config_controller.ConfigController.get_config()
 RESULTS_DIR = CONFIG['SYSTEM']['RESULTS_DIR']
 
 class BoxPlot:
