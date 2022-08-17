@@ -36,7 +36,7 @@ class WorkloadController:
         Checks whether a service fits on a mec server, otherwise, it checks the migration. 
         If migration is not possible, it will revert the service to the previous service quota.  
         """
-        
+        #print('\n*** CHECK MIGRATION DEMAND! ***')
         if mec_controller.MecController.check_deployment(
             service_mec_server, extracted_service
         ):
@@ -74,14 +74,25 @@ class WorkloadController:
         
         for response_id, response_hmd in response_hmds_set.items():
             for response_service in response_hmd.services_set:
-                service_mec_server_id, service_mec_server = mec_controller.MecController.get_service_mec_server(
+                
+                service_server: Dict[str,'Mec'] = mec_controller.MecController.get_service_mec_server(
                     mec_set, response_service.id
                 )
+            
+                service_mec_server: 'Mec' = service_server.get('mec')
+                
                 service: 'VrService' = None
+                
                 if not service_mec_server:
-                    service_owner_id, service_owner = vr_controller.VrController.get_vr_service_owner(
+                    service_owner: Dict[str, 'VrHMD'] = vr_controller.VrController.get_vr_service_owner(
                         hmds_set, response_service
                     )
+                    
+                    if service_owner is None:
+                        print('service has no service_owner')
+                        a = input('')
+                        
+                    service_owner_id: str = service_owner.get('id')
                     
                     service = vr_controller.VrController.get_vr_service(
                         hmds_set, service_owner_id, response_service.id

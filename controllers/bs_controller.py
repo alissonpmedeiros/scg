@@ -27,11 +27,17 @@ class BaseStationController:
     def get_base_station_by_name(base_station_set: Dict[str, BaseStation], bs_name: str) -> Dict[str, BaseStation]:
         """gets the base station by name and returns its ID and its object"""
         
+        bs_dict: Dict[str, BaseStation] = {
+            'id': None,
+            'base_station': None
+        }
+        
         for bs_id, base_station in base_station_set.items():
             if base_station.name == bs_name:
-                return bs_id, base_station
+                bs_dict.update({'id': bs_id, 'base_station': base_station})
+                break
         
-        return None
+        return bs_dict
     
     @staticmethod
     def print_base_stations(base_station_set: Dict[str, BaseStation]) -> None:
@@ -55,7 +61,9 @@ class BaseStationController:
             
             for destination, link_latency in zip(device['edges'], device['edge_distances']):    
                 dst_bs_name = 'BS' + str(destination)
-                dst_bs_id, dst_bs = BaseStationController.get_base_station_by_name(base_station_set, dst_bs_name)
+                dst = BaseStationController.get_base_station_by_name(base_station_set, dst_bs_name)
+                dst_bs_id: str = dst.get('id')
+                dst_bs: BaseStation = dst.get('base_station')
                 base_station.links[dst_bs_id]['latency'] = link_latency
                 # ensures that A to B has the same latency of B to A
                 dst_bs.links[bs_id]['latency'] = link_latency 

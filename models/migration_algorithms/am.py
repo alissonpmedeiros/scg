@@ -40,14 +40,16 @@ class AlwaysMigrate(Migration):
         service: 'VrService',
      ) -> bool:
         
-        service_owner_id, service_owner = vr_controller.VrController.get_vr_service_owner(
+        service_owner: Dict[str, 'VrHMD'] = vr_controller.VrController.get_vr_service_owner(
             hmds_set, service
         )
+    
+        service_owner_hmd: 'VrHMD' = service_owner.get('hmd')
         
         return self.perform_migration(
             base_station_set,
             mec_set,
-            service_owner,
+            service_owner_hmd,
             service,
         )
             
@@ -72,7 +74,11 @@ class AlwaysMigrate(Migration):
         if mec_controller.MecController.check_deployment(
             bs_mec, service
         ):
-            service_mec_server_id, service_mec_server = mec_controller.MecController.get_service_mec_server(mec_set, service.id)
+            service_server: Dict[str,'Mec'] = mec_controller.MecController.get_service_mec_server(
+                mec_set, service.id
+            )
+            
+            service_mec_server = service_server.get('mec')
             
             extracted_service = mec_controller.MecController.remove_service(
                 service_mec_server, service

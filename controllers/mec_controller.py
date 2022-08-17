@@ -69,23 +69,32 @@ class MecController:
         graph: 'Graph', 
         start_node: 'BaseStation', 
         service: VrService
-    ) -> Mec:
-        """ discovers a MEC server for a VR service """    
+    ) -> Dict[str, Mec]:
+        """ discovers a MEC server for a VR service """ 
         
-        shortest_path = dijkstra_controller.DijkstraController.get_shortest_path(
+        mec_dict: Dict[str, Mec] = {
+            'id': None,
+            'mec': None
+        }   
+        
+        shortest_path = dijkstra_controller.DijkstraController.get_ETE_shortest_path(
             mec_set, graph, start_node
         )
         # Iterate over the sorted shortest path (list of tuples) and checks whether a mec server can host the service
         for node in shortest_path:    
             bs_name = node[0]
-            bs_id, base_station = bs_controller.BaseStationController.get_base_station_by_name(base_station_set, bs_name)
+            bs =  bs_controller.BaseStationController.get_base_station_by_name(base_station_set, bs_name)
+            base_station: BaseStation = bs.get('base_station')
             bs_mec = MecController.get_mec(mec_set, base_station)
             
             if MecController.check_deployment(bs_mec, service):
-                return base_station.mec_id, bs_mec
+                mec_dict.update({'id': base_station.mec_id, 'mec': bs_mec})
+                break
             
-            #print(f'\nMEC {bs_mec.name} is overloaded! Discarting...')
-        return None, None
+        if mec_dict.get('mec') is None:
+            print(f'\nALL MEC servers are overloaded! Discarting...')
+        
+        return mec_dict
     
     
 
@@ -195,15 +204,21 @@ class MecController:
         return None
 
     @staticmethod 
-    def get_service_mec_server(mec_set: Dict[str, Mec], service_id: str) -> Mec: 
+    def get_service_mec_server(mec_set: Dict[str, Mec], service_id: str) -> Dict[str, Mec]: 
         """ gets the mec server where the service is deployed and its ID """
+        
+        mec_dict: Dict[str, Mec] = {
+            'id': None,
+            'mec': None
+        }
         
         for id, mec in mec_set.items():
             for service in mec.services_set:
                 if service.id == service_id:
-                    return id, mec
-      
-        return None, None
+                    mec_dict.update({'id': id, 'mec': mec})
+                    break
+                
+        return mec_dict
 
     @staticmethod
     def get_service_bs(
@@ -211,8 +226,9 @@ class MecController:
     ) -> 'BaseStation':
         """ gets the base station where the mec (used to deploy the service) is attached to """
         
-        service_mec_server_id, service_mec_server = MecController.get_service_mec_server(mec_set, service_id) 
-        
+        mec_server: Dict[str, Mec] = MecController.get_service_mec_server(mec_set, service_id) 
+        service_mec_server_id: str = mec_server.get('id')
+
         for base_station in base_station_set.values():
             if base_station.mec_id == service_mec_server_id:
                 return base_station

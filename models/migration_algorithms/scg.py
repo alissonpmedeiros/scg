@@ -14,12 +14,17 @@ from controllers import vr_controller
 from controllers import bs_controller 
 from controllers import scg_controller 
 from controllers import mec_controller
+from controllers import config_controller
 from controllers import dijkstra_controller 
 
 """other imports"""
-import sys
+import sys, operator
 from typing import List, Dict
 from dataclasses import dataclass, field
+
+CONFIG = config_controller.ConfigController.get_config()
+ETE_LATENCY_THRESHOLD = CONFIG['SYSTEM']['ETE_LATENCY_THRESHOLD']
+
 
 
 @dataclass
@@ -73,9 +78,12 @@ class SCG(Migration):
         """ offloads a service i back to vr hmd """
         #print("*** Performing reverse offloading ***")
 
-        service_mec_server_id, service_mec_server = mec_controller.MecController.get_service_mec_server(
+        service_server: Dict[str,'Mec'] = mec_controller.MecController.get_service_mec_server(
             mec_set, service.id
         )
+        
+        service_mec_server = service_server.get('mec')
+            
         extracted_service = mec_controller.MecController.remove_service(
             service_mec_server, service
         )
@@ -114,9 +122,10 @@ class SCG(Migration):
         return True
         
 
+
+
     #TODO: For this method, we have to implement some sort of penality to count when the service is 
     # deployed in a mec that has lower latency than its current mec server however it is higher than 5ms.
-    
     def discover_mec( 
         self, 
         base_station_set: Dict[str,'BaseStation'], 
@@ -124,31 +133,38 @@ class SCG(Migration):
         graph: 'Graph', 
         start_node: 'BaseStation', 
         service: 'VrService'
-    ) -> 'Mec':
+    ) -> Dict[str,'Mec']:
         """ discovers a MEC server for a VR service """ 
         #print(f'*** Discovering MEC ***')
-    
-        shortest_path = dijkstra_controller.DijkstraController.get_shortest_path(
+        shortest_path = dijkstra_controller.DijkstraController.get_ETE_shortest_path(
             mec_set, graph, start_node
         )
+        
+        mec_dict: Dict[str,'Mec'] = {
+            'id': None,
+            'mec': None
+        }
+        
         # Iterate over the sorted shortest path (list of tuples) and checks whether a mec server can host the service
         for node in shortest_path:    
             bs_name = node[0]
-            bs_id, base_station = bs_controller.BaseStationController.get_base_station_by_name(
-                base_station_set, bs_name
-            )
+            bs =  bs_controller.BaseStationController.get_base_station_by_name(base_station_set, bs_name)
+            base_station: BaseStation = bs.get('base_station')
+            
             bs_mec = mec_controller.MecController.get_mec(
                 mec_set, base_station
             )
             
             if mec_controller.MecController.check_deployment(bs_mec, service):
-                return base_station.mec_id, bs_mec
+                mec_dict.update({'id': base_station.mec_id, 'mec': bs_mec})
+                break
             
         
-        print(shortest_path)
-        print(f'\nALL MEC servers are overloaded! Discarting...')
-        a = input('')
-        return None, None
+        #print(shortest_path)
+        if mec_dict.get('mec') is None:
+            print(f'\nALL MEC servers are overloaded! Discarting...')
+            
+        return mec_dict
         
         
     #TODO: we have to implement the restriction of 5ms before migrating a service.admin 
@@ -164,19 +180,29 @@ class SCG(Migration):
         #print(f'\n___________________________________________________\n')
         #print(f'\n*** checking service {service.id} ***\n')
         
-        service_owner_id, service_owner = vr_controller.VrController.get_vr_service_owner(
+        service_owner: Dict[str, 'VrHMD'] = vr_controller.VrController.get_vr_service_owner(
             hmds_set, service
         )
         
+        service_owner_id: str = service_owner.get('id')
+        service_owner_hmd: 'VrHMD' = service_owner.get('hmd')
+        
         # initializing the node where the hmd in connnected to 
         start_node = bs_controller.BaseStationController.get_base_station(
-            base_station_set, service_owner.current_location
+            base_station_set, service_owner_hmd.current_location
         )
         
         # initializing the candidate node
-        mec_candidate_id, mec_candidate = self.discover_mec(
-            base_station_set, mec_set, graph, start_node, service
+        candidate_node: Dict[str, 'Mec'] = self.discover_mec(
+            base_station_set, 
+            mec_set, 
+            graph, 
+            start_node, 
+            service,
         )
+        
+        mec_candidate_id: str = candidate_node.get('id')
+        mec_candidate: 'Mec' = candidate_node.get('mec')
         
         candidate_target_node = mec_controller.MecController.get_mec_bs_location(
             base_station_set, mec_candidate_id
@@ -188,28 +214,24 @@ class SCG(Migration):
 
         candidate_service_latency = candidate_latency.get('e2e_latency')
         
-        
         hmd_latency = vr_controller.VrController.get_hmd_latency(
-            base_station_set, service_owner
+            base_station_set, service_owner_hmd
         )
         
-        
-        if any(service.id == hmd_service.id for hmd_service in service_owner.services_set):
+        if any(service.id == hmd_service.id for hmd_service in service_owner_hmd.services_set):
             """ checks whether a service IS deployed on the HMD """
             
-            
-            if mec_candidate is None:
-                #TODO: Migration should be considered. However, there are no mec servers available. 
-                #The service stays on the HMD. We should consider a service migration violation... 
-
+            if mec_candidate is None and hmd_latency > ETE_LATENCY_THRESHOLD:
                 #print('*** Cannot perform migration, there is no MEC available in the infrastructure ***')
                 self.unsuccessful_migrations +=1
                 return False    
             
-            
-            
             elif candidate_service_latency < hmd_latency:
-                return self.offload_service(mec_candidate, service_owner, service)
+                return self.offload_service(mec_candidate, service_owner_hmd, service)
+            
+            elif hmd_latency < ETE_LATENCY_THRESHOLD:
+                # no migration is needed as the HMD can support the latency demand.
+                return False
 
             else:
                 # cannot find out a MEC server with lower latency than the HMD. 
@@ -217,8 +239,6 @@ class SCG(Migration):
                 #print(f'\n*** Violation of service migration policy ***\n')
                 self.unsuccessful_migrations +=1
                 return False    
-                
-            
 
         else:
             """ otherwise, the service is deployed on MEC servers"""
@@ -226,7 +246,6 @@ class SCG(Migration):
             current_target_node = mec_controller.MecController.get_service_bs(
                 base_station_set, mec_set, service.id
             )
-            
             
             current_latency = scg_controller.ScgController.get_E2E_latency(
                 mec_set, graph, start_node, current_target_node

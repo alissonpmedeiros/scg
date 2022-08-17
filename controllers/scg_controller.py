@@ -18,6 +18,7 @@ from controllers import config_controller
 from controllers import dijkstra_controller
 
 """ other modules """
+import sys
 from typing import Any, Dict
 from dataclasses import dataclass, field
 
@@ -76,8 +77,9 @@ class ScgController:
         total_e2e_latency = 0
         total_computing_latency = 0
         
-        for id, hmd in self.hmds_set.items():
+        for hmd_id, hmd in self.hmds_set.items():
             for service_id in hmd.services_ids: 
+                service_e2e_latency = sys.maxsize
                 if any(service_id == service.id for service in hmd.services_set):
 
                     hmd_latency = vr_controller.VrController.get_hmd_latency(
@@ -86,6 +88,7 @@ class ScgController:
                 
                     total_computing_latency += hmd_latency
                     total_e2e_latency += hmd_latency
+                    service_e2e_latency = hmd_latency
                 
                 else: 
                     start_node = bs_controller.BaseStationController.get_base_station(
@@ -102,14 +105,14 @@ class ScgController:
                     
                     network_latency = latency.get('network_latency')
                     destination_latency = latency.get('destination_latency')
-                    e2e_latency = latency.get('e2e_latency')
+                    service_e2e_latency = latency.get('e2e_latency')
                     
                     total_net_latency += network_latency
                     total_computing_latency += destination_latency
-                    total_e2e_latency += e2e_latency
+                    total_e2e_latency += service_e2e_latency
 
                 vr_controller.VrController.change_service_video_resolution(
-                    self.mec_set, self.hmds_set, id, service_id, e2e_latency
+                    self.mec_set, self.hmds_set, hmd_id, service_id, service_e2e_latency
                 )
             
                 services_cont += 1
@@ -138,13 +141,15 @@ class ScgController:
                     self.base_station_set, hmd.current_location
                 )
 
-                dst_mec_id, dst_mec = mec_controller.MecController.discover_mec(
+                dst_node: Dict[str, 'Mec'] = mec_controller.MecController.discover_mec(
                     self.base_station_set, 
                     self.mec_set, 
                     self.graph, 
                     start_node, 
                     extracted_service,
                 )
+                
+                dst_mec: 'Mec' = dst_node.get('mec')
 
                 if dst_mec is not None:
                     mec_controller.MecController.deploy_service(dst_mec, extracted_service)
