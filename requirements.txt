@@ -9,3 +9,4 @@ matplotlib
 networkx
 plotly
 kaleido # for plotly
+envbash

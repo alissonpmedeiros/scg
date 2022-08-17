@@ -8,11 +8,11 @@ This repository describes the technology stack setup used by SCG.
 
 2. VMs requirements
     - RAM: 50GB
-    - VCPUs: 32
+    - CPUs: 32
     - Storage: 40G
 ---
 
-## ONOS SDN controller setup
+## ONOS SDN controller setup - VM1
 
 ONOS sdn controller is used to provide the mobility connectivity automation for SCG. 
 
@@ -59,13 +59,13 @@ ONOS sdn controller is used to provide the mobility connectivity automation for 
 
 ---
 
-## Mininet WiFi setup
+## Mininet WiFi setup - VM2
 
 Mininet Wifi is used to provide a mobility scenario for VR applications
 
 The script **mininet_network.py** constains the mininet code to provide the network, including base stations, VR HMDs in mobility, latency between nodes, and bandwidth restrictions. The script also connects to ONOS. 
 
-At root directory that contains scg directory, run the mininet script: ```sudo python3 -m scg.network.mininet_network```
+At home directory run the mininet script: ```sudo python3 -m scg.network.mininet_network```
 
 1. Mininet wifi instalation:
 
@@ -102,28 +102,38 @@ At root directory that contains scg directory, run the mininet script: ```sudo p
 
 ---
 
-## Web server setup
+## Web server setup - VM2
 1. The web server provides an *async function* to control the number of requests in order to respond to all requests at the same time. 
     - Example: there are 5 migration algorithms, then we have to run ``` python3 ~/scg/main.py {migration_algorithm}``` 5 times, especifying each migration algorithm acronym. 
     - The web server will only respond after receiving 5 requets.
-    - The number of algorithms is specified at ```~/scg/web_server.py```
+    - The number of algorithms is specified at ```~/scg/config.yaml```
     - Each algorithm will request the data from the web server. 
     - After each iteration of script ```/scg/main.py```, the algorithms that finish their processing tasks first have to wait until all other algorithms finish their tasks. 
     - This action ensures that all algorithms will have the same workload in each iteration.
 ---
 
-## TENET setup
+## System variables - VM2
+1. Create a bash file with the ONOS SDN controller information:
+    <pre><code> #!/bin/sh
+    export SERVER_IP='XXX.XXX.XXX.XXX'
+    export OF_PORT='XXXX'
+    export ONOS_USER='XXXXXXXXXX'
+    export PASSWORD='XXXXXXXXXX'
+    </code></pre>
+    - specify the file dir and file name at **config.yaml** file under *ONOS* in scg root directory
+
+---
+
+## SCG setup - VM2
 
 1. Computing resources (GPUs and CPUs) for MEC servers and VR services are automatically generated based on the number of base stations and hmds configured at **mininet_network.py**. The data will be stored at **~/config/mecs.json**, **~/config/base_stations.json** and **~/config/hmds.json**. 
     - Wait until all services are recognized by the SDN controller
     - To do so, check **http://ONOS-VM-IP:8181/onos/ui/#/host**
 
-2. Every time the script **mininet_network.py** runs, we have to delete the *hmds.json* file because VR HMDs will have different MAC addresses. 
+2. Whenever we run the script **mininet_network.py** , the files *hmds.json*, *mecs.json* and *base_stations.json* will be deleted because VR HMDs will have different MAC addresses. 
 
-3. To start the system, runs the following scripts:
-    - ```python3 ~/scg/network/mininet_network.py```
+3. From the scg project directory:    
     - ```python3 ~/scg/web_server.py```
-    - ```python3 ~/scg/main.py {migration_algorithm}``` 
-
+    - ```python3 ~/scg/main.py {migration_algorithm}``` for each migration algorithm 
 
 ---

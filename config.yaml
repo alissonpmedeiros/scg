@@ -54,3 +54,11 @@ SERVICES:
       8k: 3.5
       4k: 4
       2k: 4.5
+
+ONOS:
+  FILE_DIR: '/home/ubuntu/'
+  FILE: 'SCG_ONOS_VARIABLES.sh'
+  IP: 'SERVER_IP'
+  PORT: 'OF_PORT'
+  USER: 'ONOS_USER'
+  PASS: 'PASSWORD'

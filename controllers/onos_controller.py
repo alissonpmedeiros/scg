@@ -2,20 +2,35 @@
 """ other modules """
 from typing import List
 import requests, time, os
+from envbash import load_envbash
 from munch import Munch, DefaultMunch
 from dataclasses import dataclass, field
 from requests.exceptions import HTTPError
 
+"""controller modules"""
+from controllers import config_controller
+
+CONFIG = config_controller.ConfigController.get_config()
+
+load_envbash('{}{}'.format(CONFIG['ONOS']['FILE_DIR'], CONFIG['ONOS']['FILE']))
+
+ONOS_OS_VARIABLES = {
+    'ip': os.environ[CONFIG['ONOS']['IP']],
+    'port': os.environ[CONFIG['ONOS']['PORT']],
+    'user': os.environ[CONFIG['ONOS']['USER']],
+    'password': os.environ[CONFIG['ONOS']['PASS']]
+}
+
 
 @dataclass()
-class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVAILABLE!
+class OnosController: 
     """ SDN controller representation for ONOS """
-    
+        
     hosts: List[dict] = field(default_factory=list, init=False)
-    server_IP: str = '130.92.70.173'
-    OF_port: str = '8181'
-    user: str = 'onos'
-    password: str = 'rocks' 
+    server_IP: str = ONOS_OS_VARIABLES.get('ip')
+    OF_port: str = ONOS_OS_VARIABLES.get('port')
+    user: str = ONOS_OS_VARIABLES.get('user')
+    password: str = ONOS_OS_VARIABLES.get('password')
 
     def __post_init__(self):
         self.hosts = OnosController.get_hosts()
@@ -171,16 +186,11 @@ class OnosController: #TODO: BECAREFUL WITHT HIS PART BEFORE MAKING THE CODE AVA
         
         hosts = OnosController.get_hosts()  
         for host in hosts['hosts']:
-            #print(host)
             URL = 'http://' + self.server_IP + ':' + self.OF_port + '/onos/v1/hosts/{}'.format(host.id)
-            cmd = 'curl -X DELETE {} --user onos:rocks'.format(URL)
-            os.system(cmd)
-            '''
             try: 
                 requests.delete(URL, auth=(self.user, self.password), verify=False)
             except HTTPError as http_err:
                 print(f'HTTP error occurred: {http_err}')
-            '''
 
             time.sleep(0.001)
     
