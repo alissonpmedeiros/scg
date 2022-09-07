@@ -50,13 +50,21 @@ class DijkstraController:
         return sorted_shortest_path
     
     
-    def get_ETE_shortest_path(mec_set: Dict[str,'Mec'], graph: 'Graph', start_node: 'BaseStation'):
+    def get_ETE_shortest_path(mec_set: Dict[str,'Mec'], graph: 'Graph', start_node: 'BaseStation', zones: bool = False, latency_check: bool = False):
         """gets the shortest path from one node to all other nodes, where the weights are given in E2E latency"""
         
         start_node_mec = mec_controller.MecController.get_mec(mec_set, start_node)
-        previous_nodes, shortest_path = Dijkstra.build_ETE_shortest_path(
-            graph, start_node, start_node_mec
-        )
+        previous_nodes = None
+        shortest_path = None
+        
+        if zones:
+            previous_nodes, shortest_path = Dijkstra.build_ETE_zones_shortest_path(
+                graph, start_node, start_node_mec, latency_check
+            )
+        else:
+            previous_nodes, shortest_path = Dijkstra.build_ETE_shortest_path(
+                graph, start_node, start_node_mec
+            )
         
         """sorts (ascendent) the shortest path dict into a list of tuples based on latency."""
         sorted_shortest_path = sorted(shortest_path.items(), key=operator.itemgetter(1))

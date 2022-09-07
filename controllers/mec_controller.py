@@ -77,9 +77,10 @@ class MecController:
             'mec': None
         }   
         
-        shortest_path = dijkstra_controller.DijkstraController.get_ETE_shortest_path(
+        shortest_path = shortest_path = dijkstra_controller.DijkstraController.get_ETE_shortest_path(
             mec_set, graph, start_node
         )
+        
         # Iterate over the sorted shortest path (list of tuples) and checks whether a mec server can host the service
         for node in shortest_path:    
             bs_name = node[0]

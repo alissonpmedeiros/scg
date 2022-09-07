@@ -3,6 +3,7 @@
 """ mininet modules """
 from mininet.log import setLogLevel, info
 from mn_wifi.cli import CLI
+from envbash import load_envbash
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.link import wmediumd, ITSLink
 from mn_wifi.wmediumdConnector import interference
@@ -22,6 +23,7 @@ NET = Mininet_wifi(switch=OVSSwitch, waitConnected=True)
 
 # configuration variables
 CONFIG = config_controller.ConfigController.get_config()
+load_envbash('{}{}'.format(CONFIG['ONOS']['FILE_DIR'], CONFIG['ONOS']['FILE']))
 
 # HMDs and Base station simulation parameters
 BS_SET = []
@@ -167,7 +169,7 @@ def create_bs_links(topology_data):
         
 def get_sdn_controller():
     info("*** Starting ONOS controller\n")
-    controller_ip = str(CONFIG['SDN']['IP'])
+    controller_ip = str(os.environ[CONFIG['ONOS']['IP']])
     controller_port = CONFIG['SDN']['PORT']
     controller_protocols = CONFIG['SDN']['PROTOCOLS']
     controller = NET.addController(

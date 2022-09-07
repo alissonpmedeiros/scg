@@ -2,7 +2,7 @@
   "base_station_set": {
     "of:1000000000000013": {
       "name": "BS19",
-      "mec_id": "6fce4f10-4068-4fd9-8a5e-fc08a693edc6",
+      "mec_id": "eff4f6a1-8756-42d6-82fa-47eb7b661b9d",
       "links": {
         "of:1000000000000017": {
           "port": "9",
@@ -33,11 +33,11 @@
           "latency": 0.91
         }
       },
-      "wireless_latency": 0.21
+      "wireless_latency": 0.18
     },
     "of:1000000000000014": {
       "name": "BS20",
-      "mec_id": "a5641ce3-16dd-493b-a78a-03581c50cc53",
+      "mec_id": "9f76d814-8a2d-4c59-ad48-9321e1930cab",
       "links": {
         "of:1000000000000007": {
           "port": "8",
@@ -76,11 +76,11 @@
           "latency": 0.62
         }
       },
-      "wireless_latency": 0.27
+      "wireless_latency": 0.23
     },
     "of:1000000000000015": {
       "name": "BS21",
-      "mec_id": "e4d57d12-e126-47cd-bc80-f678eb7ad5f2",
+      "mec_id": "d960d678-4337-4e0a-acda-1cada34a5caf",
       "links": {
         "of:1000000000000019": {
           "port": "4",
@@ -111,11 +111,11 @@
           "latency": 0.87
         }
       },
-      "wireless_latency": 0.11
+      "wireless_latency": 0.13
     },
     "of:1000000000000016": {
       "name": "BS22",
-      "mec_id": "2b9e114d-15f7-40e1-ae2a-ee4ed00b1c35",
+      "mec_id": "5d810ef6-d575-4a8b-8d03-fc98fffca96b",
       "links": {
         "of:1000000000000000": {
           "port": "4",
@@ -142,7 +142,7 @@
     },
     "of:1000000000000010": {
       "name": "BS16",
-      "mec_id": "44460634-11cd-4398-be13-853ddc962db6",
+      "mec_id": "27692726-de6f-49d3-b98d-d0ba179a27ee",
       "links": {
         "of:1000000000000012": {
           "port": "4",
@@ -165,11 +165,11 @@
           "latency": 0.89
         }
       },
-      "wireless_latency": 0.25
+      "wireless_latency": 0.23
     },
     "of:1000000000000011": {
       "name": "BS17",
-      "mec_id": "00e1083e-d479-4d3a-8486-af370d1f99f6",
+      "mec_id": "e891b6ed-79c9-4d81-8a7a-280112234174",
       "links": {
         "of:1000000000000006": {
           "port": "7",
@@ -208,11 +208,11 @@
           "latency": 0.51
         }
       },
-      "wireless_latency": 0.12
+      "wireless_latency": 0.13
     },
     "of:1000000000000012": {
       "name": "BS18",
-      "mec_id": "5846b535-6fa5-4250-8ef5-2a1bfe90ee2e",
+      "mec_id": "1e496c0a-08e0-4467-805f-573446bd7bea",
       "links": {
         "of:1000000000000017": {
           "port": "8",
@@ -235,11 +235,11 @@
           "latency": 0.87
         }
       },
-      "wireless_latency": 0.25
+      "wireless_latency": 0.24
     },
     "of:1000000000000017": {
       "name": "BS23",
-      "mec_id": "9438b723-9a6f-406d-8fc0-61419ed81eb5",
+      "mec_id": "6c28f6f2-9248-46db-921b-440fb11d6b65",
       "links": {
         "of:100000000000000a": {
           "port": "4",
@@ -278,11 +278,11 @@
           "latency": 0.58
         }
       },
-      "wireless_latency": 0.29
+      "wireless_latency": 0.22
     },
     "of:1000000000000018": {
       "name": "BS24",
-      "mec_id": "fe3c1f4d-4635-4ecc-a411-d5fc915437f5",
+      "mec_id": "7e6b3dea-c0ba-42ad-af03-b8619494835f",
       "links": {
         "of:1000000000000001": {
           "port": "3",
@@ -329,11 +329,11 @@
           "latency": 0.71
         }
       },
-      "wireless_latency": 0.15
+      "wireless_latency": 0.17
     },
     "of:1000000000000019": {
       "name": "BS25",
-      "mec_id": "3f4ea480-8922-498f-a39f-605ecd48d8b2",
+      "mec_id": "9381b65b-dcaa-4e13-9870-69830baacc5d",
       "links": {
         "of:1000000000000015": {
           "port": "6",
@@ -356,11 +356,11 @@
           "latency": 0.89
         }
       },
-      "wireless_latency": 0.22
+      "wireless_latency": 0.27
     },
     "of:100000000000000b": {
       "name": "BS11",
-      "mec_id": "97c637a1-d1d3-417a-bd5b-d5f7d903e84a",
+      "mec_id": "17c55b21-cf62-4c27-9d75-79c57cfdb76f",
       "links": {
         "of:100000000000001e": {
           "port": "3",
@@ -375,11 +375,11 @@
           "latency": 0.72
         }
       },
-      "wireless_latency": 0.22
+      "wireless_latency": 0.17
     },
     "of:100000000000000c": {
       "name": "BS12",
-      "mec_id": "43088a30-e2a5-4582-bf58-c9aad6211fcb",
+      "mec_id": "dfb4067f-c610-461b-9c7a-66063ff3c259",
       "links": {
         "of:1000000000000019": {
           "port": "3",
@@ -422,11 +422,11 @@
           "latency": 0.53
         }
       },
-      "wireless_latency": 0.29
+      "wireless_latency": 0.27
     },
     "of:100000000000000d": {
       "name": "BS13",
-      "mec_id": "312df87f-f31e-4be7-baeb-7e2b00efbd9d",
+      "mec_id": "c8666fde-a18e-4b73-9b13-56082e27635b",
       "links": {
         "of:100000000000000e": {
           "port": "3",
@@ -453,11 +453,11 @@
           "latency": 0.52
         }
       },
-      "wireless_latency": 0.28
+      "wireless_latency": 0.14
     },
     "of:100000000000000e": {
       "name": "BS14",
-      "mec_id": "ae7aff81-54b2-4973-a7bf-cacd11a36db6",
+      "mec_id": "c1f605ec-abd0-4978-af41-40f3497fdc7c",
       "links": {
         "of:1000000000000017": {
           "port": "5",
@@ -488,11 +488,11 @@
           "latency": 0.5
         }
       },
-      "wireless_latency": 0.21
+      "wireless_latency": 0.14
     },
     "of:100000000000000a": {
       "name": "BS10",
-      "mec_id": "7d7da5e1-5641-450f-93f7-9b0261ced68e",
+      "mec_id": "1a98dda1-fa19-44a8-aa53-f161ce6615ee",
       "links": {
         "of:1000000000000017": {
           "port": "4",
@@ -515,11 +515,11 @@
           "latency": 0.84
         }
       },
-      "wireless_latency": 0.27
+      "wireless_latency": 0.26
     },
     "of:100000000000000f": {
       "name": "BS15",
-      "mec_id": "7e779605-9414-414b-84e6-4a0966b05943",
+      "mec_id": "8b72963a-f260-4204-b1a2-295cc38b4ae3",
       "links": {
         "of:1000000000000002": {
           "port": "4",
@@ -554,11 +554,11 @@
           "latency": 0.87
         }
       },
-      "wireless_latency": 0.3
+      "wireless_latency": 0.2
     },
     "of:1000000000000002": {
       "name": "BS2",
-      "mec_id": "220abbcc-8ad9-471d-a8a9-af2437ac9c23",
+      "mec_id": "3a7366cf-ad9c-410b-83a5-e1d0b195bd95",
       "links": {
         "of:100000000000000e": {
           "port": "2",
@@ -589,11 +589,11 @@
           "latency": 0.52
         }
       },
-      "wireless_latency": 0.15
+      "wireless_latency": 0.28
     },
     "of:1000000000000003": {
       "name": "BS3",
-      "mec_id": "89735ca6-ec2a-425e-aaaa-3a9ea07e08eb",
+      "mec_id": "50f2fa3f-010d-404a-a7fa-0797ffe48482",
       "links": {
         "of:1000000000000008": {
           "port": "3",
@@ -624,11 +624,11 @@
           "latency": 0.79
         }
       },
-      "wireless_latency": 0.23
+      "wireless_latency": 0.28
     },
     "of:1000000000000004": {
       "name": "BS4",
-      "mec_id": "afb4d22b-b4a1-4bc9-950c-b111555cd69b",
+      "mec_id": "830e24a8-fb68-4b28-a47b-2e8840f04a15",
       "links": {
         "of:1000000000000007": {
           "port": "3",
@@ -643,11 +643,11 @@
           "latency": 1.0
         }
       },
-      "wireless_latency": 0.19
+      "wireless_latency": 0.15
     },
     "of:1000000000000005": {
       "name": "BS5",
-      "mec_id": "fc18d9bc-2871-40bb-817e-7da149d608f7",
+      "mec_id": "e6839bac-6fb3-4e7f-b0b4-e384fcf2e9e0",
       "links": {
         "of:1000000000000000": {
           "port": "2",
@@ -698,7 +698,7 @@
     },
     "of:1000000000000000": {
       "name": "BS0",
-      "mec_id": "5ea636c5-b873-4543-bc29-9482c922f24c",
+      "mec_id": "df8296a9-63f3-4c62-bf95-3c18ae07e220",
       "links": {
         "of:1000000000000016": {
           "port": "2",
@@ -725,11 +725,11 @@
           "latency": 0.66
         }
       },
-      "wireless_latency": 0.18
+      "wireless_latency": 0.17
     },
     "of:1000000000000001": {
       "name": "BS1",
-      "mec_id": "b4637793-a9ce-4fe9-8c41-ff9c9ea291dc",
+      "mec_id": "d0a39d07-02f2-4d21-93d7-747c0dbd8bf8",
       "links": {
         "of:1000000000000005": {
           "port": "3",
@@ -755,13 +755,13 @@
           "port": "2",
           "latency": 0.85
         },
-        "of:1000000000000004": {
-          "port": "2",
-          "latency": 1.0
-        },
         "of:1000000000000007": {
           "port": "2",
           "latency": 0.8
+        },
+        "of:1000000000000004": {
+          "port": "2",
+          "latency": 1.0
         },
         "of:1000000000000006": {
           "port": "2",
@@ -772,11 +772,11 @@
           "latency": 0.9
         }
       },
-      "wireless_latency": 0.22
+      "wireless_latency": 0.2
     },
     "of:1000000000000006": {
       "name": "BS6",
-      "mec_id": "a2dd2ccd-1338-4ce3-8493-da0c350470a5",
+      "mec_id": "e6e83424-209a-4ff5-8d68-418143ca81d1",
       "links": {
         "of:1000000000000001": {
           "port": "11",
@@ -811,11 +811,11 @@
           "latency": 0.81
         }
       },
-      "wireless_latency": 0.21
+      "wireless_latency": 0.3
     },
     "of:1000000000000007": {
       "name": "BS7",
-      "mec_id": "cf795df4-9c56-47e9-a5b1-2884cbaa94e6",
+      "mec_id": "c0d2a253-a19b-46ed-b072-7cefb3c4650f",
       "links": {
         "of:100000000000000c": {
           "port": "4",
@@ -854,11 +854,11 @@
           "latency": 0.89
         }
       },
-      "wireless_latency": 0.18
+      "wireless_latency": 0.23
     },
     "of:1000000000000008": {
       "name": "BS8",
-      "mec_id": "4ed0d0ea-6520-4b3e-8573-72650d627f8a",
+      "mec_id": "94783b7d-77a4-4359-8485-83e7c2251723",
       "links": {
         "of:1000000000000016": {
           "port": "5",
@@ -889,11 +889,11 @@
           "latency": 0.81
         }
       },
-      "wireless_latency": 0.2
+      "wireless_latency": 0.13
     },
     "of:1000000000000009": {
       "name": "BS9",
-      "mec_id": "12d8c113-d921-4e1d-9e8c-2e2c58459d15",
+      "mec_id": "4ae01a92-7f0d-4f6a-b7da-a40888671e31",
       "links": {
         "of:1000000000000006": {
           "port": "9",
@@ -932,11 +932,11 @@
           "latency": 0.53
         }
       },
-      "wireless_latency": 0.17
+      "wireless_latency": 0.16
     },
     "of:100000000000001c": {
       "name": "BS28",
-      "mec_id": "2d117533-af02-43ad-9310-799accf1bb45",
+      "mec_id": "89698cc1-6041-4754-9c43-267707efa286",
       "links": {
         "of:1000000000000019": {
           "port": "6",
@@ -963,7 +963,7 @@
     },
     "of:100000000000001d": {
       "name": "BS29",
-      "mec_id": "9d923a37-59ee-4373-8db0-a3763cc538ec",
+      "mec_id": "421ecf62-3f17-46fc-8406-0f0b61ee6927",
       "links": {
         "of:1000000000000019": {
           "port": "5",
@@ -974,11 +974,11 @@
           "latency": 0.73
         }
       },
-      "wireless_latency": 0.23
+      "wireless_latency": 0.21
     },
     "of:100000000000001e": {
       "name": "BS30",
-      "mec_id": "2f78a6d3-482b-4e1f-bc12-8fe871a089f5",
+      "mec_id": "d9810b6a-7489-4240-9d14-1fce23aa74cf",
       "links": {
         "of:100000000000000f": {
           "port": "6",
@@ -1009,11 +1009,11 @@
           "latency": 0.62
         }
       },
-      "wireless_latency": 0.17
+      "wireless_latency": 0.13
     },
     "of:100000000000001f": {
       "name": "BS31",
-      "mec_id": "96bee62b-a74c-4904-8aeb-0c5c1f260b8e",
+      "mec_id": "ff8e148d-2da6-4e81-baef-3c73ad61e898",
       "links": {
         "of:1000000000000009": {
           "port": "9",
@@ -1056,11 +1056,11 @@
           "latency": 0.87
         }
       },
-      "wireless_latency": 0.26
+      "wireless_latency": 0.22
     },
     "of:100000000000001a": {
       "name": "BS26",
-      "mec_id": "8ebe8e69-340a-4449-9fd4-eaea4bb91443",
+      "mec_id": "6b38ca5a-d731-481f-be34-2e40874486cc",
       "links": {
         "of:1000000000000013": {
           "port": "6",
@@ -1071,11 +1071,11 @@
           "latency": 0.72
         }
       },
-      "wireless_latency": 0.17
+      "wireless_latency": 0.29
     },
     "of:100000000000001b": {
       "name": "BS27",
-      "mec_id": "50be65e9-dbc8-4e64-afa3-899ad5970ec6",
+      "mec_id": "1e6cf0c6-c0c1-45b3-9784-5577a7934c0b",
       "links": {
         "of:100000000000000c": {
           "port": "7",
@@ -1110,7 +1110,7 @@
           "latency": 0.84
         }
       },
-      "wireless_latency": 0.17
+      "wireless_latency": 0.15
     }
   }
 }

@@ -8,6 +8,7 @@ from models.migration_algorithms.lra import LRA
 from models.migration_algorithms.scg import SCG
 from models.migration_algorithms.nm import NoMigration
 from models.migration_algorithms.am import AlwaysMigrate
+from models.migration_algorithms.dscp import DSCP
 
 """ controllers modules """
 from controllers import vr_controller 
@@ -31,14 +32,17 @@ def check_algorithm():
         return NoMigration()
     elif sys.argv[1] == 'scg':
         return SCG()
-    elif sys.argv[1] == 'always':
+    elif sys.argv[1] == 'aw':
         return AlwaysMigrate()
-    elif sys.argv[1] == 'network':
+    elif sys.argv[1] == 'la':
         return LA()
-    elif sys.argv[1] == 'network-resource':
+    elif sys.argv[1] == 'lra':
         return LRA()
+    elif sys.argv[1] == 'dscp':
+        return DSCP()
     else:
         print('*** algorithm not found! ***')
+        a = input('')
         
 async def update_hmds_position(scg_controller: scg_controller.ScgController):
     print('\n*** UPDATING USERS LOCATION ***')

@@ -18,13 +18,13 @@ from controllers import config_controller
 from controllers import dijkstra_controller 
 
 """other imports"""
-import sys, operator
+import sys
 from typing import List, Dict
 from dataclasses import dataclass, field
 
 CONFIG = config_controller.ConfigController.get_config()
+LATENCY_CHECK = CONFIG['MIGRATION']['SCG']['LATENCY_CHECK']
 ETE_LATENCY_THRESHOLD = CONFIG['SYSTEM']['ETE_LATENCY_THRESHOLD']
-
 
 
 @dataclass
@@ -38,6 +38,9 @@ class SCG(Migration):
     def __post_init__(self):
         self.total_services_migrated = self.alpha * self.alpha_max_threshold
 
+    def get_migrations(self) -> dict:
+        return super().get_migrations()  
+    
     def check_services(
         self, 
         base_station_set: Dict[str,'BaseStation'], 
@@ -47,9 +50,6 @@ class SCG(Migration):
     ) -> None:
         return super().check_services(base_station_set, mec_set, hmds_set, graph)
 
-    def get_migrations(self) -> dict:
-        return super().get_migrations()
-        
 
     def service_migration(
         self, base_station_set: List['BaseStation'], 
@@ -137,7 +137,7 @@ class SCG(Migration):
         """ discovers a MEC server for a VR service """ 
         #print(f'*** Discovering MEC ***')
         shortest_path = dijkstra_controller.DijkstraController.get_ETE_shortest_path(
-            mec_set, graph, start_node
+            mec_set, graph, start_node, zones=True, latency_check=LATENCY_CHECK
         )
         
         mec_dict: Dict[str,'Mec'] = {

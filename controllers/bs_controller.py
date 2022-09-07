@@ -10,6 +10,7 @@ from controllers import onos_controller
 from controllers import json_controller
 
 """other modules"""
+import random
 from typing import Dict
 from munch import DefaultMunch
 
@@ -93,7 +94,7 @@ class BaseStationController:
             bs_links = {}
             
             for link in base_station.links:
-                dst_id = link.dst.device#.replace(':', '')
+                dst_id = link.dst.device
                 dst_port = link.dst.port
                 dst_latency = None
                 bs_links[dst_id] = {
@@ -104,10 +105,11 @@ class BaseStationController:
             mec_name = 'MEC' + base_station.name[2:]
             mec_index = mec_names.index(mec_name)
             
-            new_base_station_id = base_station.id#.replace(':', '')
+            new_base_station_id = base_station.id
             new_base_station = BaseStation(
                     name = base_station.name, 
                     mec_id = mec_keys[mec_index], 
+                    wireless_latency = round(random.uniform(0.1, 0.3), 2),
                     links = DefaultMunch.fromDict(bs_links)
                 )
             base_station_set['base_station_set'][new_base_station_id] = new_base_station

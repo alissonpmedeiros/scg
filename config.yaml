@@ -23,15 +23,16 @@ NETWORK:
   LOWER_LATENCY_THRESHOLD: 0.5 
   UPPER_LATENCY_THRESHOLD: 1   
 
-# variables for SDN controller
+# variables for mininet connection with ONOS controller
 SDN:
-  IP: 130.92.70.173
   PORT: 6653
   PROTOCOLS: 'OpenFlow13'
 
 
 MIGRATION:  
   ALGORITHMS: 2
+  SCG:
+    LATENCY_CHECK: False 
 
 MEC_SERVERS:
   GPU_LAM: 110
