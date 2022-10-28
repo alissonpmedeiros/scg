@@ -51,7 +51,7 @@ class WorkloadController:
            
             if not migration.service_migration( 
                 base_station_set, mec_set, hmds_set, graph, extracted_service
-            ):
+            ):                
                 extracted_service = mec_controller.MecController.remove_service(
                     service_mec_server, service
                 )
@@ -84,19 +84,21 @@ class WorkloadController:
                 service: 'VrService' = None
                 
                 if not service_mec_server:
-                    service_owner: Dict[str, 'VrHMD'] = vr_controller.VrController.get_vr_service_owner(
+                    service_owner_hmd: Dict[str, 'VrHMD'] = vr_controller.VrController.get_vr_service_owner(
                         hmds_set, response_service
                     )
                     
-                    if service_owner is None:
+                    if service_owner_hmd is None:
                         print('service has no service_owner')
                         a = input('')
                         
-                    service_owner_id: str = service_owner.get('id')
+                    service_owner_id: str = service_owner_hmd.get('id')
                     
                     service = vr_controller.VrController.get_vr_service(
                         hmds_set, service_owner_id, response_service.id
                     )
+                    
+                    service.quota.set_quota(response_service.quota.name)
                     
                 else:
                     service = mec_controller.MecController.get_mec_service(
@@ -106,7 +108,7 @@ class WorkloadController:
                     extracted_service = mec_controller.MecController.remove_service(
                         service_mec_server, service
                     )
-                    
+                
                     quota_copy = extracted_service.quota.name
                     extracted_service.quota.set_quota(response_service.quota.name)
                     

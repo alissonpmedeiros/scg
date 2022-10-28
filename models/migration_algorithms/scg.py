@@ -29,6 +29,20 @@ ETE_LATENCY_THRESHOLD = CONFIG['SYSTEM']['ETE_LATENCY_THRESHOLD']
 
 @dataclass
 class SCG(Migration):
+    """ 
+    This algorithm provides the latency and energy trade-off. 
+    First, it discovers the MEC server $V'$ to host a service $f_m$.
+    $V'$ is discovered considering the network and computing latency.
+    Then, it uses $\alpha$ to define the priority of latency over energy. 
+    The value of $\alpha$ can be derived according to each application's QoS requirement. 
+    The lower the latency, the higher is the value of $\alpha$.
+    When $\alpha$ is configured, the service is deployed on the HMD to ensure the acceptable latency at the cost of battery. 
+    For each service $f_m$ deployed on HMD ($f_m \in H$), if $V'$ provides lower latency than $H$, then $f_m$ is offloaded from $H$ to $V'$. 
+    Otherwise, $f_m$ is already deployed in the MEC infrastructure.
+    If $V'$ has lower latency than the current MEC server hosting $f_m$, then $f_m$ is migrated to $V'$.
+    Lastly, if there is no MEC server $V'$ to host $f_m$ with the desired E2E latency, reverse offloading is performed to bring the service back to the HMD.  
+    """
+    
     # TODO: refact alpha scheme!
     alpha: int = 0
     alpha_max_threshold = 1719
@@ -161,8 +175,8 @@ class SCG(Migration):
             
         
         #print(shortest_path)
-        if mec_dict.get('mec') is None:
-            print(f'\nALL MEC servers are overloaded! Discarting...')
+        #if mec_dict.get('mec') is None:
+            #print(f'\nALL MEC servers are overloaded! Discarting...')
             
         return mec_dict
         
@@ -187,6 +201,10 @@ class SCG(Migration):
         service_owner_id: str = service_owner.get('id')
         service_owner_hmd: 'VrHMD' = service_owner.get('hmd')
         
+        hmd_latency = vr_controller.VrController.get_hmd_latency(
+            base_station_set, service_owner_hmd
+        )
+        
         # initializing the node where the hmd in connnected to 
         start_node = bs_controller.BaseStationController.get_base_station(
             base_station_set, service_owner_hmd.current_location
@@ -204,19 +222,20 @@ class SCG(Migration):
         mec_candidate_id: str = candidate_node.get('id')
         mec_candidate: 'Mec' = candidate_node.get('mec')
         
-        candidate_target_node = mec_controller.MecController.get_mec_bs_location(
-            base_station_set, mec_candidate_id
-        )
+        candidate_service_latency = sys.maxsize
         
-        candidate_latency = scg_controller.ScgController.get_E2E_latency(
-            mec_set, graph, start_node, candidate_target_node
-        )
+        if mec_candidate is not None:
+        
+            candidate_target_node = mec_controller.MecController.get_mec_bs_location(
+                base_station_set, mec_candidate_id
+            )
+            
+            candidate_latency = scg_controller.ScgController.get_E2E_latency(
+                mec_set, graph, start_node, candidate_target_node
+            )
 
-        candidate_service_latency = candidate_latency.get('e2e_latency')
+            candidate_service_latency = candidate_latency.get('e2e_latency')
         
-        hmd_latency = vr_controller.VrController.get_hmd_latency(
-            base_station_set, service_owner_hmd
-        )
         
         if any(service.id == hmd_service.id for hmd_service in service_owner_hmd.services_set):
             """ checks whether a service IS deployed on the HMD """

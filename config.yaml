@@ -5,14 +5,14 @@ SYSTEM:
   MEC_FILE: 'mecs.json'
   HMDS_FILE: 'hmds.json'
   RESULTS_DIR: '/home/ubuntu/scg/results/'
-  SERVICE_PER_USER: 130
-
+  SERVICE_PER_USER: 60
+  #SERVICE_PER_USER: Bern -> 10, 20, 30 | Geneva -> 25, 35, 45 | Zurich -> 50, 55, 60
 # variables for mininet-wifi 
 NETWORK:
-  HMDS: 10
-  BASE_STATIONS: 32
-  NETWORK_FILE: 'network_graph.json'
-  NETWORK_FILE_DIR: '/home/ubuntu/scg/network/'
+  HMDS: 100
+  BASE_STATIONS: 100
+  NETWORK_FILE: zurich_r_022.json
+  NETWORK_FILE_DIR: /home/ubuntu/scg/network/topologies/zurich/ 
   NET_GRAPH_DIMENSION: 2000
   HMD_MIN_VELOCITY: 1000
   HMD_MAX_VELOCITY: 1500
@@ -30,17 +30,15 @@ SDN:
 
 
 MIGRATION:  
-  ALGORITHMS: 2
+  ALGORITHMS: 5
   SCG:
-    LATENCY_CHECK: False 
+    LATENCY_CHECK: False
 
 MEC_SERVERS:
   GPU_LAM: 110
   CPU_LAM: 200
-  OVERALL_MECS: 32
-  MECS_WITHOUT_GPUS: 5
-  INITIAL_GPU_LOAD: 0.8 # percentage 
-  INITIAL_CPU_LOAD: 0.8 # percentage
+  OVERALL_MECS: 100
+  MECS_WITHOUT_GPUS: 8
   LOWER_LATENCY_THRESHOLD: 3
   UPPER_LATENCY_THRESHOLD: 6
   INIT_RESOURCE_LOAD: 0.9 
@@ -56,10 +54,11 @@ SERVICES:
       4k: 4
       2k: 4.5
 
-ONOS:
+ONOS: #TODO: each yaml key can receive the value of the wrapped variable from the system environment just with key: ${SYSTEM_VARIABLE_NAME}
   FILE_DIR: '/home/ubuntu/'
   FILE: 'SCG_ONOS_VARIABLES.sh'
-  IP: 'SERVER_IP'
-  PORT: 'OF_PORT'
-  USER: 'ONOS_USER'
-  PASS: 'PASSWORD'
+  IP: SERVER_IP
+  PORT: OF_PORT
+  USER: ONOS_USER
+  PASS: PASSWORD
+

@@ -21,7 +21,7 @@ class TranscoderController:
     def convert_objects_to_dict(data_set: dict) -> list:
         """ serializes objects to dict from classes that use @dataclass_json """
         
-        print(f'\n*** serializing objects to dict***\n')
+        print(f'\n*** serializing objects to dict ***\n')
         for key, value in data_set.items(): 
             data_set[key] = value.to_dict()
     
@@ -51,7 +51,7 @@ class EncoderController():
             
         TranscoderController.convert_objects_to_dict(data_set[data_type])  
         
-        print(f'\n*** encoding***\n')
+        print(f'\n*** encoding ***\n')
         with open("{}{}".format(data_directory, file_name), "w+") as file_write:
             json.dump(data_set, file_write, indent=2, ensure_ascii=False)
         
@@ -71,7 +71,7 @@ class DecoderController:
             'hmds_set': VrHMD
         }
         
-        print(f'\n*** decoding {str(data_type_dict[data_type])} objects***')
+        print(f'\n*** decoding {str(data_type_dict[data_type])} objects ***')
         
         for key, value in data_set[data_type].items():
             data_type_object = data_type_dict[data_type].from_dict(value)
@@ -100,7 +100,7 @@ class DecoderController:
             'hmds_set': VrHMD
         }
         
-        #print(f'\n*** loading {str(data_type_dict[data_type])} objects***')
+        #print(f'\n*** loading {str(data_type_dict[data_type])} objects ***')
         
         for key, value in data_set[data_type].items():
             data_type_object = data_type_dict[data_type].from_json(value)

@@ -1,5 +1,6 @@
 """ other modules """
 import statistics, yaml
+from typing import Any
 #import numpy as np
 import pandas as pd
 #import seaborn as sns
@@ -8,163 +9,288 @@ import matplotlib.pyplot as plt
 from pprint import pprint as pprint
 
 """ controller modules """
-from controllers import config_controller as config_controller
+#from controllers import config_controller as config_controller
+from .. controllers import config_controller
+from . csv_encoder import CSV
+""" other modules """
+import os
+ 
 
 CONFIG = config_controller.ConfigController.get_config()
 RESULTS_DIR = CONFIG['SYSTEM']['RESULTS_DIR']
-
-class BoxPlot:
-
-    @staticmethod
-    def get_box_plot_data(labels, bp):
-        rows_list = []
-
-        for i in range(len(labels)):
-            dict1 = {}
-            dict1['label'] = labels[i]
-            dict1['lower_whisker'] = bp['whiskers'][i*2].get_ydata()[1]
-            dict1['lower_quartile'] = bp['boxes'][i].get_ydata()[1]
-            dict1['median'] = bp['medians'][i].get_ydata()[1]
-            dict1['upper_quartile'] = bp['boxes'][i].get_ydata()[2]
-            dict1['upper_whisker'] = bp['whiskers'][(i*2)+1].get_ydata()[1]
-            #dict1['caps'] = bp['caps'][(i*2)+1].get_ydata()[1]
-            #dict1['fliers'] = bp['fliers'][i].get_ydata()
-            rows_list.append(dict1)
-        #pprint(rows_list)
-        for row in rows_list:
-            print('label:', row['label'])
-            print('lower whisker=', row['lower_whisker'],',')
-            print('lower quartile=', row['lower_quartile'],',')
-            print('median=', row['median'],',')
-            print('upper quartile=', row['upper_quartile'],',')
-            print('upper whisker=', row['upper_whisker'],',')
-            print('\n')
-            
-        return rows_list
-
-
-class Results:
-    @staticmethod
-    def read_files(files):
-        number_of_users = 1000
-        labels = ['gpu_usage', 'net_latency', 'comput_latency', 'ete_latency', 'successfull', 'unsucessful', 'energy', 'hmd_energy', 'services_on_hmds']
-        
-        for file in files:
-            gpu, net, computing, ete, sucessful, unsuccessful, energy, hmd_energy, services_on_hmds = DataFrame.get_df_data(file, number_of_users)
-            
-            bp = plt.boxplot([gpu, net, computing, ete, sucessful, unsuccessful, energy, hmd_energy, services_on_hmds], labels=labels)
-            #bp = plt.boxplot([gpu, net, computing, ete, sucessful, unsuccessful], labels=files)
-            print('FILE: {}'.format(file))
-            BoxPlot.get_box_plot_data(labels, bp)
-            print('\n###########################\n')
-
+    
 class DataFrame:
     
     @staticmethod
-    def get_df_data(file_name: str, number_of_users: int):
-        #FILE = '/home/ubuntu/results/results-{}/{}.csv'.format(number_of_users, file_name)
-        #FILE = '/home/ubuntu/scg/results/{}.csv'.format(file_name)
-        file = '{}{}.csv'.format(RESULTS_DIR, file_name)
+    def get_df_data(file_dir: str, file_name: str):
+        file = '{}{}.csv'.format(file_dir, file_name)
+        
         data_frame = pd.read_csv(file)
-        data1 = data_frame.gpu_usage
-        data2 = data_frame.net_latency
-        data3 = data_frame.comput_latency
-        data4 = data_frame.ete_latency
-        data5 = data_frame.successful
-        data6 = data_frame.unsuccessful
-        data7 = data_frame.energy
-        data8 = data_frame.hmd_energy
-        data9 = data_frame.services_on_hmds
-        return data1, data2, data3, data4, data5, data6, data7, data8, data9
-    
-    
-class Histogram:
+        return data_frame
     
     @staticmethod
-    def generate_histograms(experiments, files):
-        for experiment in experiments:
-            number_of_users = experiment
-            print('\n###########################\n')
-            print('EXPERIMENT: {}'.format(experiment))
-            for file in files:
-                gpu, net, computing, ete, sucessful, unsuccessful, energy, hmd_energy, services_on_hmds = DataFrame.get_df_data(file, number_of_users)
-                
-                #bp = plt.boxplot([data1, data2, data3, data4, data5, data6], labels=labels)
-                #bp = plt.boxplot([gpu, net, computing, ete, sucessful, unsuccessful], labels=files)
-                #BoxPlot.get_box_plot_data(labels, bp)
-                
-                #print('\n\n')
-                #print(f'STD of algorithm {file}')
-                #print(f'STD GPU: {np.std(gpu, ddof=1)}')
-                #print(f'STD NET: {np.std(net, ddof=1)}')
-                #print(f'STD COMPUTING: {np.std(computing, ddof=1)}')
-                #print(f'STD ETE: {np.std(ete, ddof=1)}')
-                #print(f'STD SUCESSFUL: {np.std(sucessful, ddof=1)}')
-                #print(f'STD UNSUCESSFUL: {np.std(unsuccessful, ddof=1)}')
-                #print(f'STD ENERGY: {np.std(energy, ddof=1)}')
-                #print(f'STD HMD_ENERGY: {np.std(hmd_energy, ddof=1)}')
-                #print(f'STD SERVICES_ON_HMD: {np.std(services_on_hmds, ddof=1)}')
-                
-                print('\n')
-                print(f'Means of algorithm {file}')
-                #print(f'GPU: {statistics.mean(gpu)}')
-                print(f'NET: {statistics.mean(net)}')
-                #print(f'COMPUTING: {statistics.mean(computing)}')
-                print(f'ETE: {statistics.mean(ete)}')
-                #print(f'SUCESSFUL: {statistics.mean(sucessful)}')
-                #print(f'UNSUCESSFUL: {statistics.mean(unsuccessful)}')
-                print(f'ENERGY: {statistics.mean(energy)}')
-                print(f'HMD_ENERGY: {statistics.mean(hmd_energy)}')
-                print(f'SERVICES_ON_HMD: {statistics.mean(services_on_hmds)}')
-                
-                #n_bins = 200
-                #fig, axs = plt.subplots(3, 2, tight_layout=True)
-                #fig.suptitle('Algorithm {} | Vr users {}'.format(file, number_of_users))
-                
-                """
-                #GPU usage
-                axs[0, 0].hist(gpu, bins=n_bins)
-                axs[0, 0].set_title('gpu usage')
-                axs[0, 0].set_xlabel('number of gpus')
-                axs[0, 0].set_ylabel('frequency')
-                
-                #net latency
-                axs[0, 1].hist(net, bins=n_bins)
-                axs[0, 1].set_title('network latency')
-                axs[0, 1].set_xlabel('latency (ms)')
-                axs[0, 1].set_ylabel('frequency')
-                
-                #computing latency
-                axs[1, 0].hist(computing, bins=n_bins)
-                axs[1, 0].set_title('computing latency')
-                axs[1, 0].set_xlabel('latency (ms)')
-                axs[1, 0].set_ylabel('frequency')
-                
-                #e2e latency
-                axs[1, 1].hist(ete, bins=n_bins)
-                axs[1, 1].set_title('e2e latency')
-                axs[1, 1].set_xlabel('latency (ms)')
-                axs[1, 1].set_ylabel('frequency')
-                
-                #successful migrations
-                axs[2, 0].hist(sucessful, bins=n_bins)
-                axs[2, 0].set_title('sucessful migrations')
-                axs[2, 0].set_xlabel('number of migration')
-                axs[2, 0].set_ylabel('frequency')
-                
-                #unsuccessful migrations
-                axs[2, 1].hist(unsuccessful, bins=n_bins)
-                axs[2, 1].set_title('unsuccessful migrations')
-                axs[2, 1].set_xlabel('number of migrations')
-                axs[2, 1].set_ylabel('frequency')
-                """
-                
-                plt.show(block=False)
-                
-        plt.show()
+    def calculate_average(data_frame: Any, kpi: str):
+        df_mean = data_frame[[kpi]].mean()
+        return round(float(df_mean), 2)
+    
+    
+    @staticmethod
+    def calculate_std(data_frame: Any, kpi: str):
+        df_std = data_frame[[kpi]].std()
+        return round(float(df_std), 2)
+    
+    
+
+class Results:
+    
+    @staticmethod
+    def read_files(file_dir: str, cities: dict, algorithms: list):
+        
+        results = {
+            'bern':   {},
+            'geneva': {},
+            'zurich': {}       
+        }
+        
+        for city, radius in cities.items():
+            #print(f'\n##################################################')
+            #print(f'City of {city}')
+            for r in radius: 
+                radius_name = 'r_0{}'.format(r)
+                #print(f'__________________________________')
+                #print(f'\n*** radius: {radius_name} ***')
+                radius_dir = '{}/{}/{}/'.format(file_dir, city, radius_name)
+                results[city][radius_name] = {}
+                for algorithm in algorithms:
+                    #print(f'\nalgorithm: {algorithm}')
+                    result = DataFrame.get_df_data(radius_dir, algorithm)
+                    results[city][radius_name][algorithm] = result
             
+            #print(f'\n##################################################\n')
+        #print(results)
+        #a = input('')
+        return results
+    
+    @staticmethod
+    def create_overleaf_topology_directories_(overleaf_dir: str, cities: dict):
+        """ creates the directories for each topology into overleaf dir """
+        for city, radius in cities.items():
+            city_dir = os.path.join(overleaf_dir, city)
+            if not os.path.exists(city_dir):
+                os.mkdir(city_dir)
+                '''
+                for r in radius: 
+                    radius_name = 'r_0{}'.format(r)
+                    radius_dir = os.path.join(city_dir, radius_name)
+                    if not os.path.exists(radius_dir):
+                        os.mkdir(radius_dir)
+                '''
+                
+       
+    @staticmethod
+    def get_bar_plot_file_header(energy=False, latency=False):
+        global algorithms
+        file_header = []
+        file_header.append('x')
+        for algorithm in algorithms:
+            file_header.append(algorithm)
+            if energy:
+                file_header.append(str(algorithm+'-hmd'))
+            elif latency:
+                file_header.append(str(algorithm+'-net'))
+            
+            file_header.append(str(algorithm+'-std'))
+        
+        return file_header
 
+    @staticmethod
+    def get_line_plot_file_header():
+        global algorithms
+        file_header = []
+        file_header.append('x')
+        
+        for algorithm in algorithms:
+            file_header.append(algorithm)
+        
+        return file_header
+    
+    @staticmethod
+    def get_box_plot_file_header():
+        global algorithms
+        file_header = []
+        
+        for algorithm in algorithms:
+            file_header.append(algorithm)
+        
+        return file_header
+                
+class BarPlot:                
+    
+    """
+    all methods receive a DataFrame and produces a csv file that will be used by overleaf
+    """
+    
+    @staticmethod
+    def create_bar_plot(overleaf_dir: str, results: dict, kpi: str):
+        """ 
+        Can be used by all other KPIs
+        1. first row is x, which represents the radius for a specific topology
+        2. other rows are specified according to each algorithm 
+        3. each algorithm has the following rows: alg-name and alg-std, where for latency and energy plots there are alg-net and alg-hmd fields, respectively
+        """
+        for city, radius in results.items():
+            #print(f'city: {city}')
+            city_dir = '{}{}/'.format(overleaf_dir, city)
+            file_name = '{}_{}_bar.csv'.format(city, kpi)
+            file_headers = None
+            if kpi == 'ete_latency':
+                file_headers= Results.get_bar_plot_file_header(latency=True)
+            elif kpi == 'energy':
+                file_headers = Results.get_bar_plot_file_header(energy=True)
+            else:
+                file_headers = Results.get_bar_plot_file_header()
+                
+             
+            CSV.create_file(city_dir, file_name, file_headers)
+            
+            x_value = 100
+            for radius_id, algorithms in radius.items():
+                #print(f'\n\nradius: {radius_id}\n')
+                algorithms_performance = []
+                algorithms_performance.append(x_value)
+                
+                for algorithm, alg_data_frame in algorithms.items(): 
+                    alg_avg = DataFrame.calculate_average(alg_data_frame, kpi)
+                    
+                    algorithms_performance.append(alg_avg)
+                    
+                    if kpi == 'ete_latency':
+                        net_avg = DataFrame.calculate_average(alg_data_frame, 'net_latency')
+                        algorithms_performance.append(net_avg)
+                    elif kpi == 'energy':
+                        hmd_energy_avg = DataFrame.calculate_average(alg_data_frame, 'hmd_energy')
+                        algorithms_performance.append(hmd_energy_avg)
+                    
+                    alg_std = DataFrame.calculate_std(alg_data_frame, kpi)
+                    
+                    if kpi == 'successful' or kpi == 'unsuccessful' or kpi == 'exec':
+                        alg_std = alg_std / 10
+                    
+                    algorithms_performance.append(alg_std)
+                
+                CSV.save_data(city_dir, file_name,algorithms_performance )
+                x_value += 450
+                
+    @staticmethod
+    def create_bar_plots(overleaf_dir: str, results: dict):
+        global bar_plot_kpis
+        for kpi in bar_plot_kpis:
+            BarPlot.create_bar_plot(overleaf_dir, results, kpi)
+            
+    
+class LinePlot:
+    
+    """
+    all methods receive a DataFrame and produces a csv file that will be used by overleaf
+    """
+    @staticmethod
+    def create_x_row():
+        x_row = []
+        for i in range(1, 301):
+            x_row.append(round((i / 30), 2))
+        
+        #print(x_row)
+        return x_row
+    
+    @staticmethod 
+    def create_line_plot(overleaf_dir: str, results: dict, kpi: str):
+        """
+        1. first row is x and this represents the time in hours (10h). 
+        2. X row is generated based on a loop that ranges from 1 to 300, each value of each line of X is calculated based on: iteration/300. 
+        3. reads each file, delete the first result, and get first 100 values of it in each radius. in the end, there will be 300 values for the 3 radius. Store them on a list.
+        """
+        for city, radius in results.items():
+            city_dir = '{}{}/'.format(overleaf_dir, city)
+            file_name = '{}_{}_line.csv'.format(city, kpi)
+            file_headers = Results.get_line_plot_file_header()
+                
+             
+            CSV.create_file(city_dir, file_name, file_headers)
+            
+            x_row = LinePlot.create_x_row()
+            position = 0
+            
+            for radius_id, algorithms in radius.items():
+                #print(f'radius: {radius_id}')
+                for i in range(100):
+                    line_list = []
+                    line_list.append(x_row[position])
+                    for algorithm, alg_data_frame in algorithms.items():
+                        kpi_result = alg_data_frame[kpi].iloc[i]
+                        line_list.append(kpi_result)
+                
+                    #print(line_list)
+                    CSV.save_data(city_dir, file_name, line_list)
+                    position += 1   
+                
+            
+class BoxPlot:
+    @staticmethod 
+    def create_boxplot(overleaf_dir: str, results: dict, kpi: str):
+        """for each radius, it creates files without X column for overleaf boxplot"""
+        for city, radius in results.items():
+            city_dir = '{}{}/'.format(overleaf_dir, city)
+            
+            for radius_id, algorithms in radius.items():
+                
+                file_name = '{}_{}_{}_box.csv'.format(city, kpi, radius_id)
+                file_headers = Results.get_box_plot_file_header()
+                
+                CSV.create_file(city_dir, file_name, file_headers)
+            
+                min_lines = float('inf')
+                for algorithm, alg_data_frame in algorithms.items():
+                    number_lines = len(alg_data_frame)
+                    if number_lines < min_lines:
+                        min_lines = number_lines
+                        
+                for i in range(min_lines):
+                    line_list = []
+                    for algorithm, alg_data_frame in algorithms.items():
+                        kpi_result = alg_data_frame[kpi].iloc[i]
+                        line_list.append(kpi_result)
+                
+                    CSV.save_data(city_dir, file_name, line_list)
+  
+                
+                
+            
+if __name__ == "__main__":
 
+    algorithms = ['dscp', 'scg', 'lra', 'am', 'la']
+    overleaf_dir = '/home/ubuntu/overleaf/'
+    
+    cities = {
+        'bern':   [18, 23, 29],
+        'geneva': [15, 17, 19],
+        'zurich': [16, 19, 22]       
+    }
+    
+    bar_plot_kpis = ['ete_latency', 'energy', 'successful', 'unsuccessful', 'exec']
+    
+    Results.create_overleaf_topology_directories_(overleaf_dir, cities)
+    results = Results.read_files(RESULTS_DIR, cities, algorithms)
+    #BarPlot.create_bar_plots(overleaf_dir, results)
+    #LinePlot.create_line_plot(overleaf_dir, results, 'ete_latency')
+    BoxPlot.create_boxplot(overleaf_dir, results, '1080p')
+    BoxPlot.create_boxplot(overleaf_dir, results, '1440p')
+    BoxPlot.create_boxplot(overleaf_dir, results, '4k')
+    BoxPlot.create_boxplot(overleaf_dir, results, '8k')
+    
+    
+
+'''
+        
 class CDF:
     
     @staticmethod
@@ -197,93 +323,11 @@ class CDF:
                     break
     
     @staticmethod
-    def generate_cdf(experiments, files):
-        for experiment in experiments:
-            number_of_users = experiment
-            
-            for file in files:
-                gpu, net, computing, ete, sucessful, unsuccessful, energy, hmd_energy, services_on_hmds = DataFrame.get_df_data(file, number_of_users)
-    
-                
-                fig, axs = plt.subplots(3, 2, tight_layout=True, figsize=(16, 8))
-                fig.suptitle('CDF of Algorithm {} | Vr users {}'.format(file, number_of_users))
-                #GPU usage
-                cdf_data = Cdf.from_seq(gpu)
-                axs[0, 0].plot(cdf_data)
-                axs[0, 0].set_title('gpu usage')
-                axs[0, 0].set_xlabel('number of gpus')
-                axs[0, 0].set_ylabel('probability')
-                
-                #net latency
-                cdf_data = Cdf.from_seq(net)
-                axs[0, 1].plot(cdf_data)
-                axs[0, 1].set_title('network latency')
-                axs[0, 1].set_xlabel('latency (ms)')
-                axs[0, 1].set_ylabel('frequency')
-                
-                #computing latency
-                cdf_data = Cdf.from_seq(computing)
-                axs[1, 0].plot(cdf_data)
-                axs[1, 0].set_title('computing latency')
-                axs[1, 0].set_xlabel('latency (ms)')
-                axs[1, 0].set_ylabel('frequency')
-                
-                #e2e latency
-                cdf_data = Cdf.from_seq(ete)
-                axs[1, 1].plot(cdf_data)
-                axs[1, 1].set_title('e2e latency')
-                axs[1, 1].set_xlabel('latency (ms)')
-                axs[1, 1].set_ylabel('frequency')
-                
-                """
-                #successful migrations
-                cdf_data = Cdf.from_seq(sucessful)
-                axs[2, 0].plot(cdf_data)
-                axs[2, 0].set_title('sucessful migrations')
-                axs[2, 0].set_xlabel('number of migration')
-                axs[2, 0].set_ylabel('frequency')
-                
-                #if file != 'no':
-                #    print(f'\n\nCDF of algorithm {file} | successful')
-                #    CDF.print_PDF(cdf_data)
-                #unsuccessful migrations
-                cdf_data = Cdf.from_seq(unsuccessful)
-                axs[2, 1].plot(cdf_data)
-                axs[2, 1].set_title('unsuccessful migrations')
-                axs[2, 1].set_xlabel('number of migrations')
-                axs[2, 1].set_ylabel('frequency')
-                """
-                #HMD energy consumption
-                cdf_data = Cdf.from_seq(hmd_energy)
-                axs[2, 1].plot(cdf_data)
-                axs[2, 1].set_title('HMD energy consumption')
-                axs[2, 1].set_xlabel('Energy (J)')
-                axs[2, 1].set_ylabel('frequency')
-                
-                #HMD energy consumption
-                cdf_data = Cdf.from_seq(energy)
-                axs[2, 1].plot(cdf_data)
-                axs[2, 1].set_title('Energy consumption')
-                axs[2, 1].set_xlabel('Energy (J)')
-                axs[2, 1].set_ylabel('frequency')
-                
-                print(f'\n\nCDF of algorithm {file} | HMD energy')
-                CDF.print_PDF(cdf_data)
-                plt.show(block=False)
-                
+    def generate_cdf(overleaf_dir: str, results: dict, kpi: str):
         
-        plt.show()
-                
-                
-
-
-if __name__ == "__main__":
-    #files = ['scg', 'network-resource', 'network', 'always', 'no']
-    files = ['scg']
-    experiments = [1000]
-    Histogram.generate_histograms(experiments, files)
-    
-    #files = ['scg']
-    #experiments = [1000]
-    #CDF.generate_cdf(experiments, files)
-    #Results.read_files(files)
+        kpi_data = results[[kpi]]
+        print(kpi_data)
+        a = input('')
+        cdf_data = Cdf.from_seq(kpi_data)
+        CDF.print_PDF(cdf_data)
+'''

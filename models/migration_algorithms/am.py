@@ -62,7 +62,9 @@ class AlwaysMigrate(Migration):
     ) -> bool:
         """
         provides the service migration of service i, which is based on the
-        current distance between hmd_ip and where the service is deployed
+        current distance between hmd_ip and where the service is deployed. 
+        Typically, the always migration method is based on the user handover. 
+        Whenever the handover takes place, the service is moved to the nearby MEC server.
         """
 
         hmd_bs = bs_controller.BaseStationController.get_base_station(
@@ -79,6 +81,10 @@ class AlwaysMigrate(Migration):
             )
             
             service_mec_server = service_server.get('mec')
+            
+            if service_mec_server is None:
+                self.unsuccessful_migrations += 1
+                return False
             
             extracted_service = mec_controller.MecController.remove_service(
                 service_mec_server, service

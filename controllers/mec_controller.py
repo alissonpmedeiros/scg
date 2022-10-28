@@ -92,8 +92,8 @@ class MecController:
                 mec_dict.update({'id': base_station.mec_id, 'mec': bs_mec})
                 break
             
-        if mec_dict.get('mec') is None:
-            print(f'\nALL MEC servers are overloaded! Discarting...')
+        #if mec_dict.get('mec') is None:
+            #print(f'\nALL MEC servers are overloaded! Discarting...')
         
         return mec_dict
     

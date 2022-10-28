@@ -13,7 +13,7 @@ from controllers import mec_controller
 """ other modules """
 from abc import ABC
 from typing import Dict
-
+from multiprocessing import Process
 
 """abstract base classes let you define a class with abstract methods, which all subclasses must implement in order to be initialized"""
 class Migration(ABC):
@@ -56,7 +56,17 @@ class Migration(ABC):
                     self.service_migration(
                         base_station_set, mec_set, hmds_set, graph, service
                     )
+        '''
         #print('\n################### FINISH SERVICE CHECK #######################')
+        
+        processes = [Process(target=self.check_process, args=(base_station_set, mec_set, hmds_set, graph, hmd)) for hmd in hmds_set.values()]
+        
+        for p in processes:
+            p.start()
+            
+        for p in processes:
+            p.join()
+        '''
         return
         
     def service_migration(
@@ -68,3 +78,23 @@ class Migration(ABC):
         service: 'VrService',
     ) -> bool:
         pass    
+    
+    def check_process(self,
+        base_station_set: Dict[str,'BaseStation'],
+        mec_set: Dict[str,'Mec'],
+        hmds_set: Dict[str,'VrHMD'],
+        graph: 'Graph',
+        hmd: 'VrHMD'
+    ):
+        if hmd.current_location != hmd.previous_location:
+                for service_id in hmd.services_ids:
+                    service = None 
+                    if any(service_id == vr_service.id for vr_service in hmd.services_set): 
+                        service_index = [vr_service.id for vr_service in hmd.services_set].index(service_id)
+                        service = hmd.services_set[service_index]
+                    else: 
+                        service = mec_controller.MecController.get_mec_service(mec_set, service_id)
+                    
+                    self.service_migration(
+                        base_station_set, mec_set, hmds_set, graph, service
+                    )

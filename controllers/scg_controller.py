@@ -85,10 +85,9 @@ class ScgController:
                     hmd_latency = vr_controller.VrController.get_hmd_latency(
                         self.base_station_set, hmd
                     )
-                
                     total_computing_latency += hmd_latency
-                    total_e2e_latency += hmd_latency
                     service_e2e_latency = hmd_latency
+                    total_e2e_latency += hmd_latency
                 
                 else: 
                     start_node = bs_controller.BaseStationController.get_base_station(
@@ -102,7 +101,6 @@ class ScgController:
                     latency = ScgController.get_E2E_latency(
                         self.mec_set, self.graph, start_node, target_node
                     )
-                    
                     network_latency = latency.get('network_latency')
                     destination_latency = latency.get('destination_latency')
                     service_e2e_latency = latency.get('e2e_latency')
@@ -131,7 +129,7 @@ class ScgController:
 
     def offload_services(self) -> None:
         count = 0
-        for hmd in self.hmds_set.values():
+        for hmd_id, hmd in self.hmds_set.items():
             for service_id in hmd.services_ids:
                 extracted_service = vr_controller.VrController.remove_vr_service(
                     hmd, service_id
@@ -155,10 +153,11 @@ class ScgController:
                     mec_controller.MecController.deploy_service(dst_mec, extracted_service)
                 else:
                     count+=1
-                    print(f'\n*** service {extracted_service} could not be offloaded ***')
+                    vr_controller.VrController.deploy_vr_service(self.hmds_set, hmd_id, extracted_service)
+                    #print(f'\n*** service {extracted_service} could not be offloaded ***')
         if count > 1:
             print(f'could not offload {count} services')
-            a = input("press any key to continue")
+            #a = input("press any key to continue")
 
     def calculate_gpu_usage(self) -> float:
         total_services = len(self.hmds_set)
@@ -178,24 +177,29 @@ class ScgController:
     
     def calculate_energy_usage(self) -> dict:
         """calculates the energy usage of all services deployed on MECs and HMDs"""
-        
+        #TODO: should calculate the average energy consumption per application/user, all services energy should be dividend by the number of APLICATIONS and not NUMBER OF SERVICES! 
+        #TODO: need to fix the average energy consumption by the HMD, the way its written is wrong!
         hmd_energy = 0
         total_energy = 0
+        hmd_services = 0
         total_services = 0
         
         for hmd in self.hmds_set.values():
             for service in hmd.services_set:
-                total_energy += service.video_decoder.energy.energy_consumption
+                service_energy = service.video_decoder.energy.energy_consumption
+                hmd_energy += service_energy
+                total_energy += service_energy
+                hmd_services += 1
                 total_services += 1
-        
-        if total_services > 0: 
-            hmd_energy = round((total_energy / total_services), 2)
         
         for mec in self.mec_set.values():
             for service in mec.services_set:
                 if service.is_mobile:
                     total_energy += service.video_decoder.energy.energy_consumption
                     total_services += 1
+        
+        if hmd_services > 0: 
+            hmd_energy = round((hmd_energy / total_services), 2)
         
         total_energy = round((total_energy / total_services), 2)
         

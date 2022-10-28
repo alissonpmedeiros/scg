@@ -112,8 +112,8 @@ class DSCP(SCG):
             
         
         #print(shortest_path)
-        if mec_dict.get('mec') is None:
-            print(f'\nALL MEC servers are overloaded! Discarting...')
+        #if mec_dict.get('mec') is None:
+            #print(f'\nALL MEC servers are overloaded! Discarting...')
             
         return mec_dict
 

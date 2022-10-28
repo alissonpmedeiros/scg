@@ -134,9 +134,11 @@ class Dijkstra:
         """However, we initialize the  starting node with wireless latency of the Base station to reach the attached MEC and the computing latency of the MEC """   
         dist[start_node.name] = start_node.wireless_latency + start_node_mec.computing_latency  
         
+        """current_min_node is the start_node instead of the node with the lowest latency """
         current_min_node = start_node.name
         neighbors = graph.get_outgoing_edges(current_min_node)
         
+        """ we define a zone searching arround the start_node's neighbors """
         for neighbor in neighbors:
             tentative_value = (dist[current_min_node] - graph.get_node_computing_latency(current_min_node) + graph.get_network_latency(current_min_node, neighbor) + graph.get_node_computing_latency(neighbor))
             if tentative_value < dist[neighbor]:

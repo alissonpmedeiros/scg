@@ -3,8 +3,7 @@ import csv
 
 class CSV:
     @staticmethod
-    def create_file(file_dir: str, file_name: str):
-        header = ['gpu_usage', 'net_latency', 'comput_latency', 'ete_latency', 'successful', 'unsuccessful', 'energy', 'hmd_energy', 'services_on_hmds', '8k', '4k', '1440p', '1080p']
+    def create_file(file_dir: str, file_name: str, header: list):
         with open('{}{}'.format(file_dir, file_name), 'w', encoding='UTF8', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(header)

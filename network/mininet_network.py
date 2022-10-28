@@ -159,7 +159,7 @@ def add_base_stations(topology_data):
 def create_bs_links(topology_data):    
     info("*** Creating links\n")
     for node in topology_data:
-        #print(node)
+        print(node.get('id'))
         #print('\n')
         node_id = node['id']
         for edge in node['edges']:
@@ -218,8 +218,8 @@ def topology(args):
     info("*** Configuring mobility model\n")
     NET.setMobilityModel(time=0, model='RandomDirection', seed=20, AC='ssf')
 
-    info("""*** Starting the graph interface\n""")
-    NET.plotGraph(max_x=NET_GRAPH_DIMENSION, max_y=NET_GRAPH_DIMENSION) 
+    #info("""*** Starting the graph interface\n""")
+    #NET.plotGraph(max_x=NET_GRAPH_DIMENSION, max_y=NET_GRAPH_DIMENSION) 
     
     info("*** Starting network\n")
     NET.build()

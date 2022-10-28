@@ -17,6 +17,7 @@ from controllers import mec_controller
 from controllers import dijkstra_controller 
 
 """other modules"""
+import sys
 from typing import Dict
 
 
@@ -59,18 +60,17 @@ class LA(Migration):
     ) -> Dict[str,'Mec']:
         """ discovers a nearby MEC server to either offload or migrate the service not considering the resource availaiblity of MEC nodes"""
         
-        shortest_path = dijkstra_controller.DijkstraController.get_shortest_path(
-            mec_set, graph, start_node
-        )
-        
         mec_dict: Dict[str,'Mec'] = {
             'id': None,
             'mec': None
         }
         
+        shortest_path = dijkstra_controller.DijkstraController.get_shortest_path(
+            mec_set, graph, start_node
+        )
+        
         for node in shortest_path:    
             bs_name = node[0]
-            
             bs =  bs_controller.BaseStationController.get_base_station_by_name(base_station_set, bs_name)
             base_station: BaseStation = bs.get('base_station')
             
@@ -79,7 +79,10 @@ class LA(Migration):
             if mec_controller.MecController.check_deployment(bs_mec, service):
                 mec_dict.update({'id': base_station.mec_id, 'mec': bs_mec})
             break
-                
+        
+        #if mec_dict.get('mec') is None:
+            #print(f'\nALL MEC servers are overloaded! Discarting...')
+            
         return mec_dict
 
     def perform_migration(
@@ -101,9 +104,13 @@ class LA(Migration):
         
         service_owner_hmd: 'VrHMD' = service_owner.get('hmd')
         
-        start_node = bs_controller.BaseStationController.get_base_station(
+        start_node: 'BaseStation' = bs_controller.BaseStationController.get_base_station(
             base_station_set, service_owner_hmd.current_location
         )
+        
+        current_service_node: 'BaseStation' = mec_controller.MecController.get_service_bs(
+            base_station_set, mec_set, service.id
+        )    
         
         dst_node: Dict[str, 'Mec'] = self.discover_mec(
             base_station_set, 
@@ -116,22 +123,23 @@ class LA(Migration):
         mec_candidate_id: str = dst_node.get('id')
         mec_candidate: 'Mec' = dst_node.get('mec')
         
-        if mec_candidate is not None:
-            
-            """getting the current service latency"""
-            start_node = bs_controller.BaseStationController.get_base_station(
-                base_station_set, service_owner_hmd.current_location
-            )    
-            
-            current_target_node = mec_controller.MecController.get_service_bs(
-                base_station_set, mec_set, service.id
-            )
+        if mec_candidate and current_service_node:
             
             current_latency = scg_controller.ScgController.get_E2E_latency(
-                mec_set, graph, start_node, current_target_node
+                mec_set, graph, start_node, current_service_node
+            )
+        
+            current_service_latency = current_latency.get('e2e_latency')
+            
+            service_server: Dict[str,'Mec'] = mec_controller.MecController.get_service_mec_server(
+                mec_set, service.id
             )
             
-            current_service_latency = current_latency.get('e2e_latency')
+            service_mec_server = service_server.get('mec')
+            
+            extracted_service = mec_controller.MecController.remove_service(
+                service_mec_server, service
+            )
             
             
             """getting the candidate latency"""
@@ -148,22 +156,15 @@ class LA(Migration):
             
             
             if current_service_latency > candidate_service_latency:
-                service_server: Dict[str,'Mec'] = mec_controller.MecController.get_service_mec_server(
-                    mec_set, service.id
-                )
-                
-                service_mec_server = service_server.get('mec')
-                
-                extracted_service = mec_controller.MecController.remove_service(
-                    service_mec_server, service
-                )
-                
                 mec_controller.MecController.deploy_service(
                     mec_candidate, extracted_service
                 )
                 self.successful_migrations += 1
                 return True
             
+            mec_controller.MecController.deploy_service(
+                service_mec_server, extracted_service
+            )
             self.unsuccessful_migrations += 1
             return False
         else:
@@ -172,3 +173,6 @@ class LA(Migration):
 
             
     
+        #if mec_candidate_id or mec_candidate is None:
+        #    self.unsuccessful_migrations +=1
+        #    return False

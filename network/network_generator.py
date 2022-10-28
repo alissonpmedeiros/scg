@@ -1,146 +1,214 @@
-import os
-import json
-import random
 import numpy as np
 import networkx as nx
 import plotly.io as pio   
+import os, json, random
+from scipy import spatial
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 pio.kaleido.scope.mathjax = None
 
-""" controller modules """
-from .. controllers import config_controller
+#Bern
+CITY = 'zurich'
+RADIUS = 0.215
+NUMBER_NODES = 100
 
-# configuration variables
-CONFIG = config_controller.ConfigController.get_config()
+#networkx plot 
+NODE_SIZE = 200
+NODE_FONT_SIZE = 4
+EDGE_FONT_SIZE = 4
+FONT_FAMILY="sans-serif"
+NODE_FONT_COLOR = 'white'
+VERTICAL_ALIGNMENT = 'center'
+
+#plotly
+PLOTLY_NODE_SIZE = 24
+PLOTLY_NODE_FONT = 'Arial'
+EDGE_LINE_WIDTH = 1
+EDGE_LINE_COLOR = '#888'
+LEGEND_FONT_SIZE = 90
+LEGEND_COLOR = 'black'
+
+class MainGraph:
+    def __init__(self) -> None:
+        self.graph = nx.DiGraph()
+        self.graph_positions = {}
+        self.custom_names = {}
+
+class BaselineGraph:
+    def __init__(self) -> None:    
+        self.baseline_graph = nx.Graph()
+        self.baseline_positions = []
 
 def generate_positions(number_nodes):
-    positions =  np.random.rand(number_nodes, 2)
-    pos = dict(zip(range(number_nodes),positions))
-    return pos
+    positions =  np.random.rand(number_nodes,2)
+    return positions
 
-def check_graph_conectivity(graph):
+def generate_graph_connections(b_graph: BaselineGraph):
     #forces the graph to be a connected graph
-    number_nodes = CONFIG['NETWORK']['BASE_STATIONS']
-    graph_positions = generate_positions(number_nodes)
-    graph = nx.random_geometric_graph(n=number_nodes, radius=0.25, pos=graph_positions)
-   
-   
-    while not nx.is_connected(graph):
-        print('Graph is not connected!')
-        graph = nx.random_geometric_graph(n=number_nodes, radius=0.25)
-
-
-def init_graph(rgg_graph, graph, graph_positions, custom_names):
-    """ initialize GRAPH bases on RGG information """
     
-    # gets the current node positions from RGG
-    rgg_positions=nx.get_node_attributes(rgg_graph,'pos')
+    while True:
+        positions = generate_positions(NUMBER_NODES)
+        kdtree = spatial.KDTree(positions)
+        pairs = kdtree.query_pairs(RADIUS)
+        
+        b_graph.baseline_graph.add_nodes_from(range(NUMBER_NODES))
+        b_graph.baseline_graph.add_edges_from(list(pairs))
+        
+        
+        if nx.is_connected(b_graph.baseline_graph):
+            b_graph.baseline_positions = positions
+            print(f'NODES: {b_graph.baseline_graph.number_of_nodes()} | EDGES: {b_graph.baseline_graph.number_of_edges()} | ALPV: {b_graph.baseline_graph.number_of_edges()/b_graph.baseline_graph.number_of_nodes()}')
+        
+            print('Graph is connected!')
+            break
+            
+        else:    
+            print('\nGraph is not connected!')
+            b_graph.baseline_graph = nx.Graph() 
+            
+def generate_graph_connecttions_from_file(m_graph: MainGraph, b_graph: BaselineGraph):
+    # creates new connnections for a baseline graph based on the positions of main graph on the new radius
+    positions = np.array([[0]])
+    for key, value in m_graph.graph_positions.items():
+        positions = np.append(positions, value)
+    positions = np.delete(positions, 0)
+    #print(f'\n')
+    positions_2d = positions.reshape((NUMBER_NODES, 2))
+    #print(positions_2d)
+    #a = input('')
+    while True:
+        kdtree = spatial.KDTree(positions_2d)
+        pairs = kdtree.query_pairs(RADIUS)
+        
+        b_graph.baseline_graph.add_nodes_from(range(NUMBER_NODES))
+        b_graph.baseline_graph.add_edges_from(list(pairs))
+        
+        
+        if nx.is_connected(b_graph.baseline_graph):
+            b_graph.baseline_positions = positions_2d
+            print(f'NODES: {b_graph.baseline_graph.number_of_nodes()} | EDGES: {b_graph.baseline_graph.number_of_edges()} | ALPV: {b_graph.baseline_graph.number_of_edges()/b_graph.baseline_graph.number_of_nodes()}')
+            print('Graph is connected!')
+            break
+            
+        else:    
+            print('\nGraph is not connected!')
+            b_graph.baseline_graph = nx.Graph()
+          
+
+def init_graph(b_graph: BaselineGraph, m_graph: MainGraph, node_latency, link_latency):
+    """ initialize main graph based on baseline graph information """
     
     #creates custom names for the nodes bases on the node id and its computing latency
-    for node in rgg_graph.nodes():
-        node_lower_latency_threshold = CONFIG['MEC_SERVERS']['LOWER_LATENCY_THRESHOLD']
-        node_upper_latency_threshold = CONFIG['MEC_SERVERS']['UPPER_LATENCY_THRESHOLD']
+    for node in b_graph.baseline_graph.nodes():
         computing_latency = round(
-            random.uniform(node_lower_latency_threshold, node_upper_latency_threshold), 2
+            random.uniform(node_latency['lower_latency_threshold'], node_latency['upper_latency_threshold']), 2
         )
-        node_name = str(node) + ' (' + str(computing_latency) + ')'
-        custom_names[node] = node_name
+        node_name = str(node) + '\n(' + str(computing_latency) + ')'
+        m_graph.custom_names[node] = node_name
     
-    # adds nodes and their positions from RGG to GRAPH
-    for node in rgg_graph.nodes():
-        #modifies the original x and y coordinates generated by RGG
+    # adds nodes and their positions from BASELINE GRAPH to GRAPH
+    for node in b_graph.baseline_graph.nodes():
+        #modifies the original x and y coordinates generated by BASELINE GRAPH
         random_x_pos = random.uniform(0, 1)
         random_y_pos = random.uniform(0, 1)
-        x_pos = rgg_positions[node][0] #+ (rgg_positions[node][0] * random_x_pos)
-        y_pos = rgg_positions[node][1] #+ (rgg_positions[node][1] * random_y_pos)
+        x_pos = b_graph.baseline_positions[node][0] #+ (b_graph.baseline_positions[node][0] * random_x_pos)
+        y_pos = b_graph.baseline_positions[node][1] #+ (b_graph.baseline_positions[node][1] * random_y_pos)
         
-        graph.add_node(custom_names[node],pos=(x_pos,y_pos))
-        node_position = np.array(rgg_positions[node], dtype=np.float32)
-        graph_positions[custom_names[node]] = node_position
+        
+        m_graph.graph.add_node(m_graph.custom_names[node],pos=(x_pos,y_pos))
+        node_position = np.array(b_graph.baseline_positions[node], dtype=np.float32)
+        m_graph.graph_positions[m_graph.custom_names[node]] = node_position
     
-    # inserts edges from RGG into GRAPH
-    for edge in rgg_graph.edges():
+    # inserts edges from BASELINE GRAPH into GRAPH
+    for edge in b_graph.baseline_graph.edges():
         src = edge[0]
         dst = edge[1]
-        link_lower_latency_threshold = CONFIG['NETWORK']['LOWER_LATENCY_THRESHOLD']
-        link_upper_latency_threshold = CONFIG['NETWORK']['UPPER_LATENCY_THRESHOLD']
         weight = round(
-            random.uniform(link_lower_latency_threshold, link_upper_latency_threshold), 2
+            random.uniform(link_latency['lower_latency_threshold'], link_latency['upper_latency_threshold']), 2
         ) # weight means the network latency of each link between two nodes  
-        graph.add_edge(u_of_edge=custom_names[src], v_of_edge=custom_names[dst], weight=weight)
-        
-
-def draw_graph(graph, graph_positions):
+        m_graph.graph.add_edge(u_of_edge=m_graph.custom_names[src], v_of_edge=m_graph.custom_names[dst], weight=weight)
+    
+def draw_graph(m_graph: MainGraph):
     """ draws the GRAPH """    
     # provides different colors for each link according to their weight (latency)
-    elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d["weight"] > 0.75]
-    esmall = [(u, v) for (u, v, d) in graph.edges(data=True) if d["weight"] <= 0.75]
+    esmall = [(u, v) for (u, v, d) in m_graph.graph.edges(data=True) if d["weight"] < 0.7]
+    neutral = [(u, v) for (u, v, d) in m_graph.graph.edges(data=True) if d["weight"] >= 0.7 and d["weight"] <= 0.8]
+    elarge = [(u, v) for (u, v, d) in m_graph.graph.edges(data=True) if d["weight"] > 0.8]
     
     # nodes
-    nx.draw_networkx_nodes(graph, graph_positions, node_size=400)
+    nx.draw_networkx_nodes(m_graph.graph, m_graph.graph_positions, node_size=NODE_SIZE)
 
     # edges
     nx.draw_networkx_edges(
-        graph, graph_positions, 
+        m_graph.graph, m_graph.graph_positions, 
         edgelist=elarge, 
         width=0.5, 
         style="dashed", 
-        connectionstyle='arc3, rad = 0.2', 
+        edge_color="r",
+        #connectionstyle='arc3, rad = -0.3', 
         arrows=None, 
         arrowstyle='-'
     )
     nx.draw_networkx_edges(
-        graph, graph_positions, 
+        m_graph.graph, m_graph.graph_positions, 
         edgelist=esmall, 
+        width=0.5, 
+        alpha=0.5, 
+        edge_color="g", 
+        style="dashed", 
+        #connectionstyle='arc3, rad = 0.3', 
+        arrows=None, 
+        arrowstyle='-'
+    )
+    nx.draw_networkx_edges(
+        m_graph.graph, m_graph.graph_positions, 
+        edgelist=neutral, 
         width=0.5, 
         alpha=0.5, 
         edge_color="b", 
         style="dashed", 
-        connectionstyle='arc3, rad = 0.2', 
+        #connectionstyle='arc3, rad = 0.3', 
         arrows=None, 
         arrowstyle='-'
     )
 
     # node labels
-    nx.draw_networkx_labels(graph, graph_positions, font_color='white', font_size=3, font_family="sans-serif", verticalalignment='top')
+    nx.draw_networkx_labels(m_graph.graph, m_graph.graph_positions, font_color=NODE_FONT_COLOR, font_size=NODE_FONT_SIZE, font_family=FONT_FAMILY, verticalalignment=VERTICAL_ALIGNMENT)
     
     # edge weight labels
-    edge_labels = nx.get_edge_attributes(graph, "weight")
-    nx.draw_networkx_edge_labels(graph, graph_positions, edge_labels, font_size=4)
+    edge_labels = nx.get_edge_attributes(m_graph.graph, "weight")
+    nx.draw_networkx_edge_labels(m_graph.graph, m_graph.graph_positions, edge_labels, font_size=EDGE_FONT_SIZE)
 
     ax = plt.gca()
-    ax.margins(0.08)
+    ax.margins(0.00)
     plt.axis("off")
     plt.tight_layout()
-    plt.savefig('network_topology.pdf', bbox_inches='tight', orientation='landscape', dpi=None)  
-    #plt.show()
+    #plt.savefig('network_topology.pdf', bbox_inches='tight', orientation='landscape', dpi=None)  
+    plt.show()
     
-
-def save_to_json(rgg_graph, graph, graph_positions, custom_names, file_dir, file_name):
+def save_to_json(b_graph: BaselineGraph, m_graph: MainGraph, file_dir, file_name):
     # saves the graph into json file
     nodes_set = []
-    edge_weights = nx.get_edge_attributes(graph, "weight")
+    edge_weights = nx.get_edge_attributes(m_graph.graph, "weight")
     
-    for node, adjacencies in enumerate(rgg_graph.adjacency()):
+    for node, adjacencies in enumerate(b_graph.baseline_graph.adjacency()):
         node_edges = []
         node_edge_distances = [] 
         for edge, value in adjacencies[1].items():
-            edge_pair = (custom_names[node], custom_names[edge])
+            edge_pair = (m_graph.custom_names[node], m_graph.custom_names[edge])
             if edge_pair in edge_weights:
                 node_edges.append(edge)
                 node_edge_distances.append(edge_weights[edge_pair])
             
-        node_name = custom_names[node]
+        node_name = m_graph.custom_names[node]
         node_position = []
-        p1 = json.dumps(float(graph_positions[node_name][0]))
-        p2 = json.dumps(float(graph_positions[node_name][1]))
+        p1 = json.dumps(float(m_graph.graph_positions[node_name][0]))
+        p2 = json.dumps(float(m_graph.graph_positions[node_name][1]))
         node_position.append(float(p1))
         node_position.append(float(p2))
         
         #Python regex to return string between parentheses
         node_latency = node_name[node_name.find('(')+1:node_name.find(')')] 
-      
         node = {'id': node, 'position': node_position, 'node_latency': float(node_latency) , 'edges': node_edges, 'edge_distances': node_edge_distances}
         nodes_set.append(node)
 
@@ -148,14 +216,19 @@ def save_to_json(rgg_graph, graph, graph_positions, custom_names, file_dir, file
     f = open("{}{}".format(file_dir, file_name),"w+")
     f.write(json_text)
     f.close()    
+    
+def save_loaded_topology_to_json(nodes_set, file_dir, file_name):
+    json_text = json.dumps(nodes_set)
+    f = open("{}{}".format(file_dir, file_name),"w+")
+    f.write(json_text)
+    f.close() 
 
-
-def draw_plotly_graph(graph):
+def draw_plotly_graph(m_graph: MainGraph):
     edge_x = []
     edge_y = []
-    for edge in graph.edges():
-        x0, y0 = graph.nodes[edge[0]]['pos']
-        x1, y1 = graph.nodes[edge[1]]['pos']
+    for edge in m_graph.graph.edges():
+        x0, y0 = m_graph.graph.nodes[edge[0]]['pos']
+        x1, y1 = m_graph.graph.nodes[edge[1]]['pos']
         edge_x.append(x0)
         edge_x.append(x1)
         edge_x.append(None)
@@ -166,17 +239,16 @@ def draw_plotly_graph(graph):
 
     edge_trace = go.Scatter(
         x=edge_x, y=edge_y,
-        line=dict(width=6, color='#888'),
+        line=dict(width=EDGE_LINE_WIDTH, color=EDGE_LINE_COLOR),
         hoverinfo='none',
         mode='lines')
 
     node_x = []
     node_y = []
-    for node in graph.nodes():
-        x, y = graph.nodes[node]['pos']
+    for node in m_graph.graph.nodes():
+        x, y = m_graph.graph.nodes[node]['pos']
         node_x.append(x)
         node_y.append(y)
-
 
 
     node_trace = go.Scatter(
@@ -192,31 +264,25 @@ def draw_plotly_graph(graph):
             colorscale='YlGnBu',
             reversescale=True,
             color=[],
-            size=50, # node size
+            size=PLOTLY_NODE_SIZE, # node size
             colorbar=dict(
                 thickness=20,
                 tickcolor='black',
-                tickfont=dict(size=110, color='black', family='Times New Roman'),
-                title=dict(text='Node Connections', font=dict(size=110, color='black', family='Times New Roman')),
+                tickfont=dict(size=LEGEND_FONT_SIZE, color='black', family=PLOTLY_NODE_FONT),
+                title=dict(text='Node Connections', font=dict(size=LEGEND_FONT_SIZE, color=LEGEND_COLOR, family=PLOTLY_NODE_FONT)),
                 xanchor='left',
                 titleside='right'
             ),
-            line_width=5))
+            line_width=3))
 
     node_adjacencies = []
     node_text = []
-    for node, adjacencies in enumerate(graph.adjacency()):
+    for node, adjacencies in enumerate(m_graph.graph.adjacency()):
         node_adjacencies.append(len(adjacencies[1]))
         node_text.append('# of connections: '+str(len(adjacencies[1])))
 
-    #pprint(node_trace) # nodes location on the plot
-    #pprint(node_adjacencies) # number of edges
-    #pprint(node_text) # nodes adjacency text
-
     node_trace.marker.color = node_adjacencies
     node_trace.text = node_text
-
-
 
     fig = go.Figure(data=[edge_trace, node_trace],
                 layout=go.Layout(
@@ -230,10 +296,26 @@ def draw_plotly_graph(graph):
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )
-    #fig.show()
+    fig.update_layout(coloraxis={"colorbar":{"dtick":1}})
+    '''
+    fig.update_layout(
+                  xaxis = dict(
+                    tickmode='array', #change 1
+                    tickvals = x, #change 2
+                    ticktext = [0,2,4,6,8], #change 3
+                    ),
+                   font=dict(size=18, color="black"))
+    '''
     fig.write_image("./plotly_network_topology.pdf", format="pdf", width=1980, height=1080)
+    
+    #fig.show()
 
-def load_topology(rgg_graph, graph, graph_positions, custom_names, data_dir, file_name):
+def load_topology(data_dir, file_name):
+    
+    #graph variables
+    m_graph = MainGraph() 
+    b_graph = BaselineGraph()
+    
     data = {}
     with open("{}{}".format(data_dir, file_name)) as json_file:
         data = json.loads(json_file.read())
@@ -243,17 +325,56 @@ def load_topology(rgg_graph, graph, graph_positions, custom_names, data_dir, fil
         node_id = node['id']
         node_latency = node['node_latency']
         node_name = str(node_id) + ' (' + str(node_latency) + ')'
-        custom_names[node_id] = node_name
+        m_graph.custom_names[node_id] = node_name
 
-    # adds nodes and their positions from RGG to GRAPH
+    #print(f'number of vertices edges: {m_graph.graph}')
+
+    # adds nodes and their positions from file to Graph
     for node in data:
         node_id = node['id']
+        
+        '''#modifying the original graph positions
+        if node_id == 1:
+            node['position'][0] += node['position'][0] * 0.7
+            node['position'][1] -= node['position'][1] * 0.2
+        
+        if node_id == 2:
+            node['position'][1] -= node['position'][1] * 0.14
+        
+        if node_id == 6:
+            node['position'][1] += node['position'][1] * 0.1 
+           
+        if node_id == 9:
+            node['position'][0] += node['position'][0] * 0.1
+            node['position'][1] += node['position'][1] * 0.1
+        
+        if node_id == 12:
+            node['position'][1] -= node['position'][1] * 0.3
+        
+        if node_id == 16:
+            node['position'][0] -= node['position'][0] * 0.04
+            node['position'][1] -= node['position'][1] * 0.02
+        
+        if node_id == 17:
+            node['position'][0] -= node['position'][0] * 0.2
+        
+        if node_id == 20:
+            node['position'][1] -= node['position'][1] * 0.01
+        
+        if node_id == 28:
+            node['position'][1] -= node['position'][1] * 0.2
+                     
+        if node_id == 31:
+            node['position'][1] -= node['position'][1] * 0.03
+        
+        save_loaded_topology_to_json(data, data_dir, file_name)'''
+        
         node_position = node['position']
         x_pos = node_position[0]
         y_pos = node_position[1]
-        graph.add_node(custom_names[node_id],pos=(x_pos, y_pos))
+        m_graph.graph.add_node(m_graph.custom_names[node_id],pos=(x_pos, y_pos))
         node_position_aux = np.array(node_position, dtype=np.float32)
-        graph_positions[custom_names[node_id]] = node_position_aux
+        m_graph.graph_positions[m_graph.custom_names[node_id]] = node_position_aux
     
     # inserts edges from json file into GRAPH
     for node in data:
@@ -264,33 +385,47 @@ def load_topology(rgg_graph, graph, graph_positions, custom_names, data_dir, fil
             src = node_id
             dst = edge
             weight = edge_distances[edge_index]
-            graph.add_edge(u_of_edge=custom_names[src], v_of_edge=custom_names[dst], weight=weight)
+            m_graph.graph.add_edge(u_of_edge=m_graph.custom_names[src], v_of_edge=m_graph.custom_names[dst], weight=weight)
     
-    draw_graph(graph, graph_positions)    
-    #draw_plotly_graph(rgg_graph) #TODO: when loading the topology a new RGG graph should be created and specified into this function
     
-def create_topology(rgg_graph, graph, graph_positions, custom_names, file_dir, file_name):
+    #latency variables
+    node_latency = {'lower_latency_threshold': 2, 'upper_latency_threshold': 5}
+    link_latency = {'lower_latency_threshold': 0.5, 'upper_latency_threshold': 1}
+    
+    generate_graph_connecttions_from_file(m_graph, b_graph)
+    m_graph = MainGraph()
+    
+    init_graph(b_graph, m_graph, node_latency, link_latency)
+    draw_graph(m_graph)
+    file_name = CITY + '_r_' + str(RADIUS) + '.json'
+    save_to_json(b_graph, m_graph, file_dir, file_name)
+    draw_plotly_graph(m_graph)
+    
+    
+def create_topology(file_dir, file_name):
+    #graph variables
+    m_graph = MainGraph() 
+    
+    #baseline graph variables
+    b_graph = BaselineGraph()
+    
+    #latency variables
+    node_latency = {'lower_latency_threshold': 2, 'upper_latency_threshold': 5}
+    link_latency = {'lower_latency_threshold': 0.5, 'upper_latency_threshold': 1}
+
     print('\nCreating a new network topology...')
-    check_graph_conectivity(rgg_graph)
-    init_graph(rgg_graph, graph, graph_positions, custom_names)
-    draw_graph(graph, graph_positions)
-    save_to_json(rgg_graph, graph, graph_positions, custom_names, file_dir, file_name)
-    draw_plotly_graph(rgg_graph)
+    generate_graph_connections(b_graph)
+
+    init_graph(b_graph, m_graph, node_latency, link_latency)
+    draw_graph(m_graph)
+    save_to_json(b_graph, m_graph, file_dir, file_name)
+    draw_plotly_graph(m_graph)
 
 if __name__ == "__main__":
-    
-    # variables
-    GRAPH = nx.DiGraph()
-    GRAPH_POSITIONS = {}
-    CUSTOM_NAMES = {}
-    
-    #Random Geometric Graph uses as baseline for the final graph 
-    RGG_GRAPH = nx.random_geometric_graph(n=28, radius=0.25)
     
     #file variables
     file_dir = './'
     file_name = 'network.json' 
-    
     
     if os.path.exists('{}{}'.format(file_dir, file_name)):
         print(f'\n*** File {file_name} at {file_dir} already exists! ***')
@@ -301,17 +436,11 @@ if __name__ == "__main__":
             option = input('Enter your choice: ')
         
         if option == '1':
-            create_topology(RGG_GRAPH, GRAPH, GRAPH_POSITIONS, CUSTOM_NAMES, file_dir, file_name)
+            create_topology(file_dir, file_name)
         else:   
             print('\nLoading network topology...')
-            load_topology(RGG_GRAPH, GRAPH, GRAPH_POSITIONS, CUSTOM_NAMES, file_dir, file_name)
+            load_topology(file_dir, file_name)
     else:
-        create_topology(RGG_GRAPH, GRAPH, GRAPH_POSITIONS, CUSTOM_NAMES, file_dir, file_name)
+        create_topology(file_dir, file_name)
     
-    '''
-    TODO:
-    1- TEST THE SCRIPT WITH CONTROLLER VARIABLES AND CHECK THE LINK LATENCY
-    2- LOAD NET AND COMPUTING LATENCY FROM NETWORK.JSON FILE TO MECS AND BASE STATIONS
-    3- CHECK THE DIJKSTRA ALGORITHM
-    4- GET THE GENERATED FILE AND USE NODES' DISTANCES TO PLACE THE BASE STATIONS
-    '''
+    
